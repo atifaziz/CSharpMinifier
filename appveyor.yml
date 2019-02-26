@@ -1,0 +1,43 @@
+version: '{build}'
+image:
+  - Visual Studio 2017
+  - Ubuntu
+skip_commits:
+  files:
+    - '*.md'
+    - '*.txt'
+skip_tags: true
+before_build:
+- dotnet --info
+build_script:
+- ps: >-
+    $id = $env:APPVEYOR_REPO_COMMIT_TIMESTAMP -replace '([-:]|\.0+Z)', ''
+
+    $id = $id.Substring(0, 13)
+
+    if ($isWindows) { .\pack.cmd ci-$id } else { ./pack.sh ci-$id }
+test_script:
+- cmd: test.cmd
+- sh: ./test.sh
+- sh: # revert to following post merge of PR codecov/codecov-bash#138
+- sh: # curl -s https://codecov.io/bash > codecov
+- sh: curl -s https://raw.githubusercontent.com/codecov/codecov-bash/14662d32a4862918c31efafe4b450de1305a38e1/codecov > codecov
+- sh: chmod +x codecov
+- sh: ./codecov -f ./tests/coverage.opencover.xml
+artifacts:
+- path: dist\*.nupkg
+deploy:
+- provider: NuGet
+  server: https://www.myget.org/F/raboof/api/v2/package
+  api_key:
+    secure: fhGwXyO35FSshRzs5GWmF1LJTrd1sIqmS/jNCSfO2LfOciuYAKiXuFMYZFGiTAl+
+  symbol_server: https://www.myget.org/F/raboof/symbols/api/v2/package
+  on:
+    branch: master
+notifications:
+- provider: Email
+  to:
+  - raboof-ci@googlegroups.com
+  on_build_success: true
+  on_build_failure: true
+  on_build_status_changed: false

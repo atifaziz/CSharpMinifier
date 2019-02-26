@@ -1,0 +1,36 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <VersionPrefix>1.0.0</VersionPrefix>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>csmin</ToolCommandName>
+    <Copyright>Copyright © 2019 Atif Aziz. All rights reserved.</Copyright>
+    <Description>C# Minification Tool</Description>
+    <Authors>Atif Aziz</Authors>
+    <Owners>Atif Aziz</Owners>
+    <PackageProjectUrl>https://github.com/atifaziz/CSharpMinifier</PackageProjectUrl>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <PackageTags>csharp;minification;minifier</PackageTags>
+    <PackageLicenseFile>COPYING.txt</PackageLicenseFile>
+    <PackageOutputPath>..\..\dist</PackageOutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="help.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="help.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CSharpMinifier\CSharpMinifier.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\COPYING.txt" Pack="true" PackagePath="$(PackageLicenseFile)" />
+  </ItemGroup>
+
+</Project>
