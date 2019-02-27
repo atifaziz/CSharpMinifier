@@ -177,57 +177,57 @@ namespace CSharpMinifier.Tests
         [TestCase("$\"foo{{bar}}baz\"", @"InterpolatedString 16 0 16 ""$\""foo{{bar}}baz\""""")]
 
         [TestCase("$\"x = {x}, y = {y}\"",
-            @"InterpolatedString 7 0 7 ""$\""x = {""",
-            @"Text               1 0 1 ""x""",
-            @"InterpolatedString 8 0 8 ""}, y = {""",
-            @"Text               1 0 1 ""y""",
-            @"InterpolatedString 2 0 2 ""}\""""")]
+            @"InterpolatedStringStart 7 0 7 ""$\""x = {""",
+            @"Text                    1 0 1 ""x""",
+            @"InterpolatedStringMid   8 0 8 ""}, y = {""",
+            @"Text                    1 0 1 ""y""",
+            @"InterpolatedStringEnd   2 0 2 ""}\""""")]
 
         [TestCase("$\"x = {(x < 0 ? 0 : x)}, y = {y}\"",
-            @"InterpolatedString 7 0 7 ""$\""x = {""",
-            @"Text               2 0 2 ""(x""",
-            @"WhiteSpace         1 0 1 "" """,
-            @"Text               1 0 1 ""<""",
-            @"WhiteSpace         1 0 1 "" """,
-            @"Text               1 0 1 ""0""",
-            @"WhiteSpace         1 0 1 "" """,
-            @"Text               1 0 1 ""?""",
-            @"WhiteSpace         1 0 1 "" """,
-            @"Text               1 0 1 ""0""",
-            @"WhiteSpace         1 0 1 "" """,
-            @"Text               1 0 1 "":""",
-            @"WhiteSpace         1 0 1 "" """,
-            @"Text               2 0 2 ""x)""",
-            @"InterpolatedString 8 0 8 ""}, y = {""",
-            @"Text               1 0 1 ""y""",
-            @"InterpolatedString 2 0 2 ""}\""""")]
+            @"InterpolatedStringStart 7 0 7 ""$\""x = {""",
+            @"Text                    2 0 2 ""(x""",
+            @"WhiteSpace              1 0 1 "" """,
+            @"Text                    1 0 1 ""<""",
+            @"WhiteSpace              1 0 1 "" """,
+            @"Text                    1 0 1 ""0""",
+            @"WhiteSpace              1 0 1 "" """,
+            @"Text                    1 0 1 ""?""",
+            @"WhiteSpace              1 0 1 "" """,
+            @"Text                    1 0 1 ""0""",
+            @"WhiteSpace              1 0 1 "" """,
+            @"Text                    1 0 1 "":""",
+            @"WhiteSpace              1 0 1 "" """,
+            @"Text                    2 0 2 ""x)""",
+            @"InterpolatedStringMid   8 0 8 ""}, y = {""",
+            @"Text                    1 0 1 ""y""",
+            @"InterpolatedStringEnd   2 0 2 ""}\""""")]
 
         [TestCase("$\"today = { $\"{DateTime.Today:MMM dd, yyyy}\" }\"",
-            @"InterpolatedString 11 0 11 ""$\""today = {""",
-            @"WhiteSpace          1 0  1 "" """,
-            @"InterpolatedString  3 0  3 ""$\""{""",
-            @"Text               14 0 14 ""DateTime.Today""",
-            @"InterpolatedString 15 0 15 "":MMM dd, yyyy}\""""",
-            @"WhiteSpace          1 0  1 "" """,
-            @"InterpolatedString  2 0  2 ""}\""""")]
+            @"InterpolatedStringStart  11 0 11 ""$\""today = {""",
+            @"WhiteSpace                1 0  1 "" """,
+            @"InterpolatedStringStart   3 0  3 ""$\""{""",
+            @"Text                     14 0 14 ""DateTime.Today""",
+            @"InterpolatedStringEnd    15 0 15 "":MMM dd, yyyy}\""""",
+            @"WhiteSpace                1 0  1 "" """,
+            @"InterpolatedStringEnd     2 0  2 ""}\""""")]
 
         [TestCase("Console.WriteLine($\"|{\"Left\",-7}|{\"Right\",7}|\");",
-            @"Text               18 0 18 ""Console.WriteLine(""",
-            @"InterpolatedString  4 0  4 ""$\""|{""",
-            @"String              6 0  6 ""\""Left\""""",
-            @"InterpolatedString  6 0  6 "",-7}|{""",
-            @"String              7 0  7 ""\""Right\""""",
-            @"InterpolatedString  5 0  5 "",7}|\""""",
-            @"Text                2 0  2 "");""")]
+            @"Text                    18 0 18 ""Console.WriteLine(""",
+            @"InterpolatedStringStart  4 0  4 ""$\""|{""",
+            @"String                   6 0  6 ""\""Left\""""",
+            @"InterpolatedStringMid    6 0  6 "",-7}|{""",
+            @"String                   7 0  7 ""\""Right\""""",
+            @"InterpolatedStringEnd    5 0  5 "",7}|\""""",
+            @"Text                     2 0  2 "");""")]
 
         [TestCase("Console.WriteLine($\"|{foo(12,34),-7}|{bar(56,78),7}|\");",
-            @"Text               18 0 18 ""Console.WriteLine(""",
-            @"InterpolatedString  4 0  4 ""$\""|{""",
-            @"Text               10 0 10 ""foo(12,34)""",
-            @"InterpolatedString  6 0  6 "",-7}|{""",
-            @"Text               10 0 10 ""bar(56,78)""",
-            @"InterpolatedString  5 0  5 "",7}|\""""",
-            @"Text                2 0  2 "");""")]
+            @"Text                    18 0 18 ""Console.WriteLine(""",
+            @"InterpolatedStringStart  4 0  4 ""$\""|{""",
+            @"Text                    10 0 10 ""foo(12,34)""",
+            @"InterpolatedStringMid    6 0  6 "",-7}|{""",
+            @"Text                    10 0 10 ""bar(56,78)""",
+            @"InterpolatedStringEnd    5 0  5 "",7}|\""""",
+            @"Text                     2 0  2 "");""")]
 
         [TestCase("// This is a comment\r\n" +
                   "\r\n" +

@@ -279,7 +279,10 @@ namespace CSharpMinifier
                         switch (ch)
                         {
                             case '"':
-                                yield return Transit(TokenKind.InterpolatedStringLiteral, State.Text, 1);
+                                yield return Transit(source[si] == '$'
+                                                     ? TokenKind.InterpolatedStringLiteral
+                                                     : TokenKind.InterpolatedStringEnd,
+                                                     State.Text, 1);
                                 break;
                             case '\\':
                                 state = State.InterpolatedStringEscape;
@@ -307,7 +310,10 @@ namespace CSharpMinifier
                                 state = State.InterpolatedString;
                                 break;
                             default:
-                                yield return Transit(TokenKind.InterpolatedStringLiteral, State.Text);
+                                yield return Transit(source[si] == '$'
+                                                     ? TokenKind.InterpolatedStringStart
+                                                     : TokenKind.InterpolatedStringMid,
+                                                     State.Text);
                                 interpolated.Push(0);
                                 goto restart;
                         }

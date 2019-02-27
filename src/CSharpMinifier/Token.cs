@@ -27,6 +27,9 @@ namespace CSharpMinifier
         StringLiteral,
         VerbatimStringLiteral,
         InterpolatedStringLiteral,
+        InterpolatedStringStart,
+        InterpolatedStringMid,
+        InterpolatedStringEnd,
         CharLiteral,
         PreprocessorDirective,
     }
