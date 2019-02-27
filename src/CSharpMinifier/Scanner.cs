@@ -39,6 +39,10 @@ namespace CSharpMinifier
             InterpolatedString,
             InterpolatedStringEscape,
             InterpolatedStringBrace,
+            DollarAt,
+            InterpolatedVerbatimString,
+            InterpolatedVerbatimStringQuote,
+            InterpolatedVerbatimStringBrace,
             Char,
             CharEscape,
             PreprocessorDirective,
@@ -58,14 +62,14 @@ namespace CSharpMinifier
             var pos = (Line: 1, Col: 0);
             var spos = (Line: 1, Col: 1);
             int i;
-            var interpolated = new Stack<int>();
+            var interpolated = new Stack<(bool Verbatim, int Parens)>();
 
             bool Interpolated() => interpolated.Count > 0;
-            int Parens() => interpolated.Peek();
+            int Parens() => interpolated.Peek().Parens;
             int IncParens(int step = 1)
             {
-                var parens = interpolated.Pop();
-                interpolated.Push(parens + step);
+                var (verbatim, parens) = interpolated.Pop();
+                interpolated.Push((verbatim, parens + step));
                 return parens;
             }
 
@@ -154,9 +158,10 @@ namespace CSharpMinifier
                             case ':' when Interpolated() && Parens() == 0:
                             case '}' when Interpolated():
                             {
-                                if (TextTransit(State.InterpolatedString) is Token text)
+                                var (verbatim, parens) = interpolated.Pop();
+                                if (TextTransit(verbatim ? State.InterpolatedVerbatimString : State.InterpolatedString) is Token text)
                                     yield return text;
-                                if (interpolated.Pop() != 0)
+                                if (parens != 0)
                                     throw SyntaxError("Parentheses mismatch in interpolated string expression.");
                                 break;
                             }
@@ -264,6 +269,9 @@ namespace CSharpMinifier
                     {
                         switch (ch)
                         {
+                            case '@':
+                                state = State.DollarAt;
+                                break;
                             case '"':
                                 if (TextTransit(State.InterpolatedString, -1) is Token text)
                                     yield return text;
@@ -314,7 +322,67 @@ namespace CSharpMinifier
                                                      ? TokenKind.InterpolatedStringStart
                                                      : TokenKind.InterpolatedStringMid,
                                                      State.Text);
-                                interpolated.Push(0);
+                                interpolated.Push((false, 0));
+                                goto restart;
+                        }
+                        break;
+                    }
+                    case State.DollarAt:
+                    {
+                        switch (ch)
+                        {
+                            case '"':
+                                if (TextTransit(State.InterpolatedVerbatimString, -2) is Token text)
+                                    yield return text;
+                                break;
+                            default:
+                                state = State.Text;
+                                break;
+                        }
+                        break;
+                    }
+                    case State.InterpolatedVerbatimString:
+                    {
+                        switch (ch)
+                        {
+                            case '"':
+                                state = State.InterpolatedVerbatimStringQuote;
+                                break;
+                            case '{':
+                                state = State.InterpolatedVerbatimStringBrace;
+                                break;
+                        }
+                        break;
+                    }
+                    case State.InterpolatedVerbatimStringQuote:
+                    {
+                        switch (ch)
+                        {
+                            case '"':
+                                state = State.InterpolatedVerbatimString;
+                                break;
+                            default:
+                                yield return Transit(source[si] == '$'
+                                                     ? TokenKind.InterpolatedVerbatimStringLiteral
+                                                     : TokenKind.InterpolatedVerbatimStringEnd,
+                                                     State.Text);
+                                goto restart;
+                        }
+                        break;
+                    }
+                    case State.InterpolatedVerbatimStringBrace:
+                    {
+                        switch (ch)
+                        {
+                            case '{':
+                                state = State.InterpolatedVerbatimString;
+                                break;
+                            default:
+                                yield return Transit(source[si] == '$'
+                                                     ? TokenKind.InterpolatedVerbatimStringStart
+                                                     : TokenKind.InterpolatedVerbatimStringMid,
+                                                     State.Text);
+                                interpolated.Push((true, 0));
                                 goto restart;
                         }
                         break;
@@ -448,6 +516,8 @@ namespace CSharpMinifier
                 case State.InterpolatedString:
                 case State.InterpolatedStringEscape:
                 case State.InterpolatedStringBrace:
+                case State.InterpolatedVerbatimString:
+                case State.InterpolatedVerbatimStringBrace:
                     throw SyntaxError("Unterminated string starting.");
                 case State.Char:
                     throw SyntaxError("Unterminated character literal.");
@@ -465,6 +535,9 @@ namespace CSharpMinifier
                                   : state == State.WhiteSpace || state == State.WhiteSpaceCr ? TokenKind.WhiteSpace
                                   : state == State.PreprocessorDirective || state == State.PreprocessorDirectiveSlash ? TokenKind.PreprocessorDirective
                                   : state == State.VerbatimStringQuote ? TokenKind.VerbatimStringLiteral
+                                  : state == State.InterpolatedVerbatimStringQuote
+                                    ? source[si] == '$' ? TokenKind.InterpolatedVerbatimStringLiteral
+                                    : TokenKind.InterpolatedVerbatimStringEnd
                                   : TokenKind.Text;
                         pos = (pos.Line, pos.Col + 1);
                         yield return Transit(token, State.Text);

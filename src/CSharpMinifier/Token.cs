@@ -30,6 +30,10 @@ namespace CSharpMinifier
         InterpolatedStringStart,
         InterpolatedStringMid,
         InterpolatedStringEnd,
+        InterpolatedVerbatimStringLiteral,
+        InterpolatedVerbatimStringStart,
+        InterpolatedVerbatimStringMid,
+        InterpolatedVerbatimStringEnd,
         CharLiteral,
         PreprocessorDirective,
     }
