@@ -25,6 +25,8 @@ namespace CSharpMinifier
         SingleLineComment,
         MultiLineComment,
         StringLiteral,
+        VerbatimStringLiteral,
+        InterpolatedStringLiteral,
         CharLiteral,
         PreprocessorDirective,
     }
