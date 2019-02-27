@@ -220,6 +220,15 @@ namespace CSharpMinifier.Tests
             @"String  5 0  5 "",7}|\""""",
             @"Text    2 0  2 "");""")]
 
+        [TestCase("Console.WriteLine($\"|{foo(12,34),-7}|{bar(56,78),7}|\");",
+            @"Text    18 0 18 ""Console.WriteLine(""",
+            @"String   4 0  4 ""$\""|{""",
+            @"Text    10 0 10 ""foo(12,34)""",
+            @"String   6 0  6 "",-7}|{""",
+            @"Text    10 0 10 ""bar(56,78)""",
+            @"String   5 0  5 "",7}|\""""",
+            @"Text     2 0  2 "");""")]
+
         [TestCase("// This is a comment\r\n" +
                   "\r\n" +
                   "static class Program\r\n" +
