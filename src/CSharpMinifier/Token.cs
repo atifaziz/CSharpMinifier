@@ -24,8 +24,8 @@ namespace CSharpMinifier
         WhiteSpace,
         SingleLineComment,
         MultiLineComment,
-        String,
-        Char,
+        StringLiteral,
+        CharLiteral,
         PreprocessorDirective,
     }
 

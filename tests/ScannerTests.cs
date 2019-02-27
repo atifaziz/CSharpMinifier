@@ -283,7 +283,9 @@ namespace CSharpMinifier.Tests
                             e.Split(' ', 5, StringSplitOptions.RemoveEmptyEntries)
                              .Fold((knd, oc, lc, cc, txt) => new
                              {
-                                 Kind         = Enum.Parse<TokenKind>(knd, true),
+                                 Kind         = Enum.TryParse<TokenKind>(knd, true, out var kind)
+                                              ? kind
+                                              : Enum.Parse<TokenKind>(knd + "Literal", true),
                                  OffsetChange = int.Parse(oc, NumberStyles.None, CultureInfo.InvariantCulture),
                                  LineChange   = int.Parse(lc, NumberStyles.None, CultureInfo.InvariantCulture),
                                  ColumnChange = cc[0] != '=' ? int.Parse(cc, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture)  : 0,

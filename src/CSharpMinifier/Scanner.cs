@@ -279,7 +279,7 @@ namespace CSharpMinifier
                         switch (ch)
                         {
                             case '"':
-                                yield return Transit(TokenKind.String, State.Text, 1);
+                                yield return Transit(TokenKind.StringLiteral, State.Text, 1);
                                 break;
                             case '\\':
                                 state = State.InterpolatedStringEscape;
@@ -307,7 +307,7 @@ namespace CSharpMinifier
                                 state = State.InterpolatedString;
                                 break;
                             default:
-                                yield return Transit(TokenKind.String, State.Text);
+                                yield return Transit(TokenKind.StringLiteral, State.Text);
                                 interpolated.Push(0);
                                 goto restart;
                         }
@@ -318,7 +318,7 @@ namespace CSharpMinifier
                         switch (ch)
                         {
                             case '"':
-                                yield return Transit(TokenKind.String, State.Text, 1);
+                                yield return Transit(TokenKind.StringLiteral, State.Text, 1);
                                 break;
                             case '\\':
                                 state = State.StringEscape;
@@ -340,7 +340,7 @@ namespace CSharpMinifier
                         switch (ch)
                         {
                             case '\'':
-                                yield return Transit(TokenKind.Char, State.Text, 1);
+                                yield return Transit(TokenKind.CharLiteral, State.Text, 1);
                                 break;
                             case '\\':
                                 state = State.CharEscape;
@@ -375,7 +375,7 @@ namespace CSharpMinifier
                                 state = State.VerbatimString;
                                 break;
                             default:
-                                yield return Transit(TokenKind.String, State.Text);
+                                yield return Transit(TokenKind.StringLiteral, State.Text);
                                 goto restart;
                         }
                         break;
@@ -458,7 +458,7 @@ namespace CSharpMinifier
                         var token = state == State.SingleLineComment ? TokenKind.SingleLineComment
                                   : state == State.WhiteSpace || state == State.WhiteSpaceCr ? TokenKind.WhiteSpace
                                   : state == State.PreprocessorDirective || state == State.PreprocessorDirectiveSlash ? TokenKind.PreprocessorDirective
-                                  : state == State.VerbatimStringQuote ? TokenKind.String
+                                  : state == State.VerbatimStringQuote ? TokenKind.StringLiteral
                                   : TokenKind.Text;
                         pos = (pos.Line, pos.Col + 1);
                         yield return Transit(token, State.Text);
