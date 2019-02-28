@@ -378,23 +378,6 @@ namespace CSharpMinifier
                         }
                         break;
                     }
-                    case State.InterpolatedVerbatimStringCr:
-                    {
-                        switch (ch)
-                        {
-                            case '\r':
-                                pos = (pos.Line + 1, 0);
-                                state = State.InterpolatedVerbatimString;
-                                goto restart;
-                            case '\n':
-                                state = State.InterpolatedVerbatimString;
-                                goto restart;
-                            default:
-                                pos = (pos.Line + 1, 1);
-                                state = State.InterpolatedVerbatimString;
-                                goto restart;
-                        }
-                    }
                     case State.InterpolatedVerbatimStringBrace:
                     {
                         switch (ch)
@@ -485,22 +468,15 @@ namespace CSharpMinifier
                         }
                         break;
                     }
+                    case State.InterpolatedVerbatimStringCr:
                     case State.VerbatimStringCr:
                     {
-                        switch (ch)
-                        {
-                            case '\r':
-                                pos = (pos.Line + 1, 0);
-                                state = State.VerbatimString;
-                                goto restart;
-                            case '\n':
-                                state = State.VerbatimString;
-                                goto restart;
-                            default:
-                                pos = (pos.Line + 1, 1);
-                                state = State.VerbatimString;
-                                goto restart;
-                        }
+                        if (ch != '\n')
+                            pos = (pos.Line + 1, ch == '\r' ? 0 : 1);
+                        state = state == State.InterpolatedVerbatimStringCr
+                              ? State.InterpolatedVerbatimString
+                              : State.VerbatimString;
+                        goto restart;
                     }
                     case State.Slash:
                     {
