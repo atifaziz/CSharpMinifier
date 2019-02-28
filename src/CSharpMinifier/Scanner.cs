@@ -315,7 +315,6 @@ namespace CSharpMinifier
                     }
                     case State.InterpolatedStringEscape:
                     {
-                        // TODO handle unterminated
                         state = State.InterpolatedString;
                         break;
                     }
