@@ -149,7 +149,7 @@ namespace NDesk.Options
 namespace Mono.Options
 #endif
 {
-	public class OptionValueCollection : IList, IList<string> {
+	class OptionValueCollection : IList, IList<string> {
 
 		List<string> values = new List<string> ();
 		OptionContext c;
@@ -239,7 +239,7 @@ namespace Mono.Options
 		}
 	}
 
-	public class OptionContext {
+	class OptionContext {
 		private Option                option;
 		private string                name;
 		private int                   index;
@@ -276,13 +276,13 @@ namespace Mono.Options
 		}
 	}
 
-	public enum OptionValueType {
+	enum OptionValueType {
 		None,
 		Optional,
 		Required,
 	}
 
-	public abstract class Option {
+	abstract class Option {
 		string prototype, description;
 		string[] names;
 		OptionValueType type;
@@ -461,7 +461,7 @@ namespace Mono.Options
 	}
 
 	[Serializable]
-	public class OptionException : Exception {
+	class OptionException : Exception {
 		private string option;
 
 		public OptionException ()
@@ -498,9 +498,9 @@ namespace Mono.Options
 		}
 	}
 
-	public delegate void OptionAction<TKey, TValue> (TKey key, TValue value);
+	delegate void OptionAction<TKey, TValue> (TKey key, TValue value);
 
-	public class OptionSet : KeyedCollection<string, Option>
+	class OptionSet : KeyedCollection<string, Option>
 	{
 		public OptionSet ()
 			: this (delegate (string f) {return f;})
