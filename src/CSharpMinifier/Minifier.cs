@@ -72,8 +72,12 @@ namespace CSharpMinifier
                     }
                     else
                     {
-                        if (lastCh is char lch && IsWordChar(lch) && IsWordChar(source[t.Start.Offset]))
-                            yield return space;
+                        if (lastCh is char lch)
+                        {
+                            var ch = source[t.Start.Offset];
+                            if (IsWordChar(ch) && IsWordChar(lch) || ch == lch && (ch == '+' || ch == '-' || ch == '*'))
+                                yield return space;
+                        }
 
                         yield return resultSelector(t);
                         lastCh = source[t.End.Offset - 1];
