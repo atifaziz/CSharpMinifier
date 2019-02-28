@@ -345,7 +345,7 @@ namespace CSharpMinifier.Tests
                 from t in Scanner.Scan(source)
                 select $"{t} {JsonString.Encode(source, t.Start.Offset, t.Length)}";
 
-                Assert.That(
+            Assert.That(
                 tokens,
                 Is.EqualTo(
                     from e in
