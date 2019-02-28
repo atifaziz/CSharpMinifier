@@ -72,28 +72,56 @@ namespace CSharpMinifier.Tests
         }
 
         [TestCase(" ",          @"WhiteSpace 1 0 1 "" """)]
-        [TestCase(" \t\r\n ",   @"WhiteSpace 5 1 1 "" \t\r\n """)]
-        [TestCase("\n\n",       @"WhiteSpace 2 2 0 ""\n\n""")]
-        [TestCase("\r\n",       @"WhiteSpace 2 1 0 ""\r\n""")]
-        [TestCase("\r\n\r\n",   @"WhiteSpace 4 2 0 ""\r\n\r\n""")]
-        [TestCase("\r\r",       @"WhiteSpace 2 2 0 ""\r\r""")]
-        [TestCase("\n\r\r",     @"WhiteSpace 3 3 0 ""\n\r\r""")]
-        [TestCase("\r\r\r\n\n", @"WhiteSpace 5 4 0 ""\r\r\r\n\n""")]
-        [TestCase(" \r \r ",    @"WhiteSpace 5 2 1 "" \r \r """)]
+
+        [TestCase(";\n",        @"Text       1 0  1 "";""",
+                                @"NewLine    1 1 -1 ""\n""")]
+
+        [TestCase(";\r",        @"Text       1 0  1 "";""",
+                                @"NewLine    1 1 -1 ""\r""")]
+
+        [TestCase(" \t\r\n ",   @"WhiteSpace 2 0  2 "" \t""",
+                                @"NewLine    2 1 =1 ""\r\n""",
+                                @"WhiteSpace 1 0  1 "" """)]
+
+        [TestCase("\n\n",       @"NewLine    1 1 0 ""\n""",
+                                @"NewLine    1 1 0 ""\n""")]
+
+        [TestCase("\r\n",       @"NewLine    2 1 0 ""\r\n""")]
+
+        [TestCase("\r\n\r\n",   @"NewLine    2 1 0 ""\r\n""",
+                                @"NewLine    2 1 0 ""\r\n""")]
+
+        [TestCase("\r\r",       @"NewLine    1 1 0 ""\r""",
+                                @"NewLine    1 1 0 ""\r""")]
+
+        [TestCase("\n\r\r",     @"NewLine    1 1 0 ""\n""",
+                                @"NewLine    1 1 0 ""\r""",
+                                @"NewLine    1 1 0 ""\r""")]
+
+        [TestCase("\r\r\r\n\n", @"NewLine    1 1 0 ""\r""",
+                                @"NewLine    1 1 0 ""\r""",
+                                @"NewLine    2 1 0 ""\r\n""",
+                                @"NewLine    1 1 0 ""\n""")]
+
+        [TestCase(" \r \r ",    @"WhiteSpace 1 0  1 "" """,
+                                @"NewLine    1 1 =1 ""\r""",
+                                @"WhiteSpace 1 0  1 "" """,
+                                @"NewLine    1 1 =1 ""\r""",
+                                @"WhiteSpace 1 0  1 "" """)]
 
         [TestCase("//"   , @"SingleLineComment 2 0 2 ""//""")]
 
         [TestCase("//\r",
             @"SingleLineComment 2 0  2 ""//""",
-            @"WhiteSpace        1 1 =1 ""\r""")]
+            @"NewLine           1 1 =1 ""\r""")]
 
         [TestCase("//\n",
             @"SingleLineComment 2 0 2 ""//""",
-            @"WhiteSpace        1 1 =1 ""\n""")]
+            @"NewLine           1 1 =1 ""\n""")]
 
         [TestCase("//\r\n",
             @"SingleLineComment 2 0 2 ""//""",
-            @"WhiteSpace        2 1 =1 ""\r\n""")]
+            @"NewLine           2 1 =1 ""\r\n""")]
 
         [TestCase("/**/"        , @"MultiLineComment  4 0 4 ""/**/""")]
         [TestCase("/***/"       , @"MultiLineComment  5 0 5 ""/***/""")]
@@ -115,8 +143,11 @@ namespace CSharpMinifier.Tests
             @"Text 1 0 1 "";""")]
 
         [TestCase(" \r \r42",
-            @"WhiteSpace 4 2 0 "" \r \r""",
-            @"Text       2 0 2 ""42""")]
+            @"WhiteSpace 1 0  1 "" """,
+            @"NewLine    1 1 =1 ""\r""",
+            @"WhiteSpace 1 0  1 "" """,
+            @"NewLine    1 1 =1 ""\r""",
+            @"Text       2 0  2 ""42""")]
 
         [TestCase("#line 42",
             @"PreprocessorDirective 8 0 8 ""#line 42""")]
@@ -126,8 +157,8 @@ namespace CSharpMinifier.Tests
             @"PreprocessorDirective 8 0 8 ""#line 42""")]
 
         [TestCase("\r#line 42",
-            @"WhiteSpace            1 1 =1 ""\r""",
-            @"PreprocessorDirective 8 0  8 ""#line 42""")]
+            @"NewLine               1 1 0 ""\r""",
+            @"PreprocessorDirective 8 0 8 ""#line 42""")]
 
         [TestCase("#line 42 // comment",
             @"PreprocessorDirective 9  0  9 ""#line 42 """,
@@ -142,11 +173,11 @@ namespace CSharpMinifier.Tests
 
         [TestCase("#error 42 /\r",
             @"PreprocessorDirective 11 0  11 ""#error 42 /""",
-            @"WhiteSpace             1 1 -11 ""\r""")]
+            @"NewLine                1 1 -11 ""\r""")]
 
         [TestCase("#error 42 /\n",
             @"PreprocessorDirective 11 0  11 ""#error 42 /""",
-            @"WhiteSpace             1 1 -11 ""\n""")]
+            @"NewLine                1 1 -11 ""\n""")]
 
         [TestCase("#error 42 / 42",
             @"PreprocessorDirective 14 0 14 ""#error 42 / 42""")]
@@ -268,9 +299,9 @@ namespace CSharpMinifier.Tests
 
         [TestCase("$@\"foo\n{\n\"bar\"\n}\nbaz\"",
             @"InterpolatedVerbatimStringStart  8 1 =2 ""$@\""foo\n{""",
-            @"WhiteSpace                       1 1 =1 ""\n""",
+            @"NewLine                          1 1 =1 ""\n""",
             @"String                           5 0  5 ""\""bar\""""",
-            @"WhiteSpace                       1 1 =1 ""\n""",
+            @"NewLine                          1 1 =1 ""\n""",
             @"InterpolatedVerbatimStringEnd    6 1 =5 ""}\nbaz\""""")]
 
         [TestCase("$@\"x = {x}, y = {y}\"",
@@ -341,33 +372,39 @@ namespace CSharpMinifier.Tests
                   "    }\r\n" +
                   "}\r\n",
             @"SingleLineComment  20 0  20 ""// This is a comment""",
-            @"WhiteSpace          4 2 -20 ""\r\n\r\n""",
+            @"NewLine             2 1 -20 ""\r\n""",
+            @"NewLine             2 1   0 ""\r\n""",
             @"Text                6 0   6 ""static""",
             @"WhiteSpace          1 0   1 "" """,
             @"Text                5 0   5 ""class""",
             @"WhiteSpace          1 0   1 "" """,
             @"Text                7 0   7 ""Program""",
-            @"WhiteSpace          2 1  =1 ""\r\n""",
+            @"NewLine             2 1  =1 ""\r\n""",
             @"Text                1 0   1 ""{""",
-            @"WhiteSpace          6 1   3 ""\r\n    """,
+            @"NewLine             2 1  =1 ""\r\n""",
+            @"WhiteSpace          4 0   4 ""    """,
             @"SingleLineComment  62 0  62 ""// static readonly string s = \""This is a string in a comment\"";""",
-            @"WhiteSpace          6 1  =5 ""\r\n    """,
+            @"NewLine             2 1  =1 ""\r\n""",
+            @"WhiteSpace          4 0   4 ""    """,
             @"Text                6 0   6 ""static""",
             @"WhiteSpace          1 0   1 "" """,
             @"Text                4 0   4 ""void""",
             @"WhiteSpace          1 0   1 "" """,
             @"Text                6 0   6 ""Main()""",
-            @"WhiteSpace          6 1  =5 ""\r\n    """,
+            @"NewLine             2 1  =1 ""\r\n""",
+            @"WhiteSpace          4 0   4 ""    """,
             @"Text                1 0   1 ""{""",
-            @"WhiteSpace         10 1   3 ""\r\n        """,
+            @"NewLine             2 1  =1 ""\r\n""",
+            @"WhiteSpace          8 0   8 ""        """,
             @"Text               18 0  18 ""Console.WriteLine(""",
             @"String             14 0  14 ""\""Hello world!\""""",
             @"Text                2 0   2 "");""",
-            @"WhiteSpace          6 1  =5 ""\r\n    """,
+            @"NewLine             2 1  =1 ""\r\n""",
+            @"WhiteSpace          4 0   4 ""    """,
             @"Text                1 0   1 ""}""",
-            @"WhiteSpace          2 1  =1 ""\r\n""",
+            @"NewLine             2 1  =1 ""\r\n""",
             @"Text                1 0   1 ""}""",
-            @"WhiteSpace          2 1  =1 ""\r\n""")
+            @"NewLine             2 1  =1 ""\r\n""")
         ]
 
         public void Scan(string source, params string[] expectations)

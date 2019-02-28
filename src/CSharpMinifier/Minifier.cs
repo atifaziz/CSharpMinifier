@@ -43,6 +43,7 @@ namespace CSharpMinifier
                     where t.Kind != TokenKind.MultiLineComment
                        && t.Kind != TokenKind.SingleLineComment
                        && t.Kind != TokenKind.WhiteSpace
+                       && t.Kind != TokenKind.NewLine
                     select t;
 
                 bool IsWordChar(char ch) =>

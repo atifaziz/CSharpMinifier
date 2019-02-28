@@ -25,7 +25,7 @@ namespace CSharpMinifier
         {
             Text,
             WhiteSpace,
-            WhiteSpaceCr,
+            Cr,
             Slash,
             SingleLineComment,
             MultiLineComment,
@@ -64,6 +64,7 @@ namespace CSharpMinifier
             var pos = (Line: 1, Col: 0);
             var spos = (Line: 1, Col: 1);
             int i;
+            var lastTokenKind = (TokenKind?)null;
             var interpolated = new Stack<(bool Verbatim, int Parens)>();
 
             bool Interpolated() => interpolated.Count > 0;
@@ -82,9 +83,12 @@ namespace CSharpMinifier
                 return token;
             }
 
-            Token CreateToken(TokenKind kind, int offset) =>
-                new Token(kind, new Position(si, spos.Line, spos.Col),
-                                new Position(i + offset, pos.Line, pos.Col + offset));
+            Token CreateToken(TokenKind kind, int offset)
+            {
+                lastTokenKind = kind;
+                return new Token(kind, new Position(si, spos.Line, spos.Col),
+                                       new Position(i + offset, pos.Line, pos.Col + offset));
+            }
 
             Token? TextTransit(State newState, int offset = 0) =>
                 TransitReturn(newState, offset,
@@ -167,17 +171,31 @@ namespace CSharpMinifier
                                     throw SyntaxError("Parentheses mismatch in interpolated string expression.");
                                 break;
                             }
-                            case '#' when si == 0:
+                            case '#' when lastTokenKind is null // BOF
+                                       || lastTokenKind is TokenKind k
+                                       && (k == TokenKind.WhiteSpace || k == TokenKind.NewLine):
                                 state = State.PreprocessorDirective;
                                 goto restart;
                             case ' ':
                             case '\t':
-                            case '\r':
-                            case '\n':
                             {
                                 if (TextTransit(State.WhiteSpace) is Token text)
                                     yield return text;
-                                goto restart;
+                                break;
+                            }
+                            case '\r':
+                            {
+                                if (TextTransit(State.Cr) is Token text)
+                                    yield return text;
+                                break;
+                            }
+                            case '\n':
+                            {
+                                if (TextTransit(State.Text) is Token text)
+                                    yield return text;
+                                pos = (pos.Line + 1, 0);
+                                yield return Transit(TokenKind.NewLine, State.Text, 1);
+                                break;
                             }
                         }
                         break;
@@ -189,38 +207,27 @@ namespace CSharpMinifier
                             case ' ':
                             case '\t':
                                 break;
-                            case '\r':
-                                state = State.WhiteSpaceCr;
-                                break;
-                            case '\n':
-                                pos = (pos.Line + 1, 0);
-                                break;
                             default:
-                                yield return Transit(TokenKind.WhiteSpace,
-                                                     ch == '#' ? State.PreprocessorDirective : State.Text);
+                                yield return Transit(TokenKind.WhiteSpace, State.Text);
                                 goto restart;
                         }
                         break;
                     }
-                    case State.WhiteSpaceCr:
+                    case State.Cr:
                     {
                         switch (ch)
                         {
-                            case ' ':
-                            case '\t':
-                                pos = (pos.Line + 1, 1);
-                                state = State.WhiteSpace;
-                                goto restart;
                             case '\r':
-                                pos = (pos.Line + 1, 0);
+                                pos = (pos.Line + 1, 1);
+                                yield return Transit(TokenKind.NewLine, State.Cr);
                                 break;
                             case '\n':
-                                state = State.WhiteSpace;
-                                goto restart;
+                                pos = (pos.Line + 1, 0);
+                                yield return Transit(TokenKind.NewLine, State.Text, 1);
+                                break;
                             default:
                                 pos = (pos.Line + 1, 1);
-                                yield return Transit(TokenKind.WhiteSpace,
-                                                     ch == '#' ? State.PreprocessorDirective : State.Text);
+                                yield return Transit(TokenKind.NewLine, State.Text);
                                 goto restart;
                         }
                         break;
@@ -234,7 +241,7 @@ namespace CSharpMinifier
                                 break;
                             case '\r':
                             case '\n':
-                                yield return Transit(TokenKind.PreprocessorDirective, State.WhiteSpace);
+                                yield return Transit(TokenKind.PreprocessorDirective, State.Text);
                                 goto restart;
                         }
                         break;
@@ -545,13 +552,14 @@ namespace CSharpMinifier
                     throw SyntaxError("Unterminated multi-line comment");
                 default:
                 {
-                    if (state == State.WhiteSpaceCr)
+                    if (state == State.Cr)
                         pos = (pos.Line + 1, 0);
 
                     if (si < source.Length)
                     {
                         var token = state == State.SingleLineComment ? TokenKind.SingleLineComment
-                                  : state == State.WhiteSpace || state == State.WhiteSpaceCr ? TokenKind.WhiteSpace
+                                  : state == State.WhiteSpace ? TokenKind.WhiteSpace
+                                  : state == State.Cr ? TokenKind.NewLine
                                   : state == State.PreprocessorDirective || state == State.PreprocessorDirectiveSlash ? TokenKind.PreprocessorDirective
                                   : state == State.VerbatimStringQuote ? TokenKind.VerbatimStringLiteral
                                   : state == State.InterpolatedVerbatimStringQuote

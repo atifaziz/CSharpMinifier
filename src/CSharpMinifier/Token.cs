@@ -22,6 +22,7 @@ namespace CSharpMinifier
     {
         Text,
         WhiteSpace,
+        NewLine,
         SingleLineComment,
         MultiLineComment,
         StringLiteral,
