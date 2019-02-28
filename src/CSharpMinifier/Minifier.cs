@@ -22,6 +22,8 @@ namespace CSharpMinifier
 
     public static class Minifier
     {
+        static readonly char[] SpaceOrTab = { ' ', '\t' };
+
         public static IEnumerable<string> Minify(string source) =>
             Minify(source, Environment.NewLine);
 
@@ -52,18 +54,28 @@ namespace CSharpMinifier
                 var lastCh = (char?)null;
                 foreach (var t in tokens)
                 {
-                    if (lastCh is char lch && IsWordChar(lch) && IsWordChar(source[t.Start.Offset]))
-                        yield return space;
-
-                    yield return resultSelector(t);
-
                     if (t.Kind == TokenKind.PreprocessorDirective)
                     {
-                        yield return newLine;
-                        lastCh = null;
+                        var ei = source.IndexOfAny(SpaceOrTab, t.Start.Offset, t.Length);
+                        var si = t.Start.Offset + 1;
+                        var length = (ei < 0 ? t.End.Offset : ei) - si;
+                        if (   string.CompareOrdinal("region"   , 0, source, si, length) != 0
+                            && string.CompareOrdinal("endregion", 0, source, si, length) != 0)
+                        {
+                            if (lastCh != null)
+                                yield return newLine;
+
+                            yield return resultSelector(t);
+                            yield return newLine;
+                            lastCh = null;
+                        }
                     }
                     else
                     {
+                        if (lastCh is char lch && IsWordChar(lch) && IsWordChar(source[t.Start.Offset]))
+                            yield return space;
+
+                        yield return resultSelector(t);
                         lastCh = source[t.End.Offset - 1];
                     }
                 }
