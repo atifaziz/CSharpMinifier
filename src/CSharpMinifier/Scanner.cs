@@ -255,15 +255,15 @@ namespace CSharpMinifier
                     }
                     case State.At:
                     {
-                        switch (ch)
+                        if (ch == '"')
                         {
-                            case '"':
-                                if (TextTransit(State.VerbatimString, -1) is Token text)
-                                    yield return text;
-                                break;
-                            default:
-                                state = State.Text;
-                                goto restart;
+                            if (TextTransit(State.VerbatimString, -1) is Token text)
+                                yield return text;
+                        }
+                        else
+                        {
+                            state = State.Text;
+                            goto restart;
                         }
                         break;
                     }
@@ -314,32 +314,31 @@ namespace CSharpMinifier
                     }
                     case State.InterpolatedStringBrace:
                     {
-                        switch (ch)
+                        if (ch == '{')
                         {
-                            case '{':
-                                state = State.InterpolatedString;
-                                break;
-                            default:
-                                yield return Transit(source[si] == '$'
-                                                     ? TokenKind.InterpolatedStringStart
-                                                     : TokenKind.InterpolatedStringMid,
-                                                     State.Text);
-                                interpolated.Push((false, 0));
-                                goto restart;
+                            state = State.InterpolatedString;
+                        }
+                        else
+                        {
+                            yield return Transit(source[si] == '$'
+                                                 ? TokenKind.InterpolatedStringStart
+                                                 : TokenKind.InterpolatedStringMid,
+                                                 State.Text);
+                            interpolated.Push((false, 0));
+                            goto restart;
                         }
                         break;
                     }
                     case State.DollarAt:
                     {
-                        switch (ch)
+                        if (ch == '"')
                         {
-                            case '"':
-                                if (TextTransit(State.InterpolatedVerbatimString, -2) is Token text)
-                                    yield return text;
-                                break;
-                            default:
-                                state = State.Text;
-                                break;
+                            if (TextTransit(State.InterpolatedVerbatimString, -2) is Token text)
+                                yield return text;
+                        }
+                        else
+                        {
+                            state = State.Text;
                         }
                         break;
                     }
@@ -364,34 +363,34 @@ namespace CSharpMinifier
                     }
                     case State.InterpolatedVerbatimStringQuote:
                     {
-                        switch (ch)
+                        if (ch == '"')
                         {
-                            case '"':
-                                state = State.InterpolatedVerbatimString;
-                                break;
-                            default:
-                                yield return Transit(source[si] == '$'
-                                                     ? TokenKind.InterpolatedVerbatimStringLiteral
-                                                     : TokenKind.InterpolatedVerbatimStringEnd,
-                                                     State.Text);
-                                goto restart;
+                            state = State.InterpolatedVerbatimString;
+                        }
+                        else
+                        {
+                            yield return Transit(source[si] == '$'
+                                                 ? TokenKind.InterpolatedVerbatimStringLiteral
+                                                 : TokenKind.InterpolatedVerbatimStringEnd,
+                                                 State.Text);
+                            goto restart;
                         }
                         break;
                     }
                     case State.InterpolatedVerbatimStringBrace:
                     {
-                        switch (ch)
+                        if (ch == '{')
                         {
-                            case '{':
-                                state = State.InterpolatedVerbatimString;
-                                break;
-                            default:
-                                yield return Transit(source[si] == '$'
-                                                     ? TokenKind.InterpolatedVerbatimStringStart
-                                                     : TokenKind.InterpolatedVerbatimStringMid,
-                                                     State.Text);
-                                interpolated.Push((true, 0));
-                                goto restart;
+                            state = State.InterpolatedVerbatimString;
+                        }
+                        else
+                        {
+                            yield return Transit(source[si] == '$'
+                                                 ? TokenKind.InterpolatedVerbatimStringStart
+                                                 : TokenKind.InterpolatedVerbatimStringMid,
+                                                 State.Text);
+                            interpolated.Push((true, 0));
+                            goto restart;
                         }
                         break;
                     }
@@ -457,14 +456,14 @@ namespace CSharpMinifier
                     }
                     case State.VerbatimStringQuote:
                     {
-                        switch (ch)
+                        if (ch == '"')
                         {
-                            case '"':
-                                state = State.VerbatimString;
-                                break;
-                            default:
-                                yield return Transit(TokenKind.VerbatimStringLiteral, State.Text);
-                                goto restart;
+                            state = State.VerbatimString;
+                        }
+                        else
+                        {
+                            yield return Transit(TokenKind.VerbatimStringLiteral, State.Text);
+                            goto restart;
                         }
                         break;
                     }
@@ -495,23 +494,17 @@ namespace CSharpMinifier
                     }
                     case State.SingleLineComment:
                     {
-                        switch (ch)
+                        if (ch == '\r' || ch == '\n')
                         {
-                            case '\r':
-                            case '\n':
-                                yield return Transit(TokenKind.SingleLineComment, State.Text);
-                                goto restart;
+                            yield return Transit(TokenKind.SingleLineComment, State.Text);
+                            goto restart;
                         }
                         break;
                     }
                     case State.MultiLineComment:
                     {
-                        switch (ch)
-                        {
-                            case '*':
-                                state = State.MultiLineCommentStar;
-                                break;
-                        }
+                        if (ch == '*')
+                            state = State.MultiLineCommentStar;
                         break;
                     }
                     case State.MultiLineCommentStar:
