@@ -75,25 +75,25 @@ namespace CSharpMinifier
                 return parens;
             }
 
-            Token? TextTransit(State newState, int offset = 0)
+            T TransitReturn<T>(State newState, int offset, T token)
             {
-                var token = i + offset - si > 0
-                          ? new Token(TokenKind.Text, new Position(si, spos.Line, spos.Col),
-                                                      new Position(i + offset, pos.Line, pos.Col + offset))
-                          : (Token?)null;
                 si = i + offset; spos = (pos.Line, pos.Col + offset);
                 state = newState;
                 return token;
             }
 
-            Token Transit(TokenKind kind, State newState, int offset = 0)
-            {
-                var token = new Token(kind, new Position(si, spos.Line, spos.Col),
-                                            new Position(i + offset, pos.Line, pos.Col + offset));
-                si = i + offset; spos = (pos.Line, pos.Col + offset);
-                state = newState;
-                return token;
-            }
+            Token CreateToken(TokenKind kind, int offset) =>
+                new Token(kind, new Position(si, spos.Line, spos.Col),
+                                new Position(i + offset, pos.Line, pos.Col + offset));
+
+            Token? TextTransit(State newState, int offset = 0) =>
+                TransitReturn(newState, offset,
+                              i + offset - si > 0
+                              ? CreateToken(TokenKind.Text, offset)
+                              : (Token?)null);
+
+            Token Transit(TokenKind kind, State newState, int offset = 0) =>
+                TransitReturn(newState, offset, CreateToken(kind, offset));
 
             Exception SyntaxError(string message) =>
                 throw new SyntaxErrorException($"{message} The syntax error is at line {pos.Line} and column {pos.Col} (or offset {i}). The last anchor was at line {spos.Line} and column {spos.Col} (or offset {si})");
