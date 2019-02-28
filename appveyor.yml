@@ -6,6 +6,9 @@ skip_commits:
   files:
     - '*.md'
     - '*.txt'
+branches:
+  only:
+    - master
 skip_tags: true
 before_build:
 - dotnet --info
