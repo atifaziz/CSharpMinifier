@@ -77,6 +77,7 @@ namespace CSharpMinifier.Tests
         [TestCase("\r\n",       @"WhiteSpace 2 1 0 ""\r\n""")]
         [TestCase("\r\n\r\n",   @"WhiteSpace 4 2 0 ""\r\n\r\n""")]
         [TestCase("\r\r",       @"WhiteSpace 2 2 0 ""\r\r""")]
+        [TestCase("\n\r\r",     @"WhiteSpace 3 3 0 ""\n\r\r""")]
         [TestCase("\r\r\r\n\n", @"WhiteSpace 5 4 0 ""\r\r\r\n\n""")]
         [TestCase(" \r \r ",    @"WhiteSpace 5 2 1 "" \r \r """)]
 
