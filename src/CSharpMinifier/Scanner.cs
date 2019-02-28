@@ -35,6 +35,7 @@ namespace CSharpMinifier
             At,
             VerbatimString,
             VerbatimStringQuote,
+            VerbatimStringCr,
             Dollar,
             InterpolatedString,
             InterpolatedStringEscape,
@@ -43,6 +44,7 @@ namespace CSharpMinifier
             InterpolatedVerbatimString,
             InterpolatedVerbatimStringQuote,
             InterpolatedVerbatimStringBrace,
+            InterpolatedVerbatimStringCr,
             Char,
             CharEscape,
             PreprocessorDirective,
@@ -351,6 +353,12 @@ namespace CSharpMinifier
                             case '{':
                                 state = State.InterpolatedVerbatimStringBrace;
                                 break;
+                            case '\n':
+                                pos = (pos.Line + 1, 0);
+                                break;
+                            case '\r':
+                                state = State.InterpolatedVerbatimStringCr;
+                                break;
                         }
                         break;
                     }
@@ -369,6 +377,23 @@ namespace CSharpMinifier
                                 goto restart;
                         }
                         break;
+                    }
+                    case State.InterpolatedVerbatimStringCr:
+                    {
+                        switch (ch)
+                        {
+                            case '\r':
+                                pos = (pos.Line + 1, 0);
+                                state = State.InterpolatedVerbatimString;
+                                goto restart;
+                            case '\n':
+                                state = State.InterpolatedVerbatimString;
+                                goto restart;
+                            default:
+                                pos = (pos.Line + 1, 1);
+                                state = State.InterpolatedVerbatimString;
+                                goto restart;
+                        }
                     }
                     case State.InterpolatedVerbatimStringBrace:
                     {
@@ -438,6 +463,12 @@ namespace CSharpMinifier
                             case '"':
                                 state = State.VerbatimStringQuote;
                                 break;
+                            case '\n':
+                                pos = (pos.Line + 1, 0);
+                                break;
+                            case '\r':
+                                state = State.VerbatimStringCr;
+                                break;
                         }
                         break;
                     }
@@ -453,6 +484,23 @@ namespace CSharpMinifier
                                 goto restart;
                         }
                         break;
+                    }
+                    case State.VerbatimStringCr:
+                    {
+                        switch (ch)
+                        {
+                            case '\r':
+                                pos = (pos.Line + 1, 0);
+                                state = State.VerbatimString;
+                                goto restart;
+                            case '\n':
+                                state = State.VerbatimString;
+                                goto restart;
+                            default:
+                                pos = (pos.Line + 1, 1);
+                                state = State.VerbatimString;
+                                goto restart;
+                        }
                     }
                     case State.Slash:
                     {
@@ -513,11 +561,13 @@ namespace CSharpMinifier
                 case State.String:
                 case State.StringEscape:
                 case State.VerbatimString:
+                case State.VerbatimStringCr:
                 case State.InterpolatedString:
                 case State.InterpolatedStringEscape:
                 case State.InterpolatedStringBrace:
                 case State.InterpolatedVerbatimString:
                 case State.InterpolatedVerbatimStringBrace:
+                case State.InterpolatedVerbatimStringCr:
                     throw SyntaxError("Unterminated string starting.");
                 case State.Char:
                     throw SyntaxError("Unterminated character literal.");

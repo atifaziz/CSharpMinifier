@@ -160,8 +160,18 @@ namespace CSharpMinifier.Tests
         [TestCase("@\" \"\" foobar \"\" \"",
             @"VerbatimString 17 0 17 ""@\"" \""\"" foobar \""\"" \""""")]
 
-        [TestCase("@\"foo\r\nbar\"",
-            @"VerbatimString 11 0 11 ""@\""foo\r\nbar\""""")]
+        [TestCase("@\"foo\r\nbar\""    , @"VerbatimString 11 1 =5 ""@\""foo\r\nbar\""""")]
+        [TestCase("@\"foo\r\rbar\""    , @"VerbatimString 11 2 =5 ""@\""foo\r\rbar\""""")]
+        [TestCase("@\"foo\n\nbar\""    , @"VerbatimString 11 2 =5 ""@\""foo\n\nbar\""""")]
+        [TestCase("@\"foo\r\r\nbar\""  , @"VerbatimString 12 2 =5 ""@\""foo\r\r\nbar\""""")]
+        [TestCase("@\"foo\n\r\rbar\""  , @"VerbatimString 12 3 =5 ""@\""foo\n\r\rbar\""""")]
+        [TestCase("@\"foo\r\n\r\nbar\"", @"VerbatimString 13 2 =5 ""@\""foo\r\n\r\nbar\""""")]
+        [TestCase("@\"foo\r\n\""       , @"VerbatimString  8 1 =2 ""@\""foo\r\n\""""")]
+        [TestCase("@\"foo\r\r\""       , @"VerbatimString  8 2 =2 ""@\""foo\r\r\""""")]
+        [TestCase("@\"foo\n\n\""       , @"VerbatimString  8 2 =2 ""@\""foo\n\n\""""")]
+        [TestCase("@\"foo\r\r\n\""     , @"VerbatimString  9 2 =2 ""@\""foo\r\r\n\""""")]
+        [TestCase("@\"foo\n\r\r\""     , @"VerbatimString  9 3 =2 ""@\""foo\n\r\r\""""")]
+        [TestCase("@\"foo\r\n\r\n\""   , @"VerbatimString 10 2 =2 ""@\""foo\r\n\r\n\""""")]
 
         [TestCase("var@class=@\"class\";",
             @"Text           10 0 10 ""var@class=""",
@@ -242,6 +252,26 @@ namespace CSharpMinifier.Tests
         [TestCase("$@\"foo\\\\bar\""       , @"InterpolatedVerbatimString 12 0 12 ""$@\""foo\\\\bar\""""")]
         [TestCase("$@\"foo{{bar}}baz\""    , @"InterpolatedVerbatimString 17 0 17 ""$@\""foo{{bar}}baz\""""")]
         [TestCase("$@\"foo\"\"bar\"\"baz\"", @"InterpolatedVerbatimString 17 0 17 ""$@\""foo\""\""bar\""\""baz\""""")]
+
+        [TestCase("$@\"foo\r\nbar\""    , @"InterpolatedVerbatimString 12 1 =5 ""$@\""foo\r\nbar\""""")]
+        [TestCase("$@\"foo\r\rbar\""    , @"InterpolatedVerbatimString 12 2 =5 ""$@\""foo\r\rbar\""""")]
+        [TestCase("$@\"foo\n\nbar\""    , @"InterpolatedVerbatimString 12 2 =5 ""$@\""foo\n\nbar\""""")]
+        [TestCase("$@\"foo\r\r\nbar\""  , @"InterpolatedVerbatimString 13 2 =5 ""$@\""foo\r\r\nbar\""""")]
+        [TestCase("$@\"foo\n\r\rbar\""  , @"InterpolatedVerbatimString 13 3 =5 ""$@\""foo\n\r\rbar\""""")]
+        [TestCase("$@\"foo\r\n\r\nbar\"", @"InterpolatedVerbatimString 14 2 =5 ""$@\""foo\r\n\r\nbar\""""")]
+        [TestCase("$@\"foo\r\n\""       , @"InterpolatedVerbatimString  9 1 =2 ""$@\""foo\r\n\""""")]
+        [TestCase("$@\"foo\r\r\""       , @"InterpolatedVerbatimString  9 2 =2 ""$@\""foo\r\r\""""")]
+        [TestCase("$@\"foo\n\n\""       , @"InterpolatedVerbatimString  9 2 =2 ""$@\""foo\n\n\""""")]
+        [TestCase("$@\"foo\r\r\n\""     , @"InterpolatedVerbatimString 10 2 =2 ""$@\""foo\r\r\n\""""")]
+        [TestCase("$@\"foo\n\r\r\""     , @"InterpolatedVerbatimString 10 3 =2 ""$@\""foo\n\r\r\""""")]
+        [TestCase("$@\"foo\r\n\r\n\""   , @"InterpolatedVerbatimString 11 2 =2 ""$@\""foo\r\n\r\n\""""")]
+
+        [TestCase("$@\"foo\n{\n\"bar\"\n}\nbaz\"",
+            @"InterpolatedVerbatimStringStart  8 1 =2 ""$@\""foo\n{""",
+            @"WhiteSpace                       1 1 =1 ""\n""",
+            @"String                           5 0  5 ""\""bar\""""",
+            @"WhiteSpace                       1 1 =1 ""\n""",
+            @"InterpolatedVerbatimStringEnd    6 1 =5 ""}\nbaz\""""")]
 
         [TestCase("$@\"x = {x}, y = {y}\"",
             @"InterpolatedVerbatimStringStart 8 0 8 ""$@\""x = {""",
