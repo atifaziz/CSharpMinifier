@@ -419,7 +419,6 @@ namespace CSharpMinifier
                     }
                     case State.StringEscape:
                     {
-                        // TODO handle unterminated
                         state = State.String;
                         break;
                     }
@@ -441,7 +440,6 @@ namespace CSharpMinifier
                     }
                     case State.CharEscape:
                     {
-                        // TODO handle unterminated
                         state = State.Char;
                         break;
                     }
