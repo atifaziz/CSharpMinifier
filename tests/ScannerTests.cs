@@ -164,6 +164,9 @@ namespace CSharpMinifier.Tests
             @"PreprocessorDirective 9  0  9 ""#line 42 """,
             @"SingleLineComment     10 0 10 ""// comment""")]
 
+        [TestCase("#line 42 / / comment",
+            @"PreprocessorDirective 20 0 20 ""#line 42 / / comment""")]
+
         [TestCase("#error 42 //",
             @"PreprocessorDirective 10 0 10 ""#error 42 """,
             @"SingleLineComment      2 0  2 ""//""")]

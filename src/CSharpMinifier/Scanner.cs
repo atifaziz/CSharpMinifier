@@ -248,15 +248,14 @@ namespace CSharpMinifier
                     }
                     case State.PreprocessorDirectiveSlash:
                     {
-                        switch (ch)
+                        if (ch == '/')
                         {
-                            case '/':
-                                yield return Transit(TokenKind.PreprocessorDirective, State.SingleLineComment, -1);
-                                break;
-                            case '\r':
-                            case '\n':
-                                state = State.PreprocessorDirective;
-                                goto restart;
+                            yield return Transit(TokenKind.PreprocessorDirective, State.SingleLineComment, -1);
+                        }
+                        else
+                        {
+                            state = State.PreprocessorDirective;
+                            goto restart;
                         }
                         break;
                     }
