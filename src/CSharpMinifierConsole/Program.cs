@@ -19,7 +19,9 @@ namespace CSharpMinifierConsole
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
+    using System.Globalization;
     using System.IO;
+    using System.Linq;
     using CSharpMinifier;
     using CSharpMinifier.Internals;
     using Mono.Options;
@@ -103,6 +105,32 @@ namespace CSharpMinifierConsole
                 {
                     foreach (var token in tokens)
                         Console.WriteLine($@"{token.Kind} {token.Start.Offset}/{token.Start.Line}:{token.Start.Column}...{token.End.Offset}/{token.End.Line}:{token.End.Column} {JsonString.Encode(source, token.Start.Offset, token.Length)}");
+                    break;
+                }
+
+                case "csv":
+                {
+                    const string quote = "\"";
+                    const string quotequote = quote + quote;
+
+                    Console.WriteLine("token,start_offset,end_offset,start_line,start_column,end_line,end_column,Text");
+
+                    var rows =
+                        from t in tokens
+                        let text = JsonString.Encode(t.Substring(source))
+                        select
+                            string.Join(",",
+                                t.Kind,
+                                t.Start.Offset.ToString(CultureInfo.InvariantCulture),
+                                t.End.Offset.ToString(CultureInfo.InvariantCulture),
+                                t.Start.Line.ToString(CultureInfo.InvariantCulture),
+                                t.Start.Column.ToString(CultureInfo.InvariantCulture),
+                                t.End.Line.ToString(CultureInfo.InvariantCulture),
+                                t.End.Column.ToString(CultureInfo.InvariantCulture),
+                                quote + text.Substring(1, text.Length - 2).Replace(quote, quotequote) + quote);
+                    foreach (var row in rows)
+                        Console.WriteLine(row);
+
                     break;
                 }
 
