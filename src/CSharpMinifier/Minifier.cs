@@ -28,7 +28,7 @@ namespace CSharpMinifier
             Minify(source, Environment.NewLine);
 
         public static IEnumerable<string> Minify(string source, string newLine) =>
-            Minify(source, " ", newLine, t => source.Substring(t.Start.Offset, t.Length));
+            Minify(source, " ", newLine, t => t.Substring(source));
 
         public static IEnumerable<TResult>
             Minify<TResult>(string source,

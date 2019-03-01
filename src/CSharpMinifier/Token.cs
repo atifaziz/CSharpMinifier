@@ -65,4 +65,10 @@ namespace CSharpMinifier
         public override string ToString() =>
             $"{Kind} [{Start}..{End})";
     }
+
+    public static class TokenExtensions
+    {
+        public static string Substring(this Token token, string source) =>
+            SubstringPool.GetOrCreate(source, token.Start.Offset, token.Length);
+    }
 }
