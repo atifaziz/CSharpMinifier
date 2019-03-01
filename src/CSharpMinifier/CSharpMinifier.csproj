@@ -4,7 +4,7 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <LangVersion>7.3</LangVersion>
     <VersionPrefix>1.0.0</VersionPrefix>
-    <Copyright>Copyright &#169; 2019 Atif Aziz. All rights reserved.</Copyright>
+    <Copyright>Copyright © 2019 Atif Aziz. All rights reserved.</Copyright>
     <Description>C# Minification Library</Description>
     <Authors>Atif Aziz</Authors>
     <Owners>Atif Aziz</Owners>
@@ -23,7 +23,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="..\..\COPYING.txt" Pack="true" PackagePath="$(PackageLicenseFile)"/>
+    <None Include="..\..\COPYING.txt" Pack="true" PackagePath="$(PackageLicenseFile)" />
   </ItemGroup>
 
 </Project>
