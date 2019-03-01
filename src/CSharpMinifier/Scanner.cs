@@ -49,6 +49,8 @@ namespace CSharpMinifier
             CharEscape,
             PreprocessorDirective,
             PreprocessorDirectiveSlash,
+            PreprocessorDirectiveTrailingWhiteSpace,
+            PreprocessorDirectiveTrailingWhiteSpaceSlash,
         }
 
         public static IEnumerable<Token> Scan(string source)
@@ -63,6 +65,8 @@ namespace CSharpMinifier
             var si = 0;
             var pos = (Line: 1, Col: 0);
             var spos = (Line: 1, Col: 1);
+            var ppdtwssi = -1;
+            var ppdtwscol = 0;
             int i;
             var lastTokenKind = (TokenKind?)null;
             var interpolated = new Stack<(bool Verbatim, int Parens)>();
@@ -83,7 +87,7 @@ namespace CSharpMinifier
                 return token;
             }
 
-            Token CreateToken(TokenKind kind, int offset)
+            Token CreateToken(TokenKind kind, int offset = 0)
             {
                 lastTokenKind = kind;
                 return new Token(kind, new Position(si, spos.Line, spos.Col),
@@ -239,6 +243,12 @@ namespace CSharpMinifier
                             case '/':
                                 state = State.PreprocessorDirectiveSlash;
                                 break;
+                            case ' ':
+                            case '\t':
+                                ppdtwssi = i;
+                                ppdtwscol = pos.Col;
+                                state = State.PreprocessorDirectiveTrailingWhiteSpace;
+                                break;
                             case '\r':
                             case '\n':
                                 yield return Transit(TokenKind.PreprocessorDirective, State.Text);
@@ -256,6 +266,43 @@ namespace CSharpMinifier
                         {
                             state = State.PreprocessorDirective;
                             goto restart;
+                        }
+                        break;
+                    }
+                    case State.PreprocessorDirectiveTrailingWhiteSpaceSlash:
+                    {
+                        if (ch == '/')
+                        {
+                            yield return CreateToken(TokenKind.PreprocessorDirective, ppdtwscol - pos.Col);
+                            si = ppdtwssi; spos.Col = ppdtwscol;
+                            yield return Transit(TokenKind.WhiteSpace, State.SingleLineComment, -1);
+                        }
+                        else
+                        {
+                            state = State.PreprocessorDirective;
+                            goto restart;
+                        }
+                        break;
+                    }
+                    case State.PreprocessorDirectiveTrailingWhiteSpace:
+                    {
+                        switch (ch)
+                        {
+                            case ' ':
+                            case '\t':
+                                break;
+                            case '\r':
+                            case '\n':
+                                yield return CreateToken(TokenKind.PreprocessorDirective, ppdtwscol - pos.Col);
+                                si = ppdtwssi; spos.Col = ppdtwscol;
+                                yield return Transit(TokenKind.WhiteSpace, State.Text);
+                                goto restart;
+                            case '/':
+                                state = State.PreprocessorDirectiveTrailingWhiteSpaceSlash;
+                                break;
+                            default:
+                                state = State.PreprocessorDirective;
+                                goto restart;
                         }
                         break;
                     }
@@ -553,17 +600,30 @@ namespace CSharpMinifier
 
                     if (si < source.Length)
                     {
-                        var token = state == State.SingleLineComment ? TokenKind.SingleLineComment
-                                  : state == State.WhiteSpace ? TokenKind.WhiteSpace
-                                  : state == State.Cr ? TokenKind.NewLine
-                                  : state == State.PreprocessorDirective || state == State.PreprocessorDirectiveSlash ? TokenKind.PreprocessorDirective
-                                  : state == State.VerbatimStringQuote ? TokenKind.VerbatimStringLiteral
-                                  : state == State.InterpolatedVerbatimStringQuote
-                                    ? source[si] == '$' ? TokenKind.InterpolatedVerbatimStringLiteral
-                                    : TokenKind.InterpolatedVerbatimStringEnd
-                                  : TokenKind.Text;
-                        pos = (pos.Line, pos.Col + 1);
-                        yield return Transit(token, State.Text);
+                        pos.Col++;
+
+                        if (state == State.PreprocessorDirectiveTrailingWhiteSpace)
+                        {
+                            yield return CreateToken(TokenKind.PreprocessorDirective, ppdtwscol - pos.Col);
+                            si = ppdtwssi; spos.Col = ppdtwscol;
+                            yield return CreateToken(TokenKind.WhiteSpace);
+                        }
+                        else
+                        {
+                            var token
+                                = state == State.SingleLineComment ? TokenKind.SingleLineComment
+                                : state == State.WhiteSpace ? TokenKind.WhiteSpace
+                                : state == State.Cr ? TokenKind.NewLine
+                                : state == State.PreprocessorDirective || state == State.PreprocessorDirectiveSlash ? TokenKind.PreprocessorDirective
+                                : state == State.VerbatimStringQuote ? TokenKind.VerbatimStringLiteral
+                                : state == State.PreprocessorDirectiveTrailingWhiteSpaceSlash ? TokenKind.PreprocessorDirective
+                                : state == State.InterpolatedVerbatimStringQuote
+                                  ? source[si] == '$' ? TokenKind.InterpolatedVerbatimStringLiteral
+                                  : TokenKind.InterpolatedVerbatimStringEnd
+                                : TokenKind.Text;
+
+                            yield return CreateToken(token);
+                        }
                     }
                     break;
                 }

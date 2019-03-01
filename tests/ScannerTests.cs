@@ -149,27 +149,51 @@ namespace CSharpMinifier.Tests
             @"NewLine    1 1 =1 ""\r""",
             @"Text       2 0  2 ""42""")]
 
-        [TestCase("#line 42",
-            @"PreprocessorDirective 8 0 8 ""#line 42""")]
+        [TestCase("#line 42"            , @"PreprocessorDirective  8 0  8 ""#line 42""")]
+        [TestCase("#line 42 / / comment", @"PreprocessorDirective 20 0 20 ""#line 42 / / comment""")]
+        [TestCase("#line 42/ /comment"  , @"PreprocessorDirective 18 0 18 ""#line 42/ /comment""")]
+        [TestCase("#error 42 / 42"      , @"PreprocessorDirective 14 0 14 ""#error 42 / 42""")]
 
         [TestCase("  #line 42",
-            @"WhiteSpace            2 0 2 ""  """,
-            @"PreprocessorDirective 8 0 8 ""#line 42""")]
+            @"WhiteSpace            2 0  2 ""  """,
+            @"PreprocessorDirective 8 0  8 ""#line 42""")]
+
+        [TestCase("#line 42  ",
+            @"PreprocessorDirective 8 0  8 ""#line 42""",
+            @"WhiteSpace            2 0  2 ""  """)]
+
+        [TestCase("  #line 42  ",
+            @"WhiteSpace            2 0  2 ""  """,
+            @"PreprocessorDirective 8 0  8 ""#line 42""",
+            @"WhiteSpace            2 0  2 ""  """)]
+
+        [TestCase("#line 42  \r",
+            @"PreprocessorDirective 8 0  8 ""#line 42""",
+            @"WhiteSpace            2 0  2 ""  """,
+            @"NewLine               1 1 =1 ""\r""")]
+
+        [TestCase("#line 42  \n",
+            @"PreprocessorDirective 8 0  8 ""#line 42""",
+            @"WhiteSpace            2 0  2 ""  """,
+            @"NewLine               1 1 =1 ""\n""")]
 
         [TestCase("\r#line 42",
             @"NewLine               1 1 0 ""\r""",
             @"PreprocessorDirective 8 0 8 ""#line 42""")]
 
-        [TestCase("#line 42 // comment",
-            @"PreprocessorDirective 9  0  9 ""#line 42 """,
+        [TestCase("#line 42// comment",
+            @"PreprocessorDirective  8  0 8 ""#line 42""",
             @"SingleLineComment     10 0 10 ""// comment""")]
 
-        [TestCase("#line 42 / / comment",
-            @"PreprocessorDirective 20 0 20 ""#line 42 / / comment""")]
+        [TestCase("#line 42 // comment",
+            @"PreprocessorDirective  8  0 8 ""#line 42""",
+            @"WhiteSpace             1 0  1 "" """,
+            @"SingleLineComment     10 0 10 ""// comment""")]
 
         [TestCase("#error 42 //",
-            @"PreprocessorDirective 10 0 10 ""#error 42 """,
-            @"SingleLineComment      2 0  2 ""//""")]
+            @"PreprocessorDirective  9 0 9 ""#error 42""",
+            @"WhiteSpace             1 0 1 "" """,
+            @"SingleLineComment      2 0 2 ""//""")]
 
         [TestCase("#error 42 /",
             @"PreprocessorDirective 11 0 11 ""#error 42 /""")]
@@ -181,9 +205,6 @@ namespace CSharpMinifier.Tests
         [TestCase("#error 42 /\n",
             @"PreprocessorDirective 11 0  11 ""#error 42 /""",
             @"NewLine                1 1 -11 ""\n""")]
-
-        [TestCase("#error 42 / 42",
-            @"PreprocessorDirective 14 0 14 ""#error 42 / 42""")]
 
         [TestCase("@\"\"",
             @"VerbatimString 3 0 3 ""@\""\""""")]
