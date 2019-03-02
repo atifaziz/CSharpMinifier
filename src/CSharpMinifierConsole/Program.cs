@@ -25,56 +25,79 @@ namespace CSharpMinifierConsole
     using CSharpMinifier;
     using CSharpMinifier.Internals;
     using Mono.Options;
+    using OptionSetArgumentParser = System.Func<System.Func<string, Mono.Options.OptionContext, bool>, string, Mono.Options.OptionContext, bool>;
 
     static partial class Program
     {
+        static readonly Ref<bool> Verbose = Ref.Create(false);
+
         static void Wain(IEnumerable<string> args)
         {
-            var help = false;
-            var outputTokens = false;
-            var tokenFormat = (string)null;
+            var help = Ref.Create(false);
 
-            var options = new OptionSet
+            var options = new OptionSet(CreateStrictOptionSetArgumentParser())
             {
-                { "?|help|h"        , "prints out the options", _ => help = true },
-                { "d|debug"         , "debug break", _ => Debugger.Launch() },
-                { "t|tokens"        , "output scanned tokens", _ => outputTokens = true },
-                { "tf|token-format=", "tokens format (default = JSON)", v => tokenFormat = v },
+                Options.Help(help),
+                Options.Verbose(Verbose),
+                Options.Debug,
             };
 
             var tail = options.Parse(args);
 
             if (help)
             {
-                Help(options);
+                Help("min", "[min]", options);
                 return;
             }
 
-            var source = tail.Count == 0 || tail[0] == "-"
-                       ? Console.In.ReadToEnd()
-                       : File.ReadAllText(tail[0]);
+            var command = tail.FirstOrDefault();
+            var commandArgs = tail.Skip(1);
 
-            var tokens = Scanner.Scan(source);
-
-            if (outputTokens || tokenFormat != null)
+            switch (command)
             {
-                OutputToken(source, tokens, tokenFormat);
-            }
-            else
-            {
-                foreach (var s in Minifier.Minify(source, null))
-                {
-                    if (s == null)
-                        Console.WriteLine();
-                    else
-                        Console.Write(s);
-                }
+                case "tokens": TokensCommand(commandArgs); break;
+                case "min"   : DefaultCommand(commandArgs); break;
+                default      : DefaultCommand(tail); break;
             }
         }
 
-        static void OutputToken(string source, IEnumerable<Token> tokens, string tokenFormat)
+        static void DefaultCommand(IEnumerable<string> tail)
         {
-            switch (tokenFormat?.ToLowerInvariant())
+            var source = ReadSources(tail).Take(2).ToArray().First();
+
+            foreach (var s in Minifier.Minify(source, null))
+            {
+                if (s == null)
+                    Console.WriteLine();
+                else
+                    Console.Write(s);
+            }
+        }
+
+        static void TokensCommand(IEnumerable<string> args)
+        {
+            var help = Ref.Create(false);
+            var format = (string)null;
+
+            var options = new OptionSet(CreateStrictOptionSetArgumentParser())
+            {
+                Options.Help(help),
+                Options.Verbose(Verbose),
+                Options.Debug,
+                { "f|format=", "output format: json|csv|line; default = json)", v => format = v },
+            };
+
+            var tail = options.Parse(args);
+
+            if (help)
+            {
+                Help("tokens", options);
+                return;
+            }
+
+            var source = ReadSources(tail).Take(2).ToArray().First();
+            var tokens = Scanner.Scan(source);
+            switch (format?.ToLowerInvariant())
             {
                 case null:
                 case "json":
@@ -135,8 +158,55 @@ namespace CSharpMinifierConsole
                 }
 
                 default:
-                    throw new Exception("Unknown token format: " + tokenFormat);
+                    throw new Exception("Unknown token format: " + format);
             }
+        }
+
+        static IEnumerable<string> ReadSources(IEnumerable<string> files)
+        {
+            using (var e = files.GetEnumerator())
+            {
+                if (!e.MoveNext() || e.Current == "-")
+                    yield return Console.In.ReadToEnd();
+                else
+                    yield return File.ReadAllText(e.Current);
+
+                if (e.MoveNext())
+                    throw new NotImplementedException("Processing of more than one source is currently not implemented.");
+            }
+        }
+
+        static class Options
+        {
+            public static Option Help(Ref<bool> value) =>
+                new ActionOption("?|help|h", "prints out the options", _ => value.Value = true);
+
+            public static Option Verbose(Ref<bool> value) =>
+                new ActionOption("verbose|v", "enable additional output", _ => value.Value = true);
+
+            public static readonly Option Debug =
+                new ActionOption("d|debug", "debug break", vs => Debugger.Launch());
+        }
+
+        static OptionSetArgumentParser CreateStrictOptionSetArgumentParser()
+        {
+            var hasTailStarted = false;
+            return (impl, arg, context) =>
+            {
+                if (hasTailStarted) // once a tail, always a tail
+                    return false;
+
+                var isOption = impl(arg, context);
+                if (!isOption && !hasTailStarted)
+                {
+                    if (arg.Length > 1 && arg[0] == '-')
+                        throw new Exception("Invalid argument: " + arg);
+
+                    hasTailStarted = true;
+                }
+
+                return isOption;
+            };
         }
 
         static int Main(string[] args)
@@ -148,7 +218,10 @@ namespace CSharpMinifierConsole
             }
             catch (Exception e)
             {
-                Console.Error.WriteLine(e);
+                if (Verbose)
+                    Console.Error.WriteLine(e);
+                else
+                    Console.Error.WriteLine(e.GetBaseException().Message);
                 return 0xbad;
             }
         }

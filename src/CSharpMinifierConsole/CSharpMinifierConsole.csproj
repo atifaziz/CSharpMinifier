@@ -6,6 +6,7 @@
     <VersionPrefix>1.0.0</VersionPrefix>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>csmin</ToolCommandName>
+    <LangVersion>7.1</LangVersion>
     <Copyright>Copyright © 2019 Atif Aziz. All rights reserved. Portions Copyright © 2008 Novell.</Copyright>
     <Description>C# Minification Tool</Description>
     <Authors>Atif Aziz</Authors>
@@ -25,11 +26,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="help.txt" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <EmbeddedResource Include="help.txt" />
+    <None Remove="help-min.txt" />
+    <None Remove="help-tokens.txt" />
+    <EmbeddedResource Include="help-min.txt" />
+    <EmbeddedResource Include="help-tokens.txt" />
   </ItemGroup>
 
   <ItemGroup>

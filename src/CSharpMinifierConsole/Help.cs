@@ -6,14 +6,16 @@ namespace CSharpMinifierConsole
     using System.Reflection;
     using System.Text;
     using System.Text.RegularExpressions;
-    using Mono.Options;
 
     partial class Program
     {
         static readonly Lazy<FileVersionInfo> CachedVersionInfo = Lazy.Create(() => FileVersionInfo.GetVersionInfo(new Uri(typeof(Program).Assembly.CodeBase).LocalPath));
         static FileVersionInfo VersionInfo => CachedVersionInfo.Value;
 
-        static void Help(OptionSet options)
+        static void Help(string command, OptionSet options) =>
+            Help(command, command, options);
+
+        static void Help(string id, string command, OptionSet options)
         {
             var name    = Lazy.Create(() => Path.GetFileNameWithoutExtension(VersionInfo.FileName));
             var opts    = Lazy.Create(() => options.WriteOptionDescriptionsReturningWriter(new StringWriter { NewLine = Environment.NewLine }).ToString());
@@ -21,7 +23,7 @@ namespace CSharpMinifierConsole
                                                                .AppendLine(VersionInfo.LegalCopyright.Replace("\u00a9", "(C)"))
                                                                .ToString());
 
-            using (var stream = GetManifestResourceStream("help.txt"))
+            using (var stream = GetManifestResourceStream($"help-{id ?? command}.txt"))
             using (var reader = new StreamReader(stream))
             using (var e = reader.ReadLines())
             while (e.MoveNext())
@@ -32,6 +34,7 @@ namespace CSharpMinifierConsole
                     switch (m.Groups[1].Value)
                     {
                         case "NAME": return name.Value;
+                        case "COMMAND": return command;
                         case "LOGO": return logo.Value;
                         case "OPTIONS": return opts.Value;
                         default: return string.Empty;

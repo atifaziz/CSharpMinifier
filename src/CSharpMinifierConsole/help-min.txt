@@ -1,6 +1,6 @@
 $LOGO$
 
-Usage: $NAME$ [OPTIONS...] [FILE]
+Usage: $NAME$ $COMMAND$ [OPTIONS...] [FILE]
 
 where FILE is the path to a file containing syntactically correct C#
 source. If FILE is not supplied or is exactly a dash/hyphen ("-") then
