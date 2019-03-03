@@ -63,14 +63,18 @@ namespace CSharpMinifierConsole
 
         static void DefaultCommand(IEnumerable<string> tail)
         {
-            var source = ReadSources(tail).Take(2).ToArray().First();
-
-            foreach (var s in Minifier.Minify(source, null))
+            foreach (var (_, source) in ReadSources(tail))
             {
-                if (s == null)
+                var nl = false;
+                foreach (var s in Minifier.Minify(source, null))
+                {
+                    if (nl = s == null)
+                        Console.WriteLine();
+                    else
+                        Console.Write(s);
+                }
+                if (!nl)
                     Console.WriteLine();
-                else
-                    Console.Write(s);
             }
         }
 
@@ -84,7 +88,7 @@ namespace CSharpMinifierConsole
                 Options.Help(help),
                 Options.Verbose(Verbose),
                 Options.Debug,
-                { "f|format=", "output format: json|csv|line; default = json)", v => format = v },
+                { "f|format=", "output format: json|csv|line; default = json)", v => format = v.ToLowerInvariant() },
             };
 
             var tail = options.Parse(args);
@@ -95,84 +99,155 @@ namespace CSharpMinifierConsole
                 return;
             }
 
-            var source = ReadSources(tail).Take(2).ToArray().First();
-            var tokens = Scanner.Scan(source);
-            switch (format?.ToLowerInvariant())
+            var isMultiMode = tail.Count > 1;
+
+            switch (format)
             {
                 case null:
                 case "json":
                 {
-                    var i = 0;
-
-                    Console.WriteLine("[");
-
-                    foreach (var token in tokens)
+                    string indent = null;
+                    if (isMultiMode)
                     {
-                        if (i > 0)
-                            Console.WriteLine(",  ");
-                        Console.Write($@"  {{
-    ""kind"": ""{token.Kind}"",
-    ""span"": [[{token.Start.Offset}, {token.Start.Line}, {token.Start.Column}], [{token.End.Offset}, {token.End.Line}, {token.End.Column}]],
-    ""text"": {JsonString.Encode(source, token.Start.Offset, token.Length)}
-  }}");
-                        i++;
+                        Console.WriteLine("[");
+                        indent = new string(' ', 4);
                     }
 
-                    if (i > 0)
+                    var i = 0;
+                    foreach (var (path, source) in ReadSources(tail))
+                    {
+                        if (isMultiMode)
+                        {
+                            if (i > 0)
+                                Console.WriteLine(",");
+                            Console.WriteLine("  {");
+                            Console.WriteLine("    \"file\": " + JsonString.Encode(path) + ",");
+                            Console.WriteLine("    \"tokens\": [");
+                        }
+                        else
+                        {
+                            Console.WriteLine("[");
+                        }
+
+                        var tokens = Scanner.Scan(source);
+                        var j = 0;
+
+                        foreach (var token in tokens)
+                        {
+                            if (j > 0)
+                                Console.WriteLine($",");
+                            Console.WriteLine($"{indent}  {{");
+                            Console.WriteLine($"{indent}    \"kind\": \"{token.Kind}\",");
+                            Console.WriteLine($"{indent}    \"span\": [[{token.Start.Offset}, {token.Start.Line}, {token.Start.Column}], [{token.End.Offset}, {token.End.Line}, {token.End.Column}]],");
+                            Console.WriteLine($"{indent}    \"text\": {JsonString.Encode(source, token.Start.Offset, token.Length)}");
+                            Console.Write($"{indent}  }}");
+                            j++;
+                        }
+
+                        if (j > 0)
+                            Console.WriteLine();
+                        Console.WriteLine($"{indent}]");
+
+                        if (isMultiMode)
+                        {
+                            Console.Write("  }");
+                            i++;
+                        }
+                    }
+
+                    if (isMultiMode)
+                    {
                         Console.WriteLine();
-                    Console.WriteLine("]");
+                        Console.WriteLine("]");
+                    }
+
                     break;
                 }
-
                 case "line":
                 {
-                    foreach (var token in tokens)
-                        Console.WriteLine($@"{token.Kind} {token.Start.Offset}/{token.Start.Line}:{token.Start.Column}...{token.End.Offset}/{token.End.Line}:{token.End.Column} {JsonString.Encode(source, token.Start.Offset, token.Length)}");
+                    foreach (var (path, source) in ReadSources(tail))
+                    {
+                        var lines =
+                            from token in Scanner.Scan(source)
+                            select new object[]
+                            {
+                                token.Kind,
+                                $"{token.Start.Offset}/{token.Start.Line}:{token.Start.Column}...{token.End.Offset}/{token.End.Line}:{token.End.Column}",
+                                JsonString.Encode(source, token.Start.Offset, token.Length),
+                            }
+                            into fs
+                            select isMultiMode ? fs.Append(JsonString.Encode(path)) : fs
+                            into fs
+                            select string.Join(" ", fs);
+
+                        foreach (var line in lines)
+                            Console.WriteLine(line);
+                    }
                     break;
                 }
-
                 case "csv":
                 {
-                    const string quote = "\"";
-                    const string quotequote = quote + quote;
+                    Console.WriteLine(
+                        "token,text," +
+                        "start_offset,end_offset," +
+                        "start_line,start_column,end_line,end_column"
+                        + (isMultiMode ? ",file" : null));
 
-                    Console.WriteLine("token,start_offset,end_offset,start_line,start_column,end_line,end_column,Text");
-
-                    var rows =
-                        from t in tokens
-                        let text = JsonString.Encode(t.Substring(source))
-                        select
-                            string.Join(",",
+                    foreach (var (path, source) in ReadSources(tail))
+                    {
+                        var rows =
+                            from t in Scanner.Scan(source)
+                            select new object[]
+                            {
                                 t.Kind,
+                                Encode(t.Substring(source)),
                                 t.Start.Offset.ToString(CultureInfo.InvariantCulture),
                                 t.End.Offset.ToString(CultureInfo.InvariantCulture),
                                 t.Start.Line.ToString(CultureInfo.InvariantCulture),
                                 t.Start.Column.ToString(CultureInfo.InvariantCulture),
                                 t.End.Line.ToString(CultureInfo.InvariantCulture),
                                 t.End.Column.ToString(CultureInfo.InvariantCulture),
-                                quote + text.Substring(1, text.Length - 2).Replace(quote, quotequote) + quote);
-                    foreach (var row in rows)
-                        Console.WriteLine(row);
+                            }
+                            into fs
+                            select isMultiMode ? fs.Append(Encode(path)) : fs
+                            into fs
+                            select string.Join(",", fs);
+
+                        foreach (var row in rows)
+                            Console.WriteLine(row);
+                    }
+
+                    string Encode(string s)
+                    {
+                        const string quote = "\"";
+                        const string quotequote = quote + quote;
+
+                        var json = JsonString.Encode(s);
+                        return quote
+                             + json.Substring(1, json.Length - 2)
+                                   .Replace(quote, quotequote)
+                             + quote;
+                    }
 
                     break;
                 }
-
-                default:
-                    throw new Exception("Unknown token format: " + format);
             }
         }
 
-        static IEnumerable<string> ReadSources(IEnumerable<string> files)
+        static IEnumerable<(string File, string Source)> ReadSources(IEnumerable<string> files)
         {
             using (var e = files.GetEnumerator())
             {
-                if (!e.MoveNext() || e.Current == "-")
-                    yield return Console.In.ReadToEnd();
-                else
-                    yield return File.ReadAllText(e.Current);
+                if (!e.MoveNext())
+                    yield return ("STDIN", Console.In.ReadToEnd());
 
-                if (e.MoveNext())
-                    throw new NotImplementedException("Processing of more than one source is currently not implemented.");
+                do
+                {
+                    yield return e.Current == "-"
+                               ? ("STDIN", Console.In.ReadToEnd())
+                               : (e.Current, File.ReadAllText(e.Current));
+                }
+                while (e.MoveNext());
             }
         }
 
