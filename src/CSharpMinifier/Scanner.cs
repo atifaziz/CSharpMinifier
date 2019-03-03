@@ -21,6 +21,12 @@ namespace CSharpMinifier
 
     public static class Scanner
     {
+        public static IEnumerable<Token> Scan(string source)
+        {
+            if (source == null) throw new ArgumentNullException(nameof(source));
+            return ScanImpl(source);
+        }
+
         enum State
         {
             Text,
@@ -51,12 +57,6 @@ namespace CSharpMinifier
             PreprocessorDirectiveSlash,
             PreprocessorDirectiveTrailingWhiteSpace,
             PreprocessorDirectiveTrailingWhiteSpaceSlash,
-        }
-
-        public static IEnumerable<Token> Scan(string source)
-        {
-            if (source == null) throw new ArgumentNullException(nameof(source));
-            return ScanImpl(source);
         }
 
         static IEnumerable<Token> ScanImpl(string source)
