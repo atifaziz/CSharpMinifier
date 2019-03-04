@@ -60,6 +60,7 @@ namespace CSharpMinifierConsole
                 case "min"   : Wain(commandArgs); break;
                 case "help"  : HelpCommand(commandArgs); break;
                 case "tokens": TokensCommand(commandArgs); break;
+                case "grep"  : GrepCommand(commandArgs); break;
                 case "hash"  : result = HashCommand(commandArgs); break;
                 case "color":
                 case "colour": ColorCommand(commandArgs); break;

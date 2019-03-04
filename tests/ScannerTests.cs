@@ -19,6 +19,7 @@ namespace CSharpMinifier.Tests
     using System;
     using System.Globalization;
     using System.Linq;
+    using System.Text.RegularExpressions;
     using Internals;
     using MoreLinq;
     using NUnit.Framework;
@@ -446,7 +447,7 @@ namespace CSharpMinifier.Tests
                             e.Split(' ', 5, StringSplitOptions.RemoveEmptyEntries)
                              .Fold((knd, oc, lc, cc, txt) => new
                              {
-                                 Kind         = Enum.TryParse<TokenKind>(knd, true, out var kind)
+                                 Kind         = Enum.TryParse<TokenKind>(Regex.Replace(knd, @"(?<=String)(?=Start|Mid|End)", "Literal"), true, out var kind)
                                               ? kind
                                               : Enum.Parse<TokenKind>(knd + "Literal", true),
                                  OffsetChange = int.Parse(oc, NumberStyles.None, CultureInfo.InvariantCulture),
@@ -474,6 +475,146 @@ namespace CSharpMinifier.Tests
                               })
                         .Skip(1)
                     select $"{e.Kind} [{e.Start}..{e.End}) {e.Text}"));
+        }
+
+        [TestCase(@"""Hello world!"""                       , "Hello world!")]
+        [TestCase(@"""\tHello world!\t"""                   , "\tHello world!\t")]
+        [TestCase(@"""\'\""\\\0\a\b\f\n\r\t\v"""            , "\'\"\\\0\a\b\f\n\r\t\v")]
+        [TestCase(@""" \' \"" \\ \0 \a \b \f \n \r \t \v """, " \' \" \\ \0 \a \b \f \n \r \t \v ")]
+        [TestCase(@"""\x8"""                                , "\x8")]
+        [TestCase(@"""\x89"""                               , "\x89")]
+        [TestCase(@"""\x89a"""                              , "\x89a")]
+        [TestCase(@"""\x89ab"""                             , "\x89ab")]
+        [TestCase(@"""\x89abc"""                            , "\x89abc")]
+        [TestCase(@"""[\x8]"""                              , "[\x8]")]
+        [TestCase(@"""[\x89]"""                             , "[\x89]")]
+        [TestCase(@"""[\x89a]"""                            , "[\x89a]")]
+        [TestCase(@"""[\x89ab]"""                           , "[\x89ab]")]
+        [TestCase(@"""[\x89abc]"""                          , "[\x89abc]")]
+        [TestCase(@"""\u89ab"""                             , "\u89ab")]
+        [TestCase(@"""\u89abc"""                            , "\u89abc")]
+        [TestCase(@"""\U00000024"""                         , "\U00000024")]
+        [TestCase(@"""\U000000245"""                        , "\U000000245")]
+        [TestCase(@"""\U00024B62"""                         , "\U00024B62")]
+        [TestCase(@"""\U00024B623"""                        , "\U00024B623")]
+        [TestCase(@"""\U0001F01C"""                         , "\U0001F01C")]
+        [TestCase(@"""\U0001F01CD"""                        , "\U0001F01CD")]
+
+        [TestCase(@"$""Hello world!"""                       , "Hello world!")]
+        [TestCase(@"$""\tHello world!\t"""                   , "\tHello world!\t")]
+        [TestCase(@"$""\'\""\\\0\a\b\f\n\r\t\v"""            , "\'\"\\\0\a\b\f\n\r\t\v")]
+        [TestCase(@"$"" \' \"" \\ \0 \a \b \f \n \r \t \v """, " \' \" \\ \0 \a \b \f \n \r \t \v ")]
+        [TestCase(@"$""\x8"""                                , "\x8")]
+        [TestCase(@"$""\x89"""                               , "\x89")]
+        [TestCase(@"$""\x89a"""                              , "\x89a")]
+        [TestCase(@"$""\x89ab"""                             , "\x89ab")]
+        [TestCase(@"$""\x89abc"""                            , "\x89abc")]
+        [TestCase(@"$""[\x8]"""                              , "[\x8]")]
+        [TestCase(@"$""[\x89]"""                             , "[\x89]")]
+        [TestCase(@"$""[\x89a]"""                            , "[\x89a]")]
+        [TestCase(@"$""[\x89ab]"""                           , "[\x89ab]")]
+        [TestCase(@"$""[\x89abc]"""                          , "[\x89abc]")]
+
+        [TestCase(@"@""Hello world!"""                         , @"Hello world!")]
+        [TestCase(@"@""\tHello world!\t"""                     , @"\tHello world!\t")]
+        [TestCase(@"@""\'\""""\\\0\a\b\f\n\r\t\v"""            , @"\'\""\\\0\a\b\f\n\r\t\v")]
+        [TestCase(@"@"" \' \"""" \\ \0 \a \b \f \n \r \t \v """, @" \' \"" \\ \0 \a \b \f \n \r \t \v ")]
+        [TestCase(@"@""\x8"""                                  , @"\x8")]
+        [TestCase(@"@""\x89"""                                 , @"\x89")]
+        [TestCase(@"@""\x89a"""                                , @"\x89a")]
+        [TestCase(@"@""\x89ab"""                               , @"\x89ab")]
+        [TestCase(@"@""\x89abc"""                              , @"\x89abc")]
+        [TestCase(@"@""[\x8]"""                                , @"[\x8]")]
+        [TestCase(@"@""[\x89]"""                               , @"[\x89]")]
+        [TestCase(@"@""[\x89a]"""                              , @"[\x89a]")]
+        [TestCase(@"@""[\x89ab]"""                             , @"[\x89ab]")]
+        [TestCase(@"@""[\x89abc]"""                            , @"[\x89abc]")]
+
+        [TestCase(@"$@""Hello world!"""                         , @"Hello world!")]
+        [TestCase(@"$@""\tHello world!\t"""                     , @"\tHello world!\t")]
+        [TestCase(@"$@""\'\""""\\\0\a\b\f\n\r\t\v"""            , @"\'\""\\\0\a\b\f\n\r\t\v")]
+        [TestCase(@"$@"" \' \"""" \\ \0 \a \b \f \n \r \t \v """, @" \' \"" \\ \0 \a \b \f \n \r \t \v ")]
+        [TestCase(@"$@""\x8"""                                  , @"\x8")]
+        [TestCase(@"$@""\x89"""                                 , @"\x89")]
+        [TestCase(@"$@""\x89a"""                                , @"\x89a")]
+        [TestCase(@"$@""\x89ab"""                               , @"\x89ab")]
+        [TestCase(@"$@""\x89abc"""                              , @"\x89abc")]
+        [TestCase(@"$@""[\x8]"""                                , @"[\x8]")]
+        [TestCase(@"$@""[\x89]"""                               , @"[\x89]")]
+        [TestCase(@"$@""[\x89a]"""                              , @"[\x89a]")]
+        [TestCase(@"$@""[\x89ab]"""                             , @"[\x89ab]")]
+        [TestCase(@"$@""[\x89abc]"""                            , @"[\x89abc]")]
+
+        [TestCase("$@\"today = {{ { $\"{DateTime.Today:MMM dd, yyyy}\" } }}\"",
+            "today = { ", "", "", " }")]
+        [TestCase("$\"{{}}\"", @"{}")]
+        [TestCase("$@\"{{\n}}\"", "{\n}")]
+
+        public void ParseStrings(string source, params string[] expectations)
+        {
+            Assert.That(Scanner.ParseStrings(source), Is.EqualTo(expectations));
+        }
+
+        [TestCase(@"""\x""")]
+        [TestCase(@"""\xg""")]
+        public void InvalidHexadecimalEscapeSequence(string source)
+        {
+            var e = Assert.Throws<SyntaxErrorException>(() =>
+                Scanner.ParseStrings(source).Consume());
+            Assert.That(e.Message, Is.EqualTo("Invalid hexadecimal escape sequence in string."));
+        }
+
+        [TestCase(@"""\u""")]
+        [TestCase(@"""\u1""")]
+        [TestCase(@"""\u12""")]
+        [TestCase(@"""\u123""")]
+        [TestCase(@"""\U""")]
+        [TestCase(@"""\U1""")]
+        [TestCase(@"""\U12""")]
+        [TestCase(@"""\U123""")]
+        [TestCase(@"""\U1234""")]
+        [TestCase(@"""\U12345""")]
+        [TestCase(@"""\U123456""")]
+        [TestCase(@"""\U1234567""")]
+        [TestCase(@"""\U12345678""")]
+        [TestCase(@"""\U00110000""")]
+        public void InvalidUnicodeCharacterEscapeSequence(string source)
+        {
+            var e = Assert.Throws<SyntaxErrorException>(() =>
+                Scanner.ParseStrings(source).Consume());
+            Assert.That(e.Message, Is.EqualTo("Invalid Unicode character escape sequence in string."));
+        }
+
+        [TestCase("A")]
+        [TestCase("B")]
+        [TestCase("C"), TestCase("c")]
+        [TestCase("D"), TestCase("d")]
+        [TestCase("E"), TestCase("e")]
+        [TestCase("F")]
+        [TestCase("G"), TestCase("g")]
+        [TestCase("H"), TestCase("h")]
+        [TestCase("I"), TestCase("i")]
+        [TestCase("J"), TestCase("j")]
+        [TestCase("K"), TestCase("k")]
+        [TestCase("L"), TestCase("l")]
+        [TestCase("M"), TestCase("m")]
+        [TestCase("N")]
+        [TestCase("O"), TestCase("o")]
+        [TestCase("P"), TestCase("p")]
+        [TestCase("Q"), TestCase("q")]
+        [TestCase("R")]
+        [TestCase("S"), TestCase("s")]
+        [TestCase("T")]
+        [TestCase("V")]
+        [TestCase("W"), TestCase("w")]
+        [TestCase("X")]
+        [TestCase("Y"), TestCase("y")]
+        [TestCase("Z"), TestCase("z")]
+        public void InvalidEscapeSequence(string ch)
+        {
+            var e = Assert.Throws<SyntaxErrorException>(() =>
+                Scanner.ParseStrings($@"""\{ch}""").Consume());
+            Assert.That(e.Message, Is.EqualTo("Invalid escape sequence in string."));
         }
     }
 }
