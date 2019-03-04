@@ -25,6 +25,7 @@ namespace CSharpMinifier
         NewLine,
         SingleLineComment,
         MultiLineComment,
+        CharLiteral,
         StringLiteral,
         VerbatimStringLiteral,
         InterpolatedStringLiteral,
@@ -35,7 +36,6 @@ namespace CSharpMinifier
         InterpolatedVerbatimStringLiteralStart,
         InterpolatedVerbatimStringLiteralMid,
         InterpolatedVerbatimStringLiteralEnd,
-        CharLiteral,
         PreprocessorDirective,
     }
 
@@ -70,5 +70,58 @@ namespace CSharpMinifier
     {
         public static string Substring(this Token token, string source) =>
             SubstringPool.GetOrCreate(source, token.Start.Offset, token.Length);
+
+    }
+
+    public static class TokenKindExtensions
+    {
+        public static bool IsString(this TokenKind kind)
+        {
+            switch (kind)
+            {
+                case TokenKind.StringLiteral:
+                case TokenKind.VerbatimStringLiteral:
+                case TokenKind.InterpolatedStringLiteral:
+                case TokenKind.InterpolatedStringLiteralStart:
+                case TokenKind.InterpolatedStringLiteralMid:
+                case TokenKind.InterpolatedStringLiteralEnd:
+                case TokenKind.InterpolatedVerbatimStringLiteral:
+                case TokenKind.InterpolatedVerbatimStringLiteralStart:
+                case TokenKind.InterpolatedVerbatimStringLiteralMid:
+                case TokenKind.InterpolatedVerbatimStringLiteralEnd:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        public static bool IsVerbatimString(this TokenKind kind)
+        {
+            switch (kind)
+            {
+                case TokenKind.VerbatimStringLiteral:
+                case TokenKind.InterpolatedVerbatimStringLiteral:
+                case TokenKind.InterpolatedVerbatimStringLiteralStart:
+                case TokenKind.InterpolatedVerbatimStringLiteralMid:
+                case TokenKind.InterpolatedVerbatimStringLiteralEnd:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        public static bool IsInterpolatedString(this TokenKind kind)
+        {
+            switch (kind)
+            {
+                case TokenKind.InterpolatedVerbatimStringLiteral:
+                case TokenKind.InterpolatedVerbatimStringLiteralStart:
+                case TokenKind.InterpolatedVerbatimStringLiteralMid:
+                case TokenKind.InterpolatedVerbatimStringLiteralEnd:
+                    return true;
+                default:
+                    return false;
+            }
+        }
     }
 }

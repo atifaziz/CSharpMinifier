@@ -629,5 +629,13 @@ namespace CSharpMinifier
                 }
             }
         }
+
+        public static IEnumerable<string> ParseStrings(string source) =>
+            CSharpString.ParseValues(Scan(source), source);
+
+        public static IEnumerable<T>
+                ParseStrings<T>(string source,
+                                Func<Token, string, string, T> selector) =>
+            CSharpString.ParseValues(Scan(source), source, selector);
     }
 }
