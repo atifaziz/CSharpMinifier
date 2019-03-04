@@ -17,6 +17,7 @@
 namespace CSharpMinifier.Tests
 {
     using System;
+    using System.Collections.Generic;
     using System.Globalization;
     using System.Linq;
     using System.Text.RegularExpressions;
@@ -429,17 +430,80 @@ namespace CSharpMinifier.Tests
             @"Text                1 0   1 ""}""",
             @"NewLine             2 1  =1 ""\r\n""",
             @"Text                1 0   1 ""}""",
-            @"NewLine             2 1  =1 ""\r\n""")
-        ]
+            @"NewLine             2 1  =1 ""\r\n""")]
 
         public void Scan(string source, params string[] expectations)
         {
-            var tokens =
-                from t in Scanner.Scan(source)
+            Test(source, Scanner.Scan(source), expectations);
+        }
+
+        [Test]
+        public void MergeNewLineWithWhiteSpaceNullTokens()
+        {
+            Assert.Throws<ArgumentNullException>(() =>
+                Scanner.MergeNewLineWithWhiteSpace(null));
+        }
+
+        [TestCase("foobar", @"Text 6 0 6 ""foobar""")]
+
+        [TestCase("foo\nbar",
+            @"Text       3 0  3 ""foo""",
+            @"WhiteSpace 1 1 =1 ""\n""",
+            @"Text       3 0  3 ""bar""")]
+
+        [TestCase("foo\n\nbar",
+            @"Text       3 0  3 ""foo""",
+            @"WhiteSpace 2 2 =1 ""\n\n""",
+            @"Text       3 0  3 ""bar""")]
+
+        [TestCase("\nfoo\nbar\n",
+            @"WhiteSpace 1 1 =1 ""\n""",
+            @"Text       3 0  3 ""foo""",
+            @"WhiteSpace 1 1 =1 ""\n""",
+            @"Text       3 0  3 ""bar""",
+            @"WhiteSpace 1 1 =1 ""\n""")]
+
+        [TestCase("\n\nfoo\n\nbar\n\n",
+            @"WhiteSpace 2 2 =1 ""\n\n""",
+            @"Text       3 0  3 ""foo""",
+            @"WhiteSpace 2 2 =1 ""\n\n""",
+            @"Text       3 0  3 ""bar""",
+            @"WhiteSpace 2 2 =1 ""\n\n""")]
+
+        [TestCase(" \n \nfoo \n \nbar \n \n",
+            @"WhiteSpace 4 2 =1 "" \n \n""",
+            @"Text       3 0  3 ""foo""",
+            @"WhiteSpace 4 2 =1 "" \n \n""",
+            @"Text       3 0  3 ""bar""",
+            @"WhiteSpace 4 2 =1 "" \n \n""")]
+
+        [TestCase("\n \n foo\n \n bar\n \n ",
+            @"WhiteSpace 4 2 =2 ""\n \n """,
+            @"Text       3 0  3 ""foo""",
+            @"WhiteSpace 4 2 =2 ""\n \n """,
+            @"Text       3 0  3 ""bar""",
+            @"WhiteSpace 4 2 =2 ""\n \n """)]
+
+        [TestCase(" \n \n foo \n \n bar \n \n ",
+            @"WhiteSpace 5 2 =2 "" \n \n """,
+            @"Text       3 0  3 ""foo""",
+            @"WhiteSpace 5 2 =2 "" \n \n """,
+            @"Text       3 0  3 ""bar""",
+            @"WhiteSpace 5 2 =2 "" \n \n """)]
+
+        public void MergeNewLineWithWhiteSpace(string source, params string[] expectations)
+        {
+            Test(source, Scanner.Scan(source).MergeNewLineWithWhiteSpace(), expectations);
+        }
+
+        static void Test(string source, IEnumerable<Token> tokens, params string[] expectations)
+        {
+            var actuals =
+                from t in tokens
                 select $"{t} {JsonString.Encode(source, t.Start.Offset, t.Length)}";
 
             Assert.That(
-                tokens,
+                actuals,
                 Is.EqualTo(
                     from e in
                     expectations

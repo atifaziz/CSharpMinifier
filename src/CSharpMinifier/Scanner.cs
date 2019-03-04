@@ -630,6 +630,48 @@ namespace CSharpMinifier
             }
         }
 
+        public static IEnumerable<Token> MergeNewLineWithWhiteSpace(this IEnumerable<Token> tokens)
+        {
+            if (tokens == null) throw new ArgumentNullException(nameof(tokens));
+
+            return _(); IEnumerable<Token> _()
+            {
+                var ws = (Token?)null;
+
+                foreach (var t in tokens)
+                {
+                    if (ws is Token pws)
+                    {
+                        if (t.Traits.HasFlag(TokenKindTraits.WhiteSpace) && pws.End == t.Start)
+                        {
+                            ws = new Token(TokenKind.WhiteSpace, pws.Start, t.End);
+                        }
+                        else
+                        {
+                            yield return pws;
+                            ws = null;
+                            yield return t;
+                        }
+                    }
+                    else switch (t.Kind)
+                    {
+                        case TokenKind.WhiteSpace:
+                            ws = t;
+                            break;
+                        case TokenKind.NewLine:
+                            ws = new Token(TokenKind.WhiteSpace, t.Start, t.End);
+                            break;
+                        default:
+                            yield return t;
+                            break;
+                    }
+                }
+
+                if (ws is Token fws)
+                    yield return fws;
+            }
+        }
+
         public static IEnumerable<string> ParseStrings(string source) =>
             CSharpString.ParseValues(Scan(source), source);
 
