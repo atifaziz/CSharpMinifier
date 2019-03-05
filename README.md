@@ -15,7 +15,7 @@ private details like local variable names are not changed.
 
 Before:
 
-```
+```c#
 using System;
 
 class Program
@@ -29,7 +29,7 @@ class Program
 
 After:
 
-```
+```c#
 using System;class Program{static void Main(){Console.WriteLine("Hello, world!");}}
 ```
 
