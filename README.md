@@ -7,8 +7,8 @@ the download size or parsing effort. Instead, it is best used for computing
 hashes or digests for the purpose of detecting _useful_ as opposed to
 _physical changes_.
 
-It is available as a .NET Standard Library as well as a .NET Core console
-application that can be installed as a [global tool].
+It is [available as a .NET Standard Library][lib] as well as a .[NET Core
+console application][app] that can be installed as a [global tool].
 
 It is a _minifier_ but not an _obfuscator_ or an _uglifier_; that is,
 private details like local variable names are not changed.
@@ -78,3 +78,5 @@ This will also build the binaries if necessary.
 
 
 [global tool]: https://docs.microsoft.com/en-us/dotnet/core/tools/global-tools
+[app]: https://www.nuget.org/packages/CSharpMinifierConsole/
+[lib]: https://www.nuget.org/packages/CSharpMinifier/
