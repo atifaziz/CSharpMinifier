@@ -26,8 +26,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="help-glob.txt" />
     <None Remove="help-min.txt" />
     <None Remove="help-tokens.txt" />
+    <EmbeddedResource Include="help-glob.txt" />
     <EmbeddedResource Include="help-min.txt" />
     <EmbeddedResource Include="help-tokens.txt" />
   </ItemGroup>
@@ -38,6 +40,10 @@
 
   <ItemGroup>
     <None Include="..\..\COPYING.txt" Pack="true" PackagePath="$(PackageLicenseFile)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.FileSystemGlobbing" Version="2.2.0" />
   </ItemGroup>
 
 </Project>

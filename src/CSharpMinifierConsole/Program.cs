@@ -24,6 +24,7 @@ namespace CSharpMinifierConsole
     using System.Linq;
     using CSharpMinifier;
     using CSharpMinifier.Internals;
+    using Microsoft.Extensions.FileSystemGlobbing;
     using Mono.Options;
     using OptionSetArgumentParser = System.Func<System.Func<string, Mono.Options.OptionContext, bool>, string, Mono.Options.OptionContext, bool>;
 
@@ -34,12 +35,14 @@ namespace CSharpMinifierConsole
         static void Wain(IEnumerable<string> args)
         {
             var help = Ref.Create(false);
+            var globDir = Ref.Create((DirectoryInfo)null);
 
             var options = new OptionSet(CreateStrictOptionSetArgumentParser())
             {
                 Options.Help(help),
                 Options.Verbose(Verbose),
                 Options.Debug,
+                Options.Glob(globDir),
             };
 
             var tail = options.Parse(args);
@@ -55,32 +58,59 @@ namespace CSharpMinifierConsole
 
             switch (command)
             {
+                case "min"   : Wain(commandArgs); break;
                 case "tokens": TokensCommand(commandArgs); break;
-                case "min"   : DefaultCommand(commandArgs); break;
-                default      : DefaultCommand(tail); break;
+                case "glob"  : GlobCommand(commandArgs); break;
+                default      : DefaultCommand(); break;
+            }
+
+            void DefaultCommand()
+            {
+                foreach (var (_, source) in ReadSources(tail, globDir))
+                {
+                    var nl = false;
+                    foreach (var s in Minifier.Minify(source, null))
+                    {
+                        if (nl = s == null)
+                            Console.WriteLine();
+                        else
+                            Console.Write(s);
+                    }
+                    if (!nl)
+                        Console.WriteLine();
+                }
             }
         }
 
-        static void DefaultCommand(IEnumerable<string> tail)
+        static void GlobCommand(IEnumerable<string> args)
         {
-            foreach (var (_, source) in ReadSources(tail))
+            var help = Ref.Create(false);
+            var globDir = Ref.Create((DirectoryInfo)null);
+
+            var options = new OptionSet(CreateStrictOptionSetArgumentParser())
             {
-                var nl = false;
-                foreach (var s in Minifier.Minify(source, null))
-                {
-                    if (nl = s == null)
-                        Console.WriteLine();
-                    else
-                        Console.Write(s);
-                }
-                if (!nl)
-                    Console.WriteLine();
+                Options.Help(help),
+                Options.Verbose(Verbose),
+                Options.Debug,
+                Options.Glob(globDir)
+            };
+
+            var tail = options.Parse(args);
+
+            if (help)
+            {
+                Help("glob", options);
+                return;
             }
+
+            foreach (var (p, _) in ReadSources(tail, globDir, () => (string)null, _ => null))
+                Console.WriteLine(p);
         }
 
         static void TokensCommand(IEnumerable<string> args)
         {
             var help = Ref.Create(false);
+            var globDir = Ref.Create((DirectoryInfo)null);
             var format = (string)null;
 
             var options = new OptionSet(CreateStrictOptionSetArgumentParser())
@@ -88,6 +118,7 @@ namespace CSharpMinifierConsole
                 Options.Help(help),
                 Options.Verbose(Verbose),
                 Options.Debug,
+                Options.Glob(globDir),
                 { "f|format=", "output format: json|csv|line; default = json)", v => format = v.ToLowerInvariant() },
             };
 
@@ -114,7 +145,7 @@ namespace CSharpMinifierConsole
                     }
 
                     var i = 0;
-                    foreach (var (path, source) in ReadSources(tail))
+                    foreach (var (path, source) in ReadSources(tail, globDir))
                     {
                         if (isMultiMode)
                         {
@@ -234,20 +265,57 @@ namespace CSharpMinifierConsole
             }
         }
 
-        static IEnumerable<(string File, string Source)> ReadSources(IEnumerable<string> files)
+        static IEnumerable<(string File, string Source)>
+            ReadSources(IEnumerable<string> files, DirectoryInfo rootDir = null)
         {
-            using (var e = files.GetEnumerator())
-            {
-                if (!e.MoveNext())
-                    yield return ("STDIN", Console.In.ReadToEnd());
+            var stdin = Lazy.Create(() => Console.In.ReadToEnd());
+            return ReadSources(files, rootDir, () => stdin.Value, File.ReadAllText);
+        }
 
-                do
+        static IEnumerable<(string File, T Source)>
+            ReadSources<T>(IEnumerable<string> files,
+                           DirectoryInfo rootDir,
+                           Func<T> stdin, Func<string, T> reader)
+        {
+            if (rootDir != null)
+            {
+                var matcher = new Matcher();
+                using (var e = files.GetEnumerator())
                 {
-                    yield return e.Current == "-"
-                               ? ("STDIN", Console.In.ReadToEnd())
-                               : (e.Current, File.ReadAllText(e.Current));
+                    if (!e.MoveNext())
+                        yield return ("STDIN", stdin());
+
+                    do
+                    {
+                        if (string.IsNullOrEmpty(e.Current))
+                            continue;
+
+                        if (e.Current[0] == '!')
+                            matcher.AddExclude(e.Current.Substring(1));
+                        else
+                            matcher.AddInclude(e.Current);
+                    }
+                    while (e.MoveNext());
                 }
-                while (e.MoveNext());
+
+                foreach (var r in matcher.GetResultsInFullPath(rootDir.FullName))
+                    yield return (Path.GetRelativePath(rootDir.FullName, r), reader(r));
+            }
+            else
+            {
+                using (var e = files.GetEnumerator())
+                {
+                    if (!e.MoveNext())
+                        yield return ("STDIN", stdin());
+
+                    do
+                    {
+                        if (string.IsNullOrEmpty(e.Current))
+                            continue;
+                        yield return (e.Current, reader(e.Current));
+                    }
+                    while (e.MoveNext());
+                }
             }
         }
 
@@ -261,6 +329,9 @@ namespace CSharpMinifierConsole
 
             public static readonly Option Debug =
                 new ActionOption("d|debug", "debug break", vs => Debugger.Launch());
+
+            public static Option Glob(Ref<DirectoryInfo> value) =>
+                new ActionOption("glob=", "glob base directory", vs => value.Value = new DirectoryInfo(vs.Last()));
         }
 
         static OptionSetArgumentParser CreateStrictOptionSetArgumentParser()
