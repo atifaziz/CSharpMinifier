@@ -118,7 +118,11 @@ namespace CSharpMinifierConsole
                 return;
             }
 
-            foreach (var (p, _) in ReadSources(tail, globDir, () => (string)null, _ => null))
+            var dir = globDir.Value != null
+                    ? globDir
+                    : new DirectoryInfo(Environment.CurrentDirectory);
+
+            foreach (var (p, _) in ReadSources(tail, dir, () => (string)null, _ => null))
                 Console.WriteLine(p);
         }
 
