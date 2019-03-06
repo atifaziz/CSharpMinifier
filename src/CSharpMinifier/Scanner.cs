@@ -637,5 +637,79 @@ namespace CSharpMinifier
                 ParseStrings<T>(string source,
                                 Func<Token, string, string, T> selector) =>
             CSharpString.ParseValues(Scan(source), source, selector);
+
+        public static IEnumerable<Region> ScanRegions(string source)
+        {
+            if (source == null) throw new ArgumentNullException(nameof(source));
+
+            return _(); IEnumerable<Region> _()
+            {
+                var tokens = (List<Token>)null;
+                var level = 0;
+                var awaitingEndRegionLineEnding = false;
+                var lwsToken = (Token?)null;
+                var startMessage = (string)null;
+                var endMessage = (string)null;
+
+                foreach (var token in Scan(source))
+                {
+                    switch (token.Kind)
+                    {
+                        case TokenKind.WhiteSpace when level == 0:
+                            lwsToken = token;
+                            break;
+
+                        case TokenKind.PreprocessorDirective:
+                            var (name, specifics) = SplitName(token);
+                            switch (name)
+                            {
+                                case "region":
+                                    if (level == 0)
+                                    {
+                                        startMessage = specifics;
+                                        tokens = new List<Token>();
+                                        if (lwsToken is Token t)
+                                            tokens.Add(t);
+                                    }
+                                    level++;
+                                    break;
+
+                                case "endregion":
+                                    level--;
+                                    if (level == 0)
+                                    {
+                                        awaitingEndRegionLineEnding = true;
+                                        endMessage = specifics;
+                                    }
+                                    break;
+                            }
+                            break;
+                    }
+
+                    if (tokens != null)
+                    {
+                        tokens.Add(token);
+
+                        if (token.Kind == TokenKind.NewLine && awaitingEndRegionLineEnding)
+                        {
+                            awaitingEndRegionLineEnding = false;
+                            yield return new Region(startMessage, endMessage, tokens);
+                            tokens = null;
+                        }
+                    }
+                }
+
+                if (tokens != null && awaitingEndRegionLineEnding)
+                    yield return new Region(startMessage, endMessage, tokens);
+
+                (string, string) SplitName(Token token)
+                {
+                    var parts = source.Slice(token.Start.Offset + 1, token.End.Offset)
+                                      .TrimStart()
+                                      .Split(Minifier.SpaceOrTab, 2);
+                    return (parts[0], parts.Length > 1 ? parts[1].Trim() : string.Empty);
+                }
+            }
+        }
     }
 }

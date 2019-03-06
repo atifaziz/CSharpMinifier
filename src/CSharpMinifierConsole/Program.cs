@@ -21,6 +21,7 @@ namespace CSharpMinifierConsole
     using System.Diagnostics;
     using System.IO;
     using System.Linq;
+    using System.Text.RegularExpressions;
     using CSharpMinifier;
     using Microsoft.Extensions.FileSystemGlobbing;
     using Mono.Options;
@@ -57,15 +58,16 @@ namespace CSharpMinifierConsole
 
             switch (command)
             {
-                case "min"   : Wain(commandArgs); break;
-                case "help"  : HelpCommand(commandArgs); break;
-                case "tokens": TokensCommand(commandArgs); break;
-                case "grep"  : GrepCommand(commandArgs); break;
-                case "hash"  : result = HashCommand(commandArgs); break;
-                case "color":
-                case "colour": ColorCommand(commandArgs); break;
-                case "glob"  : GlobCommand(commandArgs); break;
-                default      : DefaultCommand(); break;
+                case "min"    : Wain(commandArgs); break;
+                case "help"   : HelpCommand(commandArgs); break;
+                case "tokens" : TokensCommand(commandArgs); break;
+                case "grep"   : GrepCommand(commandArgs); break;
+                case "hash"   : result = HashCommand(commandArgs); break;
+                case "regions": RegionsCommand(commandArgs); break;
+                case "color"  :
+                case "colour" : ColorCommand(commandArgs); break;
+                case "glob"   : GlobCommand(commandArgs); break;
+                default       : DefaultCommand(); break;
             }
 
             return result;

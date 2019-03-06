@@ -22,7 +22,7 @@ namespace CSharpMinifier
 
     public static class Minifier
     {
-        static readonly char[] SpaceOrTab = { ' ', '\t' };
+        internal static readonly char[] SpaceOrTab = { ' ', '\t' };
 
         public static IEnumerable<string> Minify(string source) =>
             Minify(source, Environment.NewLine);

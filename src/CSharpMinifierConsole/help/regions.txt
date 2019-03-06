@@ -1,16 +1,16 @@
 $LOGO$
 
-Usage: $NAME$ $COMMAND$ COMMAND
+Lists top-level regions (#region...#endregion).
 
-where COMMAND should be one of the following:
+Usage: $NAME$ $COMMAND$ [OPTIONS...] [FILE]
 
-  min           minifies C# source (default)
-  tokens        lists tokens scanned from C# source
-  color/colour  colors tokens scanned from C# source
-  hash          compute hash of minified C# source
-  grep          search in strings scanned from C# source
-  regions       lists top-level regions, i.e. #region...#endregion
-  help          displays COMMAND help and usage
+where FILE is the path to a file containing syntactically correct C#
+source. If FILE is not supplied or is exactly a dash/hyphen ("-") then
+STDIN is read for syntactically correct C# source.
+
+Options:
+
+$OPTIONS$
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

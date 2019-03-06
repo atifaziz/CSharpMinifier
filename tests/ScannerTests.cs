@@ -616,5 +616,74 @@ namespace CSharpMinifier.Tests
                 Scanner.ParseStrings($@"""\{ch}""").Consume());
             Assert.That(e.Message, Is.EqualTo("Invalid escape sequence in string."));
         }
+
+        [TestCase(
+            "#region\n" +
+            "#endregion",
+
+            "#region\n" +
+            "#endregion")]
+
+        [TestCase(
+            "#region\n" +
+            "#endregion\n",
+
+            "#region\n" +
+            "#endregion\n")]
+
+        [TestCase(
+            "#region foo\n" +
+            "#endregion\n",
+
+            "#region foo\n" +
+            "#endregion\n")]
+
+        [TestCase(
+            "# region foo \n" +
+            "# endregion \n",
+
+            "# region foo \n" +
+            "# endregion \n")]
+
+        [TestCase(
+            "\t#region foo\n" +
+            "\t#endregion\n",
+
+            "\t#region foo\n" +
+            "\t#endregion\n")]
+
+        [TestCase(
+            ""
+            + "#region foo\n"
+            + "  #region bar\n"
+            + "  // comment\n"
+            + "  #endregion\n"
+            + "#endregion\n"
+            + "\n"
+            + "#region baz\n"
+            + "#if DEBUG\n"
+            + "#endif DEBUG\n"
+            + "#endregion\n",
+            ""
+            + "#region foo\n"
+            + "  #region bar\n"
+            + "  // comment\n"
+            + "  #endregion\n"
+            + "#endregion\n",
+            ""
+            + "#region baz\n"
+            + "#if DEBUG\n"
+            + "#endif DEBUG\n"
+            + "#endregion\n")]
+
+        public void ScanRegions(string source, params string[] expectations)
+        {
+            Assert.That(
+                from rts in Scanner.ScanRegions(source)
+                select rts.Tokens
+                          .Select(t => t.Substring(source))
+                          .ToDelimitedString(string.Empty),
+                Is.EqualTo(expectations));
+        }
     }
 }

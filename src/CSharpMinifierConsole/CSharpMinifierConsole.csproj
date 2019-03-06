@@ -32,6 +32,7 @@
     <EmbeddedResource Include="help\hash.txt" />
     <EmbeddedResource Include="help\help.txt" />
     <EmbeddedResource Include="help\min.txt" />
+    <EmbeddedResource Include="help\regions.txt" />
     <EmbeddedResource Include="help\tokens.txt" />
   </ItemGroup>
 
