@@ -19,7 +19,7 @@ namespace CSharpMinifierConsole
     using System;
     using System.Collections.Generic;
     using System.IO;
-    using Mono.Options;
+    using MonoOptionSet = Mono.Options.OptionSet;
 
     static class Extensions
     {
@@ -48,7 +48,7 @@ namespace CSharpMinifierConsole
 
     static class OptionSetExtensions
     {
-        public static T WriteOptionDescriptionsReturningWriter<T>(this OptionSet options, T writer)
+        public static T WriteOptionDescriptionsReturningWriter<T>(this MonoOptionSet options, T writer)
             where T : TextWriter
         {
             options.WriteOptionDescriptions(writer);

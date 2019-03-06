@@ -6,21 +6,22 @@ namespace CSharpMinifierConsole
     using System.Reflection;
     using System.Text;
     using System.Text.RegularExpressions;
+    using MonoOptionSet = Mono.Options.OptionSet;
 
     partial class Program
     {
         static readonly Lazy<FileVersionInfo> CachedVersionInfo = Lazy.Create(() => FileVersionInfo.GetVersionInfo(new Uri(typeof(Program).Assembly.CodeBase).LocalPath));
         static FileVersionInfo VersionInfo => CachedVersionInfo.Value;
 
-        static void Help(string command, OptionSet options) =>
+        static void Help(string command, MonoOptionSet options) =>
             Help(command, command, options);
 
-        static void Help(string id, string command, OptionSet options)
+        static void Help(string id, string command, MonoOptionSet options)
         {
-            var name    = Lazy.Create(() => Path.GetFileNameWithoutExtension(VersionInfo.FileName));
-            var opts    = Lazy.Create(() => options.WriteOptionDescriptionsReturningWriter(new StringWriter { NewLine = Environment.NewLine }).ToString());
-            var logo    = Lazy.Create(() => new StringBuilder().AppendLine($"{VersionInfo.ProductName} (version {VersionInfo.FileVersion})")
-                                                               .AppendLine(VersionInfo.LegalCopyright.Replace("\u00a9", "(C)"))
+            var name = Lazy.Create(() => Path.GetFileNameWithoutExtension(VersionInfo.FileName));
+            var opts = Lazy.Create(() => options.WriteOptionDescriptionsReturningWriter(new StringWriter { NewLine = Environment.NewLine }).ToString());
+            var logo = Lazy.Create(() => new StringBuilder().AppendLine($"{VersionInfo.ProductName} (version {VersionInfo.FileVersion})")
+                                                            .AppendLine(VersionInfo.LegalCopyright.Replace("\u00a9", "(C)"))
                                                                .ToString());
 
             using (var stream = GetManifestResourceStream($"help-{id ?? command}.txt"))

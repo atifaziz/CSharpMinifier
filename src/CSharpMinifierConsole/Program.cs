@@ -59,6 +59,7 @@ namespace CSharpMinifierConsole
             switch (command)
             {
                 case "min"   : Wain(commandArgs); break;
+                case "help"  : HelpCommand(commandArgs); break;
                 case "tokens": TokensCommand(commandArgs); break;
                 case "glob"  : GlobCommand(commandArgs); break;
                 default      : DefaultCommand(); break;
@@ -79,6 +80,20 @@ namespace CSharpMinifierConsole
                     if (!nl)
                         Console.WriteLine();
                 }
+            }
+        }
+
+        static void HelpCommand(IEnumerable<string> args)
+        {
+            switch (args.FirstOrDefault())
+            {
+                case null:
+                case string command when command == "help":
+                    Help("help", new Mono.Options.OptionSet());
+                    break;
+                case string command:
+                    Wain(new [] { command, "--help" });
+                        break;
             }
         }
 

@@ -27,8 +27,10 @@
 
   <ItemGroup>
     <None Remove="help-glob.txt" />
+    <None Remove="help-help.txt" />
     <None Remove="help-min.txt" />
     <None Remove="help-tokens.txt" />
+    <EmbeddedResource Include="help-help.txt" />
     <EmbeddedResource Include="help-glob.txt" />
     <EmbeddedResource Include="help-min.txt" />
     <EmbeddedResource Include="help-tokens.txt" />
