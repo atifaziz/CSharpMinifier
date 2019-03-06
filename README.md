@@ -4,18 +4,20 @@ CSharpMinifier filters comments and unnecessary whitespace from _valid_ C#
 source code in order to arrive at a compressed form without changing the
 behaviour of the code. Unlike JavaScript minifiers, the goal is not to reduce
 the download size or parsing effort. Instead, it is best used for computing
-hashes or digests for the purpose of detecting _useful_ as opposed to
-_physical changes_.
+hashes or digests for the purpose of detecting _potentially useful_ as opposed
+to _any physical changes_.
 
 It is [available as a .NET Standard Library][lib] as well as a .[NET Core
 console application][app] that can be installed as a [global tool].
 
 It is a _minifier_ but not an _obfuscator_ or an _uglifier_; that is,
-private details like local variable names are not changed.
+private details like local variable names are not abbreviated.
 
-Before:
+Before minification:
 
 ```c#
+// Author: John Doe <johndoe@example.com>
+
 using System;
 
 class Program
@@ -27,7 +29,7 @@ class Program
 }
 ```
 
-After:
+After minification:
 
 ```c#
 using System;class Program{static void Main(){Console.WriteLine("Hello, world!");}}
@@ -41,6 +43,139 @@ original versions no longer compare equal (instead of whenever a physical
 change occurs). Minification removes C# comments and extraneous whitespace in
 the source as they do not constitute a _useful change_ that could affect
 behaviour of the code at run-time.
+
+## Minification
+
+CSharpMinifier assumes that the input C# source is syntactically sound;
+otherwise the results are undefined (even if they may appear to resemble some
+defined behaviour).
+
+For the purpose of minification, especially that of whitespace and comments,
+CSharpMinifier needs to ensure that it does not confuse, for example, a comment
+appearing in a string or a commented-out string. Therefore it parses some
+minimal grammar of a C# source such as:
+
+- Horizontal whitespace (space or tab)
+- New-line sequences like `CR`, `LF` or `CRLF`
+- Single-line comments, staring with `//` and until a new-line sequence or
+  end of input
+- Multi-line comments; that is, everything between `/*` and `*/`
+- Pre-processor directives
+- Strings literals of all sorts:
+  - regularm e,g, , e.g. `"..."`
+  - verbatim, e.g. , e.g. `@"..."`
+  - interpolated, e.g. `$"..."`
+  - verbatim and interpolated, e.g. `$@"..."`
+
+Everything surrounding or inbetween the above is treated as raw and unparsed
+_text_. As a consequence, the C# source does not have to be a full C# program
+or library code. You can minify C# snippets like scripts and expressions as
+long as they are syntactically valid.
+
+All white space within the following type of lexical tokens is maintained:
+
+- string literals
+- pre-processor directive text
+
+CSharpMinifier preserves all pre-processor directives except `#region` and
+`#endregion`. These are filtered but content inbetween is subject to
+minification.
+
+Horizontal (e.g. space and tab) and vertical (e.g. carriage-return and
+line-feed) white space is eliminated in all cases except:
+
+- a single horizontal space is maintained between words and some some obscure
+  cases of operators (e.g. `x = i+++ +2`) to prevent minification from
+  introducing ambiguities.
+- a pre-processor directive; it must appear on a line of its own so it is
+  succeeded by a new-line sequence.
+
+CSharpMinifier provides offset, line and column information about all lexical
+tokens it recognizes.
+
+The scanner/parser is hand-written as a simple state machine and makes
+practically no heap allocations.
+
+
+## Installation
+
+To install the library for use in a project, see the various installation
+instructions on the library package page on NuGet
+
+    nuget install CSharpMinifier
+
+To install the command-line application as .NET Core global tool, do:
+
+    dotnet tool install -g CSharpMinifierConsole
+
+
+
+## Usage
+
+Suppose the following C# source text loaded in a string variable called
+`source`:
+
+```c#
+// Author: John Doe <johndoe@example.com>
+
+using System;
+
+static class Program
+{
+    static void Main()
+    {
+        Console.WriteLine($"Today's date is {DateTime.Today:MMM dd, yyyy}.");
+    }
+}
+```
+
+To minify, do:
+
+```c#
+var minifiedSource = Minifier.Minify(source);
+```
+
+Alternatively, to analyse and visit the tokens identified by the scanner:
+
+```c#
+var tokens =
+    from token in Scanner.Scan(source)
+    where token.Kind != TokenKind.WhiteSpace
+       && token.Kind != TokenKind.NewLine
+    select token;
+
+foreach (var token in tokens)
+    Console.WriteLine($"{token.Kind}({token.Start.Line},{token.Start.Column}): {token.Substring(source)}");
+```
+
+The output from the above will be:
+
+```
+SingleLineComment(2,1): // Author: John Doe <johndoe@example.com>
+Text(4,1): using
+Text(4,7): System;
+Text(6,1): static
+Text(6,8): class
+Text(6,14): Program
+Text(7,1): {
+Text(8,5): static
+Text(8,12): void
+Text(8,17): Main()
+Text(9,5): {
+Text(10,9): Console.WriteLine(
+InterpolatedStringStart(10,27): $"Today's date is {
+Text(10,46): DateTime.Today
+InterpolatedStringEnd(10,60): :MMM dd, yyyy}."
+Text(10,76): );
+Text(11,5): }
+Text(12,1): }
+```
+
+## Command-Line Usage
+
+    csmin < example.cs > example.min.cs
+
+For more information, see the [on-line documentation][wiki].
 
 
 ## Building
@@ -80,3 +215,4 @@ This will also build the binaries if necessary.
 [global tool]: https://docs.microsoft.com/en-us/dotnet/core/tools/global-tools
 [app]: https://www.nuget.org/packages/CSharpMinifierConsole/
 [lib]: https://www.nuget.org/packages/CSharpMinifier/
+[wiki]: https://github.com/atifaziz/CSharpMinifier/wiki
