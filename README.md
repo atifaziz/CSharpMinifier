@@ -93,8 +93,9 @@ line-feed) white space is eliminated in all cases except:
 CSharpMinifier provides offset, line and column information about all lexical
 tokens it recognizes.
 
-The scanner/parser is hand-written as a simple state machine and makes
-practically no heap allocations.
+The scanner/parser is hand-written and does not use Roslyn so it is extremely
+lightweight in use and processing. It is implemented as a simple state machine
+and makes practically no heap allocations.
 
 
 ## Installation
