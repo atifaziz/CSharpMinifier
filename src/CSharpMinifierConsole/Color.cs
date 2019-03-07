@@ -18,8 +18,6 @@ namespace CSharpMinifierConsole
 {
     using System;
     using System.Diagnostics;
-    using System.Globalization;
-    using System.Text.RegularExpressions;
 
     [DebuggerDisplay("Foreground = {Foreground}, Background = {Background}")]
     readonly struct Color : IEquatable<Color>
@@ -57,38 +55,6 @@ namespace CSharpMinifierConsole
                 System.Console.BackgroundColor);
             set => value.Do(fg => System.Console.ForegroundColor = fg,
                 bg => System.Console.BackgroundColor = bg);
-        }
-
-        public static Color Parse(string input)
-        {
-            Color color;
-            if (input.Length > 0 && IsHexChar(input[0])
-                                 && (input.Length == 1 || (input.Length == 2 && IsHexChar(input[1]))))
-            {
-                var n = int.Parse(input, NumberStyles.HexNumber);
-                color = new Color((ConsoleColor) (n & 0xf), (ConsoleColor) (n >> 4));
-            }
-            else
-            {
-                var tokens = input.Split('/', 2);
-                color = new Color(ParseConsoleColor(tokens[0]),
-                    tokens.Length > 1 ? ParseConsoleColor(tokens[1]) : null);
-            }
-            return color;
-        }
-
-        static bool IsHexChar(char ch) => (ch >= '0' && ch <= '9')
-                                          || (ch >= 'a' && ch <= 'f')
-                                          || (ch >= 'A' && ch <= 'F');
-
-        static ConsoleColor? ParseConsoleColor(string input)
-        {
-            if (input.Length == 0) return null;
-            if (!Regex.IsMatch(input, " *[a-zA-Z]+ *", RegexOptions.CultureInvariant))
-                throw new FormatException("Color name syntax error.");
-            return input.Length > 0
-                ? Enum.Parse<ConsoleColor>(input, true)
-                : (ConsoleColor?)null;
         }
     }
 }
