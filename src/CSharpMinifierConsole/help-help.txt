@@ -7,6 +7,7 @@ where COMMAND should be one of the following:
   min           minifies C# source (default)
   tokens        lists tokens scanned from C# source
   color/colour  colors tokens scanned from C# source
+  hash          compute hash of minified C# source
   help          displays COMMAND help and usage
 
 Licensed under the Apache License, Version 2.0 (the "License");
