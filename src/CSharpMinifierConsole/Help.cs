@@ -24,7 +24,7 @@ namespace CSharpMinifierConsole
                                                             .AppendLine(VersionInfo.LegalCopyright.Replace("\u00a9", "(C)"))
                                                                .ToString());
 
-            using (var stream = GetManifestResourceStream($"help-{id ?? command}.txt"))
+            using (var stream = GetManifestResourceStream($"help.{id ?? command}.txt"))
             using (var reader = new StreamReader(stream))
             using (var e = reader.ReadLines())
             while (e.MoveNext())
