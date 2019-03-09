@@ -57,7 +57,7 @@ namespace CSharpMinifierConsole
             }
 
             var utf8 = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
-            using (var ha = (HashAlgorithm)SHA256.Create())
+            using (var ha = IncrementalHash.CreateHash(HashAlgorithmName.SHA256))
             {
                 byte[] buffer = null;
                 foreach (var (_, source) in ReadSources(tail, globDir))
@@ -71,20 +71,20 @@ namespace CSharpMinifierConsole
                         var desiredBufferLength = utf8.GetByteCount(s);
                         Array.Resize(ref buffer, Math.Max(desiredBufferLength, buffer?.Length ?? 0));
                         var actualBufferLength = utf8.GetBytes(s, 0, s.Length, buffer, 0);
-                        ha.TransformBlock(buffer, 0, actualBufferLength, buffer, 0);
+                        ha.AppendData(buffer, 0, actualBufferLength);
                     }
                 }
 
-                ha.TransformFinalBlock(buffer ?? Array.Empty<byte>(), 0, 0);
+                var hash = ha.GetHashAndReset();
 
-                Console.WriteLine(BitConverter.ToString(ha.Hash)
+                Console.WriteLine(BitConverter.ToString(hash)
                                               .Replace("-", string.Empty)
                                               .ToLowerInvariant());
 
                 if (hashComparand == null)
                     return 0;
 
-                return hashComparand.SequenceEqual(ha.Hash) ? 0 : 1;
+                return hashComparand.SequenceEqual(hash) ? 0 : 1;
             }
         }
 
