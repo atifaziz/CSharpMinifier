@@ -56,7 +56,9 @@ namespace CSharpMinifierConsole
                 return 0;
             }
 
+            byte[] hash;
             var utf8 = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
+
             using (var ha = IncrementalHash.CreateHash(HashAlgorithmName.SHA256))
             {
                 byte[] buffer = null;
@@ -75,17 +77,17 @@ namespace CSharpMinifierConsole
                     }
                 }
 
-                var hash = ha.GetHashAndReset();
-
-                Console.WriteLine(BitConverter.ToString(hash)
-                                              .Replace("-", string.Empty)
-                                              .ToLowerInvariant());
-
-                if (hashComparand == null)
-                    return 0;
-
-                return hashComparand.SequenceEqual(hash) ? 0 : 1;
+                hash = ha.GetHashAndReset();
             }
+
+            Console.WriteLine(BitConverter.ToString(hash)
+                                          .Replace("-", string.Empty)
+                                          .ToLowerInvariant());
+
+            if (hashComparand == null)
+                return 0;
+
+            return hashComparand.SequenceEqual(hash) ? 0 : 1;
         }
 
         static bool TryParseHexadecimalString(string s, out byte[] result)
