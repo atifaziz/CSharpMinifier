@@ -20,6 +20,10 @@ namespace CSharpMinifier
 
     public enum TokenKind
     {
+        // IMPORTANT! Keep the order here in sync with TraitsByTokenKind
+        // member of TokenKind. If a member is moved, added or removed then
+        // TokenKind.TraitsByTokenKind must be changed appropriately as well.
+
         Text,
         WhiteSpace,
         NewLine,
@@ -39,7 +43,7 @@ namespace CSharpMinifier
         PreprocessorDirective,
     }
 
-    public readonly struct Token : IEquatable<Token>
+    public readonly partial struct Token : IEquatable<Token>
     {
         public readonly TokenKind Kind;
         public readonly Position Start;
@@ -49,6 +53,8 @@ namespace CSharpMinifier
             (Kind, Start, End) = (kind, start, end);
 
         public int Length => End.Offset - Start.Offset;
+
+        public TokenKindTraits Traits => TraitsByKind[(int)Kind];
 
         public bool Equals(Token other) =>
             Kind == other.Kind && Start.Equals(other.Start) && End.Equals(other.End);
@@ -71,57 +77,5 @@ namespace CSharpMinifier
         public static string Substring(this Token token, string source) =>
             SubstringPool.GetOrCreate(source, token.Start.Offset, token.Length);
 
-    }
-
-    public static class TokenKindExtensions
-    {
-        public static bool IsString(this TokenKind kind)
-        {
-            switch (kind)
-            {
-                case TokenKind.StringLiteral:
-                case TokenKind.VerbatimStringLiteral:
-                case TokenKind.InterpolatedStringLiteral:
-                case TokenKind.InterpolatedStringLiteralStart:
-                case TokenKind.InterpolatedStringLiteralMid:
-                case TokenKind.InterpolatedStringLiteralEnd:
-                case TokenKind.InterpolatedVerbatimStringLiteral:
-                case TokenKind.InterpolatedVerbatimStringLiteralStart:
-                case TokenKind.InterpolatedVerbatimStringLiteralMid:
-                case TokenKind.InterpolatedVerbatimStringLiteralEnd:
-                    return true;
-                default:
-                    return false;
-            }
-        }
-
-        public static bool IsVerbatimString(this TokenKind kind)
-        {
-            switch (kind)
-            {
-                case TokenKind.VerbatimStringLiteral:
-                case TokenKind.InterpolatedVerbatimStringLiteral:
-                case TokenKind.InterpolatedVerbatimStringLiteralStart:
-                case TokenKind.InterpolatedVerbatimStringLiteralMid:
-                case TokenKind.InterpolatedVerbatimStringLiteralEnd:
-                    return true;
-                default:
-                    return false;
-            }
-        }
-
-        public static bool IsInterpolatedString(this TokenKind kind)
-        {
-            switch (kind)
-            {
-                case TokenKind.InterpolatedVerbatimStringLiteral:
-                case TokenKind.InterpolatedVerbatimStringLiteralStart:
-                case TokenKind.InterpolatedVerbatimStringLiteralMid:
-                case TokenKind.InterpolatedVerbatimStringLiteralEnd:
-                    return true;
-                default:
-                    return false;
-            }
-        }
     }
 }
