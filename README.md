@@ -97,6 +97,12 @@ The scanner/parser is hand-written and does not use Roslyn so it is extremely
 lightweight in use and processing. It is implemented as a simple state machine
 and makes practically no heap allocations.
 
+While CSharpMinifier does detect some syntactic errors, like unterminated
+strings and comments, and reports them through raised exceptions, there should
+be no expectation that such checks will be maintained in future versions.
+After all, as stated earlier, the input C# source is expected to be
+syntactically correct and all results otherwise are undefined.
+
 
 ## Installation
 
