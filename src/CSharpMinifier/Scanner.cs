@@ -344,7 +344,7 @@ namespace CSharpMinifier
                             case '"':
                                 yield return Transit(source[si] == '$'
                                                      ? TokenKind.InterpolatedStringLiteral
-                                                     : TokenKind.InterpolatedStringEnd,
+                                                     : TokenKind.InterpolatedStringLiteralEnd,
                                                      State.Text, 1);
                                 break;
                             case '\\':
@@ -373,8 +373,8 @@ namespace CSharpMinifier
                         else
                         {
                             yield return Transit(source[si] == '$'
-                                                 ? TokenKind.InterpolatedStringStart
-                                                 : TokenKind.InterpolatedStringMid,
+                                                 ? TokenKind.InterpolatedStringLiteralStart
+                                                 : TokenKind.InterpolatedStringLiteralMid,
                                                  State.Text);
                             interpolated.Push((false, 0));
                             goto restart;
@@ -423,7 +423,7 @@ namespace CSharpMinifier
                         {
                             yield return Transit(source[si] == '$'
                                                  ? TokenKind.InterpolatedVerbatimStringLiteral
-                                                 : TokenKind.InterpolatedVerbatimStringEnd,
+                                                 : TokenKind.InterpolatedVerbatimStringLiteralEnd,
                                                  State.Text);
                             goto restart;
                         }
@@ -438,8 +438,8 @@ namespace CSharpMinifier
                         else
                         {
                             yield return Transit(source[si] == '$'
-                                                 ? TokenKind.InterpolatedVerbatimStringStart
-                                                 : TokenKind.InterpolatedVerbatimStringMid,
+                                                 ? TokenKind.InterpolatedVerbatimStringLiteralStart
+                                                 : TokenKind.InterpolatedVerbatimStringLiteralMid,
                                                  State.Text);
                             interpolated.Push((true, 0));
                             goto restart;
@@ -619,7 +619,7 @@ namespace CSharpMinifier
                                 : state == State.PreprocessorDirectiveTrailingWhiteSpaceSlash ? TokenKind.PreprocessorDirective
                                 : state == State.InterpolatedVerbatimStringQuote
                                   ? source[si] == '$' ? TokenKind.InterpolatedVerbatimStringLiteral
-                                  : TokenKind.InterpolatedVerbatimStringEnd
+                                  : TokenKind.InterpolatedVerbatimStringLiteralEnd
                                 : TokenKind.Text;
 
                             yield return CreateToken(token);
