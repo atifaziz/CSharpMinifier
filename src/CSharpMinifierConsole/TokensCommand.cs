@@ -38,7 +38,7 @@ namespace CSharpMinifierConsole
                 Options.Verbose(Verbose),
                 Options.Debug,
                 Options.Glob(globDir),
-                { "f|format=", "output format: json|csv|line; default = json)", v => format = v.ToLowerInvariant() },
+                { "f|format=", "where {FORMAT} is one of: json (default), csv, line", v => format = v.ToLowerInvariant() },
             };
 
             var tail = options.Parse(args);

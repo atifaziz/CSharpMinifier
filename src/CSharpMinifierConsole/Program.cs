@@ -168,7 +168,7 @@ namespace CSharpMinifierConsole
                 new ActionOption("d|debug", "debug break", vs => Debugger.Launch());
 
             public static Option Glob(Ref<DirectoryInfo> value) =>
-                new ActionOption("glob=", "glob base directory", vs => value.Value = new DirectoryInfo(vs.Last()));
+                new ActionOption("glob=", "interpret file path as glob pattern with {DIRECTORY} as base", vs => value.Value = new DirectoryInfo(vs.Last()));
         }
 
         static OptionSetArgumentParser CreateStrictOptionSetArgumentParser()

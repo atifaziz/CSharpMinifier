@@ -1,12 +1,16 @@
 $LOGO$
 
-Usage: $NAME$ $COMMAND$ [OPTIONS...] [FILE]
+Colors tokens scanned from C# source.
 
-where FILE is the path to a file containing syntactically correct C#
-source. If FILE is not supplied or is exactly a dash/hyphen ("-") then
-STDIN is read for syntactically correct C# source.
+Usage: $NAME$ $COMMAND$ [OPTIONS...] [FILES...]
 
-Options:
+where FILES is a list of zero or more paths to files containing
+syntactically correct C# source. If zero or exactly one file path is
+supplied and that file path is just dash/hyphen ("-") then STDIN is read
+for syntactically correct C# source. If the "--glob" option is used then
+FILE is interpreted as glob patterns.
+
+where OPTIONS is zero or more of the following:
 
 $OPTIONS$
 
