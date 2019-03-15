@@ -31,7 +31,7 @@ namespace CSharpMinifierConsole
         {
             var help = Ref.Create(false);
             var globDir = Ref.Create((DirectoryInfo)null);
-            var hashComparand = (byte[])null;
+            var comparand = (byte[])null;
 
             var options = new OptionSet(CreateStrictOptionSetArgumentParser())
             {
@@ -40,11 +40,8 @@ namespace CSharpMinifierConsole
                 Options.Debug,
                 Options.Glob(globDir),
                 { "c|compare=", "set non-zero exit code if {HASH} is different",
-                    v =>
-                    {
-                        if (!TryParseHexadecimalString(v, out hashComparand))
-                            throw new Exception("Hash comparand is not a valid hexadecimal string.");
-                    }
+                    v => comparand = TryParseHexadecimalString(v, out var hc) ? hc
+                                   : throw new Exception("Hash comparand is not a valid hexadecimal string.")
                 },
             };
 
@@ -84,10 +81,10 @@ namespace CSharpMinifierConsole
                                           .Replace("-", string.Empty)
                                           .ToLowerInvariant());
 
-            if (hashComparand == null)
+            if (comparand == null)
                 return 0;
 
-            return hashComparand.SequenceEqual(hash) ? 0 : 1;
+            return comparand.SequenceEqual(hash) ? 0 : 1;
         }
 
         static bool TryParseHexadecimalString(string s, out byte[] result)
