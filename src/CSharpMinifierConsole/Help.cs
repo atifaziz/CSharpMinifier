@@ -18,7 +18,6 @@ namespace CSharpMinifierConsole
 
         static void Help(string id, string command, MonoOptionSet options)
         {
-            var name = Lazy.Create(() => Path.GetFileNameWithoutExtension(VersionInfo.FileName));
             var opts = Lazy.Create(() => options.WriteOptionDescriptionsReturningWriter(new StringWriter { NewLine = Environment.NewLine }).ToString());
             var logo = Lazy.Create(() => new StringBuilder().AppendLine($"{VersionInfo.ProductName} (version {VersionInfo.FileVersion})")
                                                             .AppendLine(VersionInfo.LegalCopyright.Replace("\u00a9", "(C)"))
@@ -34,7 +33,7 @@ namespace CSharpMinifierConsole
                 {
                     switch (m.Groups[1].Value)
                     {
-                        case "NAME": return name.Value;
+                        case "NAME": return "csmin";
                         case "COMMAND": return command;
                         case "LOGO": return logo.Value;
                         case "OPTIONS": return opts.Value;
