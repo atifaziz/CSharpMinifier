@@ -32,6 +32,7 @@ namespace CSharpMinifierConsole
             var help = Ref.Create(false);
             var globDir = Ref.Create((DirectoryInfo)null);
             var comparand = (byte[])null;
+            var algoName = HashAlgorithmName.SHA256;
 
             var options = new OptionSet(CreateStrictOptionSetArgumentParser())
             {
@@ -43,6 +44,10 @@ namespace CSharpMinifierConsole
                     v => comparand = TryParseHexadecimalString(v, out var hc) ? hc
                                    : throw new Exception("Hash comparand is not a valid hexadecimal string.")
                 },
+                { "a|algo=", $"hash algorithm to use (default = {algoName})",
+                    v => algoName = HashAlgorithmNames.TryGetValue(v, out var name)
+                                  ? name
+                                  : new HashAlgorithmName(v) },
             };
 
             var tail = options.Parse(args);
@@ -56,7 +61,7 @@ namespace CSharpMinifierConsole
             byte[] hash;
             var utf8 = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
 
-            using (var ha = IncrementalHash.CreateHash(HashAlgorithmName.SHA256))
+            using (var ha = IncrementalHash.CreateHash(algoName))
             {
                 byte[] buffer = null;
                 foreach (var (_, source) in ReadSources(tail, globDir))
@@ -86,6 +91,19 @@ namespace CSharpMinifierConsole
 
             return comparand.SequenceEqual(hash) ? 0 : 1;
         }
+
+        static readonly Dictionary<string, HashAlgorithmName> HashAlgorithmNames =
+            Enumerable.ToDictionary(
+                new[]
+                {
+                    HashAlgorithmName.MD5,
+                    HashAlgorithmName.SHA1,
+                    HashAlgorithmName.SHA256,
+                    HashAlgorithmName.SHA384,
+                    HashAlgorithmName.SHA512,
+                },
+                e => e.Name,
+                StringComparer.OrdinalIgnoreCase);
 
         static bool TryParseHexadecimalString(string s, out byte[] result)
         {
