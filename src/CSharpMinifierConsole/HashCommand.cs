@@ -40,7 +40,7 @@ namespace CSharpMinifierConsole
                 Options.Verbose(Verbose),
                 Options.Debug,
                 Options.Glob(globDir),
-                { "c|compare=", "set non-zero exit code if {HASH} is different",
+                { "c|compare=", "set non-zero exit code if {HASH} (in hexadecimal) is different",
                     v => comparand = TryParseHexadecimalString(v, out var hc) ? hc
                                    : throw new Exception("Hash comparand is not a valid hexadecimal string.")
                 },
