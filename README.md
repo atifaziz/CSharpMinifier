@@ -182,7 +182,8 @@ Text(12,1): }
 
     csmin < example.cs > example.min.cs
 
-For more information, see the [on-line documentation][wiki].
+For more information, run `csmin help` or see the [on-line
+documentation][wiki].
 
 
 ## Building
