@@ -27,12 +27,29 @@ namespace CSharpMinifierConsole
 
     partial class Program
     {
+        enum HashOutputFormat
+        {
+            Hexadecimal,
+            Json,
+            JsonHexadecimal,
+        }
+
+        static readonly KeyValuePair<string, HashOutputFormat>[] HashOutputFormats =
+        {
+            KeyValuePair.Create("hexadecimal"     , HashOutputFormat.Hexadecimal),
+            KeyValuePair.Create("hex"             , HashOutputFormat.Hexadecimal),
+            KeyValuePair.Create("json"            , HashOutputFormat.Json),
+            KeyValuePair.Create("json-hexadecimal", HashOutputFormat.JsonHexadecimal),
+            KeyValuePair.Create("json-hex"        , HashOutputFormat.JsonHexadecimal),
+        };
+
         static int HashCommand(IEnumerable<string> args)
         {
             var help = Ref.Create(false);
             var globDir = Ref.Create((DirectoryInfo)null);
             var comparand = (byte[])null;
             var algoName = HashAlgorithmName.SHA256;
+            var format = HashOutputFormat.Hexadecimal;
 
             var options = new OptionSet(CreateStrictOptionSetArgumentParser())
             {
@@ -48,6 +65,14 @@ namespace CSharpMinifierConsole
                     v => algoName = HashAlgorithmNames.TryGetValue(v, out var name)
                                   ? name
                                   : new HashAlgorithmName(v) },
+                { "f|format=", "output hash format where {FORMAT} is one of: " +
+                               string.Join(", ", from f in HashOutputFormats
+                                                 group f.Key by f.Value into g
+                                                 select string.Join("|", g)),
+                    v => format = HashOutputFormats.ToDictionary(e => e.Key, e => e.Value)
+                                                   .TryGetValue(v, out var f) ? f
+                                : throw new Exception("Invalid hash format.")
+                }
             };
 
             var tail = options.Parse(args);
@@ -82,9 +107,30 @@ namespace CSharpMinifierConsole
                 hash = ha.GetHashAndReset();
             }
 
-            Console.WriteLine(BitConverter.ToString(hash)
-                                          .Replace("-", string.Empty)
-                                          .ToLowerInvariant());
+            switch (format)
+            {
+                case HashOutputFormat.Hexadecimal:
+                {
+                    Console.WriteLine(BitConverter.ToString(hash)
+                                                  .Replace("-", string.Empty)
+                                                  .ToLowerInvariant());
+                    break;
+                }
+                case HashOutputFormat.Json:
+                case HashOutputFormat.JsonHexadecimal:
+                {
+                    var (prefix, fs) = format == HashOutputFormat.JsonHexadecimal
+                                     ? ("0x", "x2")
+                                     : (null, null);
+
+                    Console.WriteLine(
+                        "[" + string.Join(",",
+                                  from b in hash
+                                  select prefix + b.ToString(fs, CultureInfo.InvariantCulture))
+                            + "]");
+                    break;
+                }
+            }
 
             if (comparand == null)
                 return 0;
