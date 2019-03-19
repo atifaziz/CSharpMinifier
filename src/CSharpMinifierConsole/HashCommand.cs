@@ -30,6 +30,7 @@ namespace CSharpMinifierConsole
         enum HashOutputFormat
         {
             Hexadecimal,
+            Base32,
             Json,
         }
 
@@ -56,7 +57,7 @@ namespace CSharpMinifierConsole
                                   ? name
                                   : new HashAlgorithmName(v) },
                 { "f|format=", "output hash format; where {FORMAT} is one of: " +
-                               "hexadecimal (default), json",
+                               "hexadecimal (default), base32 (Crockford), json",
                     v => format = Enum.TryParse<HashOutputFormat>(v, true, out var f)
                                   && Enum.IsDefined(typeof(HashOutputFormat), f) ? f
                                 : throw new Exception("Invalid hash format.")
@@ -102,6 +103,11 @@ namespace CSharpMinifierConsole
                     Console.WriteLine(BitConverter.ToString(hash)
                                                   .Replace("-", string.Empty)
                                                   .ToLowerInvariant());
+                    break;
+                }
+                case HashOutputFormat.Base32:
+                {
+                    Console.WriteLine(Crockbase32.Encode(hash));
                     break;
                 }
                 case HashOutputFormat.Json:
