@@ -34,6 +34,7 @@ namespace CSharpMinifierConsole
         {
             var help = Ref.Create(false);
             var globDir = Ref.Create((DirectoryInfo)null);
+            var validate = false;
 
             var options = new OptionSet(CreateStrictOptionSetArgumentParser())
             {
@@ -41,6 +42,7 @@ namespace CSharpMinifierConsole
                 Options.Verbose(Verbose),
                 Options.Debug,
                 Options.Glob(globDir),
+                { "validate", "validate minified output", _ => validate = true },
             };
 
             var tail = options.Parse(args);
@@ -75,16 +77,59 @@ namespace CSharpMinifierConsole
             {
                 foreach (var (_, source) in ReadSources(tail, globDir))
                 {
+                    Minify(source, Console.Out);
+
+                    if (validate && !Validate(stdin => Minify(source, stdin)))
+                        throw new Exception("Minified version is invalid.");
+                }
+
+                void Minify(string source, TextWriter output)
+                {
                     var nl = false;
                     foreach (var s in Minifier.Minify(source, null))
                     {
                         if (nl = s == null)
-                            Console.WriteLine();
+                            output.WriteLine();
                         else
-                            Console.Write(s);
+                            output.Write(s);
                     }
                     if (!nl)
-                        Console.WriteLine();
+                        output.WriteLine();
+                }
+
+                bool Validate(Action<TextWriter> minificationAction)
+                {
+                    var psi = new ProcessStartInfo("csval")
+                    {
+                        UseShellExecute        = false,
+                        CreateNoWindow         = false,
+                        RedirectStandardOutput = true,
+                        RedirectStandardError  = true,
+                        RedirectStandardInput  = true,
+                    };
+
+                    psi.ArgumentList.Add("--langversion=latest");
+
+                    using (var process = Process.Start(psi))
+                    {
+                        process.OutputDataReceived += (_, ea) =>
+                        {
+                            if (ea.Data != null)
+                                Console.Error.WriteLine(ea.Data);
+                        };
+
+                        process.BeginOutputReadLine();
+                        process.BeginErrorReadLine();
+
+                        var stdin = process.StandardInput;
+                        minificationAction(stdin);
+                        stdin.Flush();
+                        stdin.Close();
+
+                        process.WaitForExit();
+
+                        return process.ExitCode == 0;
+                    }
                 }
             }
         }
