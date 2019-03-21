@@ -21,7 +21,6 @@ namespace CSharpMinifierConsole
     using System.Diagnostics;
     using System.IO;
     using System.Linq;
-    using System.Text.RegularExpressions;
     using CSharpMinifier;
     using Microsoft.Extensions.FileSystemGlobbing;
     using Mono.Options;
