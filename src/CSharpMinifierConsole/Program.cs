@@ -102,7 +102,7 @@ namespace CSharpMinifierConsole
                     var psi = new ProcessStartInfo("csval")
                     {
                         UseShellExecute        = false,
-                        CreateNoWindow         = false,
+                        CreateNoWindow         = true,
                         RedirectStandardOutput = true,
                         RedirectStandardError  = true,
                         RedirectStandardInput  = true,
