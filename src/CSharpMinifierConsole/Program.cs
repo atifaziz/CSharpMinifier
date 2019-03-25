@@ -21,6 +21,7 @@ namespace CSharpMinifierConsole
     using System.Diagnostics;
     using System.IO;
     using System.Linq;
+    using System.Runtime.InteropServices;
     using CSharpMinifier;
     using Microsoft.Extensions.FileSystemGlobbing;
     using Mono.Options;
@@ -75,6 +76,14 @@ namespace CSharpMinifierConsole
 
             void DefaultCommand()
             {
+                const string validatorExecutableName = "csval";
+
+                var validator = Lazy.Create(() =>
+                       RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
+                    || RuntimeInformation.IsOSPlatform(OSPlatform.OSX)
+                     ? FindProgramPath(validatorExecutableName)
+                     : validatorExecutableName);
+
                 foreach (var (_, source) in ReadSources(tail, globDir))
                 {
                     Minify(source, Console.Out);
@@ -99,7 +108,7 @@ namespace CSharpMinifierConsole
 
                 bool Validate(Action<TextWriter> minificationAction)
                 {
-                    var psi = new ProcessStartInfo("csval")
+                    var psi = new ProcessStartInfo(validator.Value)
                     {
                         UseShellExecute        = false,
                         CreateNoWindow         = true,
@@ -132,6 +141,24 @@ namespace CSharpMinifierConsole
                     }
                 }
             }
+        }
+
+        static string FindProgramPath(string program)
+        {
+            var fileName = Path.GetFileName(program);
+
+            var paths =
+                from p in Environment.GetEnvironmentVariable("PATH")
+                                     .Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries)
+                select p.Length > 0 && p[0] == '~'
+                     ? Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.Personal), p.Substring(1))
+                     : p
+                into p
+                select Path.Join(p, fileName) into p
+                where File.Exists(p)
+                select p;
+
+            return paths.FirstOrDefault() ?? program;
         }
 
         static void HelpCommand(IEnumerable<string> args)
