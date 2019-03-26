@@ -38,7 +38,7 @@ namespace CSharpMinifier
 {
     using static TokenKindTraits;
 
-    partial struct Token
+    partial class TokenKindExtensions
     {
         static readonly TokenKindTraits[] TraitsByKind =
         {

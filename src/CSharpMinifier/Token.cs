@@ -43,7 +43,18 @@ namespace CSharpMinifier
         PreprocessorDirective,
     }
 
-    public readonly partial struct Token : IEquatable<Token>
+    public static partial class TokenKindExtensions
+    {
+        public static TokenKindTraits GetTraits(this TokenKind kind)
+        {
+            var i = (int)kind;
+            return i >= 0 && i < TraitsByKind.Length
+                 ? TraitsByKind[i]
+                 : throw new ArgumentOutOfRangeException(nameof(kind));
+        }
+    }
+
+    public readonly struct Token : IEquatable<Token>
     {
         public readonly TokenKind Kind;
         public readonly Position Start;
@@ -54,7 +65,8 @@ namespace CSharpMinifier
 
         public int Length => End.Offset - Start.Offset;
 
-        public TokenKindTraits Traits => TraitsByKind[(int)Kind];
+        [Obsolete("Use " + nameof(TokenKindExtensions) + "." + nameof(TokenKindExtensions.GetTraits) + " instead.")]
+        public TokenKindTraits Traits => Kind.GetTraits();
 
         public bool Equals(Token other) =>
             Kind == other.Kind && Start.Equals(other.Start) && End.Equals(other.End);

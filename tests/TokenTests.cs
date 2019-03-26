@@ -18,35 +18,10 @@ namespace CSharpMinifier.Tests
 {
     using System.Linq;
     using NUnit.Framework;
-    using static TokenKindTraits;
 
     [TestFixture]
     public class TokenTests
     {
-        [TestCase(TokenKind.Text                                  , None)]
-        [TestCase(TokenKind.WhiteSpace                            , WhiteSpace)]
-        [TestCase(TokenKind.NewLine                               , WhiteSpace)]
-        [TestCase(TokenKind.SingleLineComment                     , Comment)]
-        [TestCase(TokenKind.MultiLineComment                      , Comment)]
-        [TestCase(TokenKind.CharLiteral                           , Literal)]
-        [TestCase(TokenKind.StringLiteral                         , Literal | String)]
-        [TestCase(TokenKind.VerbatimStringLiteral                 , Literal | String | VerbatimString)]
-        [TestCase(TokenKind.InterpolatedStringLiteral             , Literal | String | InterpolatedString)]
-        [TestCase(TokenKind.InterpolatedStringLiteralStart        , Literal | String | InterpolatedString | InterpolatedStringStart)]
-        [TestCase(TokenKind.InterpolatedStringLiteralMid          , Literal | String | InterpolatedString | InterpolatedStringMid)]
-        [TestCase(TokenKind.InterpolatedStringLiteralEnd          , Literal | String | InterpolatedString | InterpolatedStringEnd)]
-        [TestCase(TokenKind.InterpolatedVerbatimStringLiteral     , Literal | String | InterpolatedString | VerbatimString)]
-        [TestCase(TokenKind.InterpolatedVerbatimStringLiteralStart, Literal | String | InterpolatedString | VerbatimString | InterpolatedStringStart)]
-        [TestCase(TokenKind.InterpolatedVerbatimStringLiteralMid  , Literal | String | InterpolatedString | VerbatimString | InterpolatedStringMid)]
-        [TestCase(TokenKind.InterpolatedVerbatimStringLiteralEnd  , Literal | String | InterpolatedString | VerbatimString | InterpolatedStringEnd)]
-        [TestCase(TokenKind.PreprocessorDirective                 , None)]
-
-        public void Traits(TokenKind kind, TokenKindTraits traits)
-        {
-            var token = new Token(kind, new Position(), new Position());
-            Assert.That(token.Traits, Is.EqualTo(traits));
-        }
-
         public class Substring
         {
             [TestCase("as")]
