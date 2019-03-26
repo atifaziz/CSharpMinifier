@@ -4,9 +4,10 @@ Lists top-level regions (#region...#endregion).
 
 Usage: $NAME$ $COMMAND$ [OPTIONS...] [FILE]
 
-where FILE is the path to a file containing syntactically correct C#
-source. If FILE is not supplied or is exactly a dash/hyphen ("-") then
-STDIN is read for syntactically correct C# source.
+where FILES is a list of zero or more paths to files containing
+syntactically correct C# source. If FILES is not given then STDIN is
+read for syntactically correct C# source. If the "--glob" option is used
+then FILES is interpreted as glob patterns.
 
 Options:
 

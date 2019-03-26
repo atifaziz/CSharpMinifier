@@ -5,11 +5,9 @@ files matching glob patterns.
 
 Usage: $NAME$ $COMMAND$ [OPTIONS...] [FILES...]
 
-where FILES is a list of zero or more paths to files containing
-syntactically correct C# source. If zero or exactly one file path is
-supplied and that file path is just dash/hyphen ("-") then STDIN is read
-for syntactically correct C# source. If the "--glob" option is used then
-FILE is interpreted as glob patterns.
+where FILES is a list of zero or more paths to files. If FILES is not
+given then a single file of the name "STDIN" is assumed. If the "--glob"
+option is used then FILES is interpreted as glob patterns.
 
 where OPTIONS is zero or more of the following:
 
