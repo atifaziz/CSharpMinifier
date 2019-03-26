@@ -53,7 +53,7 @@ defined behaviour).
 For the purpose of minification, especially that of whitespace and comments,
 CSharpMinifier needs to ensure that it does not confuse, for example, a comment
 appearing in a string or a commented-out string. Therefore it parses some
-minimal grammar of a C# source such as:
+minimal grammar of a C# source, such as:
 
 - Horizontal whitespace (space or tab)
 - New-line sequences like `CR`, `LF` or `CRLF`
@@ -62,27 +62,27 @@ minimal grammar of a C# source such as:
 - Multi-line comments; that is, everything between `/*` and `*/`
 - Pre-processor directives
 - Strings literals of all sorts:
-  - regularm e,g, , e.g. `"..."`
+  - regular e,g, , e.g. `"..."`
   - verbatim, e.g. , e.g. `@"..."`
   - interpolated, e.g. `$"..."`
-  - verbatim and interpolated, e.g. `$@"..."`
+  - interpolated verbatim, e.g. `$@"..."`
 
-Everything surrounding or inbetween the above is treated as raw and unparsed
+Everything surrounding or in-between the above is treated as raw and unparsed
 _text_. As a consequence, the C# source does not have to be a full C# program
 or library code. You can minify C# snippets like scripts and expressions as
 long as they are syntactically valid.
 
-All white space within the following type of lexical tokens is maintained:
+All whitespace within the following type of lexical tokens is maintained:
 
 - string literals
 - pre-processor directive text
 
 CSharpMinifier preserves all pre-processor directives except `#region` and
-`#endregion`. These are filtered but content inbetween is subject to
+`#endregion`. These are filtered but content in-between is subject to
 minification.
 
 Horizontal (e.g. space and tab) and vertical (e.g. carriage-return and
-line-feed) white space is eliminated in all cases except:
+line-feed) whitespace is eliminated in all cases except:
 
 - a single horizontal space is maintained between words and some some obscure
   cases of operators (e.g. `x = i+++ +2`) to prevent minification from
@@ -93,9 +93,9 @@ line-feed) white space is eliminated in all cases except:
 CSharpMinifier provides offset, line and column information about all lexical
 tokens it recognizes.
 
-The scanner/parser is hand-written and does not use Roslyn so it is extremely
-lightweight in use and processing. It is implemented as a simple state machine
-and makes practically no heap allocations.
+The scanner/parser is hand-written. It does not use Roslyn so it is extremely
+lightweight to use and in processing. It is implemented as a simple state
+machine and practically makes no heap allocations.
 
 While CSharpMinifier does detect some syntactic errors, like unterminated
 strings and comments, and reports them through raised exceptions, there should
@@ -106,20 +106,25 @@ syntactically correct and all results otherwise are undefined.
 
 ## Installation
 
-To install the library for use in a project, see the various installation
-instructions on the library package page on NuGet
+To install the library for use in a project, do either:
 
     nuget install CSharpMinifier
+
+or for projects based on .NET Core SDK:
+    
+    dotnet add package CSharpMinifier
+
+See also the various installation instructions on [the library package
+page on nuget.org][nupkg]
 
 To install the command-line application as .NET Core global tool, do:
 
     dotnet tool install -g CSharpMinifierConsole
 
 
-
 ## Usage
 
-Suppose the following C# source text loaded in a string variable called
+Suppose the following C# source text is loaded in a string variable called
 `source`:
 
 ```c#
@@ -220,6 +225,7 @@ On Linux or macOS, run:
 This will also build the binaries if necessary.
 
 
+[nupkg]: https://www.nuget.org/packages/CSharpMinifier/
 [global tool]: https://docs.microsoft.com/en-us/dotnet/core/tools/global-tools
 [app]: https://www.nuget.org/packages/CSharpMinifierConsole/
 [lib]: https://www.nuget.org/packages/CSharpMinifier/
