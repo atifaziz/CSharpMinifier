@@ -103,6 +103,8 @@ be no expectation that such checks will be maintained in future versions.
 After all, as stated earlier, the input C# source is expected to be
 syntactically correct and all results otherwise are undefined.
 
+For C# syntax validation, consider using [CSharpSyntaxValidator][csval].
+
 
 ## Installation
 
@@ -230,3 +232,4 @@ This will also build the binaries if necessary.
 [app]: https://www.nuget.org/packages/CSharpMinifierConsole/
 [lib]: https://www.nuget.org/packages/CSharpMinifier/
 [wiki]: https://github.com/atifaziz/CSharpMinifier/wiki
+[csval]: https://www.nuget.org/packages/CSharpSyntaxValidator/
