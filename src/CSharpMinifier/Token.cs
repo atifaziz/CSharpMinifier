@@ -52,6 +52,9 @@ namespace CSharpMinifier
                  ? TraitsByKind[i]
                  : throw new ArgumentOutOfRangeException(nameof(kind));
         }
+
+        public static bool HasTraits(this TokenKind kind, TokenKindTraits traits) =>
+            (kind.GetTraits() & traits) == traits;
     }
 
     public readonly struct Token : IEquatable<Token>

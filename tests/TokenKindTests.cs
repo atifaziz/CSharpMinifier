@@ -44,7 +44,9 @@ namespace CSharpMinifier.Tests
 
         public void Traits(TokenKind kind, TokenKindTraits traits)
         {
-            Assert.That(kind.GetTraits(), Is.EqualTo(traits));
+            Assert.That(kind.GetTraits()       , Is.EqualTo(traits));
+            Assert.That(kind.HasTraits(traits) , Is.True);
+            Assert.That(kind.HasTraits(~traits), Is.False);
         }
 
         [Test]
