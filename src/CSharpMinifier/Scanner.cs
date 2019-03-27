@@ -29,6 +29,8 @@ namespace CSharpMinifier
 
         enum State
         {
+            NewLine,
+            LeadingWhiteSpace,
             Text,
             WhiteSpace,
             Cr,
@@ -61,14 +63,13 @@ namespace CSharpMinifier
 
         static IEnumerable<Token> ScanImpl(string source)
         {
-            var state = State.Text;
+            var state = State.NewLine;
             var si = 0;
             var pos = (Line: 1, Col: 0);
             var spos = (Line: 1, Col: 1);
             var ppdtwssi = -1;
             var ppdtwscol = 0;
             int i;
-            var lastTokenKind = (TokenKind?)null;
             var interpolated = new Stack<(bool Verbatim, int Parens)>();
 
             bool Interpolated() => interpolated.Count > 0;
@@ -87,12 +88,9 @@ namespace CSharpMinifier
                 return token;
             }
 
-            Token CreateToken(TokenKind kind, int offset = 0)
-            {
-                lastTokenKind = kind;
-                return new Token(kind, new Position(si, spos.Line, spos.Col),
-                                       new Position(i + offset, pos.Line, pos.Col + offset));
-            }
+            Token CreateToken(TokenKind kind, int offset = 0) =>
+                new Token(kind, new Position(si, spos.Line, spos.Col),
+                                new Position(i + offset, pos.Line, pos.Col + offset));
 
             Token? TextTransit(State newState, int offset = 0) =>
                 TransitReturn(newState, offset,
@@ -132,6 +130,39 @@ namespace CSharpMinifier
                 restart:
                 switch (state)
                 {
+                    case State.NewLine:
+                    {
+                        switch (ch)
+                        {
+                            case ' ':
+                            case '\t':
+                                state = State.LeadingWhiteSpace;
+                                break;
+                            case '#':
+                                state = State.PreprocessorDirective;
+                                break;
+                            default:
+                                state = State.Text;
+                                goto restart;
+                        }
+                        break;
+                    }
+                    case State.LeadingWhiteSpace:
+                    {
+                        switch (ch)
+                        {
+                            case ' ':
+                            case '\t':
+                                break;
+                            case '#':
+                                yield return Transit(TokenKind.WhiteSpace, State.PreprocessorDirective);
+                                break;
+                            default:
+                                yield return Transit(TokenKind.WhiteSpace, State.Text);
+                                goto restart;
+                        }
+                        break;
+                    }
                     case State.Text:
                     {
                         switch (ch)
@@ -175,11 +206,6 @@ namespace CSharpMinifier
                                     throw SyntaxError("Parentheses mismatch in interpolated string expression.");
                                 break;
                             }
-                            case '#' when lastTokenKind is null // BOF
-                                       || lastTokenKind is TokenKind k
-                                       && (k == TokenKind.WhiteSpace || k == TokenKind.NewLine):
-                                state = State.PreprocessorDirective;
-                                goto restart;
                             case ' ':
                             case '\t':
                             {
@@ -198,7 +224,7 @@ namespace CSharpMinifier
                                 if (TextTransit(State.Text) is Token text)
                                     yield return text;
                                 pos = (pos.Line + 1, 0);
-                                yield return Transit(TokenKind.NewLine, State.Text, 1);
+                                yield return Transit(TokenKind.NewLine, State.NewLine, 1);
                                 break;
                             }
                         }
@@ -227,11 +253,11 @@ namespace CSharpMinifier
                                 break;
                             case '\n':
                                 pos = (pos.Line + 1, 0);
-                                yield return Transit(TokenKind.NewLine, State.Text, 1);
+                                yield return Transit(TokenKind.NewLine, State.NewLine, 1);
                                 break;
                             default:
                                 pos = (pos.Line + 1, 1);
-                                yield return Transit(TokenKind.NewLine, State.Text);
+                                yield return Transit(TokenKind.NewLine, State.NewLine);
                                 goto restart;
                         }
                         break;
@@ -612,7 +638,7 @@ namespace CSharpMinifier
                         {
                             var token
                                 = state == State.SingleLineComment ? TokenKind.SingleLineComment
-                                : state == State.WhiteSpace ? TokenKind.WhiteSpace
+                                : state == State.WhiteSpace || state == State.LeadingWhiteSpace ? TokenKind.WhiteSpace
                                 : state == State.Cr ? TokenKind.NewLine
                                 : state == State.PreprocessorDirective || state == State.PreprocessorDirectiveSlash ? TokenKind.PreprocessorDirective
                                 : state == State.VerbatimStringQuote ? TokenKind.VerbatimStringLiteral
