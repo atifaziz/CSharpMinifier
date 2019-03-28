@@ -653,6 +653,13 @@ namespace CSharpMinifier.Tests
             "\t#endregion\n")]
 
         [TestCase(
+            "\t#\tregion foo\n" +
+            "\t# endregion\n",
+
+            "\t#\tregion foo\n" +
+            "\t# endregion\n")]
+
+        [TestCase(
             ""
             + "#region foo\n"
             + "  #region bar\n"
