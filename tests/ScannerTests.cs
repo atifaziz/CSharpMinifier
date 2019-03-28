@@ -150,6 +150,17 @@ namespace CSharpMinifier.Tests
             @"NewLine    1 1 =1 ""\r""",
             @"Text       2 0  2 ""42""")]
 
+        // A pre-processing directive always occupies a separate line of
+        // source code and always begins with a # character and a
+        // pre-processing directive name.
+
+        [TestCase("foo #bar baz",         // not technically valid C#
+            @"Text       3 0 3 ""foo""",
+            @"WhiteSpace 1 0 1 "" """,
+            @"Text       4 0 4 ""#bar""",
+            @"WhiteSpace 1 0 1 "" """,
+            @"Text       3 0 3 ""baz""")]
+
         [TestCase("#line 42"            , @"PreprocessorDirective  8 0  8 ""#line 42""")]
         [TestCase("#line 42 / / comment", @"PreprocessorDirective 20 0 20 ""#line 42 / / comment""")]
         [TestCase("#line 42/ /comment"  , @"PreprocessorDirective 18 0 18 ""#line 42/ /comment""")]
@@ -206,6 +217,23 @@ namespace CSharpMinifier.Tests
         [TestCase("#error 42 /\n",
             @"PreprocessorDirective 11 0  11 ""#error 42 /""",
             @"NewLine                1 1 -11 ""\n""")]
+
+        // White space may occur before
+        // the # character and between the # character and the directive
+        // name.
+
+        [TestCase("# error 42",
+            @"PreprocessorDirective 10 0 10 ""# error 42""")]
+
+        // Delimited comments (the /* */ style of comments) are not permitted
+        // on source lines containing pre-processing directives.
+
+        [TestCase("/* foo */ #bar /* baz */",
+            @"MultiLineComment 9 0 9 ""/* foo */""",
+            @"WhiteSpace       1 0 1 "" """,
+            @"Text             4 0 4 ""#bar""",
+            @"WhiteSpace       1 0 1 "" """,
+            @"MultiLineComment 9 0 9 ""/* baz */""")]
 
         [TestCase("@\"\"",
             @"VerbatimString 3 0 3 ""@\""\""""")]
