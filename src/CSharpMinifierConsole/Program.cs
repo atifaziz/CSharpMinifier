@@ -68,6 +68,7 @@ namespace CSharpMinifierConsole
                 case "regions": RegionsCommand(commandArgs); break;
                 case "color"  :
                 case "colour" : ColorCommand(commandArgs); break;
+                case "serve"  : ServeCommand(commandArgs); break;
                 case "glob"   : GlobCommand(commandArgs); break;
                 default       : DefaultCommand(); break;
             }
