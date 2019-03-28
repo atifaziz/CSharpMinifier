@@ -19,9 +19,9 @@ namespace CSharpMinifierConsole
         static void Help(string id, string command, MonoOptionSet options)
         {
             var opts = Lazy.Create(() => options.WriteOptionDescriptionsReturningWriter(new StringWriter { NewLine = Environment.NewLine }).ToString());
-            var logo = Lazy.Create(() => new StringBuilder().AppendLine($"{VersionInfo.ProductName} (version {VersionInfo.FileVersion})")
+            var logo = Lazy.Create(() => new StringBuilder().AppendLine($"{VersionInfo.ProductName} (version {new Version(VersionInfo.FileVersion).Trim(3)})")
                                                             .AppendLine(VersionInfo.LegalCopyright.Replace("\u00a9", "(C)"))
-                                                               .ToString());
+                                                            .ToString());
 
             using (var stream = GetManifestResourceStream($"help.{id ?? command}.txt"))
             using (var reader = new StreamReader(stream))

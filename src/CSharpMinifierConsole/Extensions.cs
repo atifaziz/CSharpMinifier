@@ -44,6 +44,32 @@ namespace CSharpMinifierConsole
             while (reader.ReadLine() is string line)
                 yield return line;
         }
+
+        /// <summary>
+        /// Trims version build and revision fields if they are both zero or
+        /// just the revision if build is non-zero. An additional parameter
+        /// specifies the minimum field count (between 2 and 4) in the
+        /// resulting version, which prevents trimming even if zero.
+        /// </summary>
+
+        public static Version Trim(this Version version, int minFieldCount = 2)
+        {
+            if (version == null) throw new ArgumentNullException(nameof(version));
+            if (minFieldCount < 2 || minFieldCount > 4) throw new ArgumentOutOfRangeException(nameof(minFieldCount), minFieldCount, null);
+
+            if (version.Revision < 0 || version.Build < 0)
+            {
+                version = new Version(version.Major,
+                                      version.Minor,
+                                      version.Build    < 0 ? 0 : version.Build,
+                                      version.Revision < 0 ? 0 : version.Revision);
+            }
+
+            return minFieldCount < 4 && version.Revision == 0
+                 ? minFieldCount < 3 && version.Build == 0 ? new Version(version.Major, version.Minor)
+                 : new Version(version.Major, version.Minor, version.Build)
+                 : version;
+        }
     }
 
     static class OptionSetExtensions
