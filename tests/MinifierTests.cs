@@ -35,6 +35,8 @@ namespace CSharpMinifier.Tests
         public void Minify()
         {
             const string source = @"
+#line 1
+# line 1
 /* https://unlicense.org/
  *
  * This is free and unencumbered software released into the public domain.
@@ -62,6 +64,10 @@ namespace CSharpMinifier.Tests
  *
  * For more information, please refer to <http://unlicense.org>
  */
+
+#region!
+#! // not really valid
+#endregion!
 
 #region Imports
 using System;
@@ -91,6 +97,9 @@ static class Program
                                    .ToDelimitedString(string.Empty);
 
             const string expected =
+                "#line 1\n" +
+                "# line 1\n" +
+                "#!\n" +
                 "using System;" +
                 "static class Program{" +
                 "static void Main(){" +

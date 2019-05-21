@@ -48,18 +48,31 @@ namespace CSharpMinifier
                        && t.Kind != TokenKind.NewLine
                     select t;
 
-                bool IsWordChar(char ch) =>
-                    char.IsLetter(ch) || ch >= '0' && ch <= '9' || ch == '_';
+                bool IsSpaceOrTab (char ch) => ch == ' ' || ch == '\t';
+                bool IsAsciiLetter(char ch) => (ch = (char) (ch & ~0x20)) >= 'A' && ch <= 'z';
+                bool IsWordChar   (char ch) => char.IsLetter(ch)
+                                            || ch >= '0' && ch <= '9'
+                                            || ch == '_';
 
                 var lastCh = (char?)null;
                 foreach (var t in tokens)
                 {
                     if (t.Kind == TokenKind.PreprocessorDirective)
                     {
-                        var ei = source.IndexOfAny(SpaceOrTab, t.Start.Offset, t.Length);
+                        var tei = t.End.Offset;
+
                         var si = t.Start.Offset + 1;
-                        var length = (ei < 0 ? t.End.Offset : ei) - si;
-                        if (   string.CompareOrdinal("region"   , 0, source, si, length) != 0
+                        while (si < tei && IsSpaceOrTab(source[si]))
+                            si++;
+
+                        var ei = si;
+                        while (ei < tei && IsAsciiLetter(source[ei]))
+                            ei++;
+
+                        var length = ei - si;
+
+                        if (length == 0
+                            || string.CompareOrdinal("region"   , 0, source, si, length) != 0
                             && string.CompareOrdinal("endregion", 0, source, si, length) != 0)
                         {
                             if (lastCh != null)
