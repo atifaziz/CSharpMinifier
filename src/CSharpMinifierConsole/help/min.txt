@@ -3,6 +3,8 @@ $LOGO$
 Minifies C# source, removing comments and whitespace that would not
 affect the behaviour of the compiled code.
 
+To see other commands, re-run with the "help" command.
+
 Usage: $NAME$ $COMMAND$ [OPTIONS...] [FILES...]
 
 where FILES is a list of zero or more paths to files containing
