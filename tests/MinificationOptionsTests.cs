@@ -67,11 +67,11 @@ namespace CSharpMinifier.Tests
         public void CommentMatchingWithNullPattern()
         {
             var e = Assert.Throws<ArgumentNullException>(() =>
-                MinificationOptions.Default.WithCommentMatching(null));
+                MinificationOptions.Default.FilterCommentMatching(null));
             Assert.That(e.ParamName, Is.EqualTo("pattern"));
 
             e = Assert.Throws<ArgumentNullException>(() =>
-                MinificationOptions.Default.WithCommentMatching(null, RegexOptions.None));
+                MinificationOptions.Default.FilterCommentMatching(null, RegexOptions.None));
             Assert.That(e.ParamName, Is.EqualTo("pattern"));
         }
 
@@ -83,7 +83,7 @@ namespace CSharpMinifier.Tests
         [TestCase(@"^///[^/]", "//// foo" , false)]
         public void CommentMatching(string pattern, string source, bool match)
         {
-            var options = MinificationOptions.Default.WithCommentMatching(pattern);
+            var options = MinificationOptions.Default.FilterCommentMatching(pattern);
             var token = Scanner.Scan(source).Single();
             Assert.That(options.CommentFilter(token, source), Is.EqualTo(match));
         }

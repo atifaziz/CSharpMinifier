@@ -180,7 +180,7 @@ static class Program
     }
 }";
 
-            var options = MinificationOptions.Default.WithCommentMatching(@"^(//!|/\*!)");
+            var options = MinificationOptions.Default.FilterCommentMatching(@"^(//!|/\*!)");
             var minified = Minifier.Minify(NormalizeLineEndings(source), "\n", options)
                                    .ToDelimitedString(string.Empty);
 

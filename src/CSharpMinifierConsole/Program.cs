@@ -157,7 +157,7 @@ namespace CSharpMinifierConsole
                                                  .WithKeepLeadComment(keepLeadComment);
 
                 if (commentFilterPattern is string s)
-                    options = options.WithCommentMatching(s);
+                    options = options.FilterCommentMatching(s);
 
                 return CSharpMinifier.Minifier.Minify(source, newLine: null, options);
             }

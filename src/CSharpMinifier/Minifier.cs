@@ -42,10 +42,10 @@ namespace CSharpMinifier
              : value == Default.CommentFilter && KeepLeadComment == Default.KeepLeadComment ? Default
              : new MinificationOptions(this) { CommentFilter = value };
 
-        public MinificationOptions WithCommentMatching(string pattern) =>
-            WithCommentMatching(pattern, RegexOptions.None);
+        public MinificationOptions FilterCommentMatching(string pattern) =>
+            FilterCommentMatching(pattern, RegexOptions.None);
 
-        public MinificationOptions WithCommentMatching(string pattern, RegexOptions options)
+        public MinificationOptions FilterCommentMatching(string pattern, RegexOptions options)
             => pattern == null ? throw new ArgumentNullException(nameof(pattern))
              : WithCommentFilter((t, s) => Regex.IsMatch(t.Substring(s), pattern, options));
 
