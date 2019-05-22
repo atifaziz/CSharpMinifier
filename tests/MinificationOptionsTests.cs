@@ -28,6 +28,7 @@ namespace CSharpMinifier.Tests
         {
             Assert.That(MinificationOptions.Default, Is.Not.Null);
             Assert.That(MinificationOptions.Default.CommentFilter, Is.Null);
+            Assert.That(MinificationOptions.Default.KeepLeadComment, Is.False);
         }
 
         [Test]
@@ -85,6 +86,35 @@ namespace CSharpMinifier.Tests
             var options = MinificationOptions.Default.WithCommentMatching(pattern);
             var token = Scanner.Scan(source).Single();
             Assert.That(options.CommentFilter(token, source), Is.EqualTo(match));
+        }
+
+        [Test]
+        public void SetKeepLeadComment()
+        {
+            var options = MinificationOptions.Default.WithKeepLeadComment(true);
+            Assert.That(options, Is.Not.SameAs(MinificationOptions.Default));
+            Assert.That(options.KeepLeadComment, Is.True);
+        }
+
+        [Test]
+        public void ResetKeepLeadComment()
+        {
+            var options = MinificationOptions.Default.WithKeepLeadComment(true).WithKeepLeadComment(false);
+            Assert.That(options.KeepLeadComment, Is.False);
+            Assert.That(options, Is.SameAs(MinificationOptions.Default));
+        }
+
+        [Test]
+        public void SetKeepLeadCommentToSame()
+        {
+            var options = MinificationOptions.Default.WithKeepLeadComment(false);
+            Assert.That(options, Is.SameAs(MinificationOptions.Default));
+
+            var options1 = options.WithKeepLeadComment(true);
+            Assert.That(options1, Is.Not.SameAs(options));
+
+            var options2 = options1.WithKeepLeadComment(true);
+            Assert.That(options2, Is.SameAs(options1));
         }
     }
 }

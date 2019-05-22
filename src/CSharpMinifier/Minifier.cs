@@ -18,23 +18,29 @@ namespace CSharpMinifier
 {
     using System;
     using System.Collections.Generic;
-    using System.Linq;
     using System.Text.RegularExpressions;
 
     public sealed class MinificationOptions
     {
         public static readonly MinificationOptions Default =
-            new MinificationOptions(null);
+            new MinificationOptions(null, false);
 
-        public Func<Token, string, bool> CommentFilter { get; }
+        public Func<Token, string, bool> CommentFilter { get; private set; }
+        public bool KeepLeadComment { get; private set; }
 
-        MinificationOptions(Func<Token, string, bool> commentFilter) =>
+        MinificationOptions(Func<Token, string, bool> commentFilter, bool keepLeadComment)
+        {
             CommentFilter = commentFilter;
+            KeepLeadComment = keepLeadComment;
+        }
+
+        MinificationOptions(MinificationOptions options) :
+            this(options.CommentFilter, options.KeepLeadComment) {}
 
         public MinificationOptions WithCommentFilter(Func<Token, string, bool> value)
             => CommentFilter == value ? this
-             : value == null ? Default
-             : new MinificationOptions(value);
+             : value == Default.CommentFilter && KeepLeadComment == Default.KeepLeadComment ? Default
+             : new MinificationOptions(this) { CommentFilter = value };
 
         public MinificationOptions WithCommentMatching(string pattern) =>
             WithCommentMatching(pattern, RegexOptions.None);
@@ -42,6 +48,11 @@ namespace CSharpMinifier
         public MinificationOptions WithCommentMatching(string pattern, RegexOptions options)
             => pattern == null ? throw new ArgumentNullException(nameof(pattern))
              : WithCommentFilter((t, s) => Regex.IsMatch(t.Substring(s), pattern, options));
+
+        public MinificationOptions WithKeepLeadComment(bool value)
+            => KeepLeadComment == value ? this
+             : value == Default.KeepLeadComment && CommentFilter == Default.CommentFilter ? Default
+             : new MinificationOptions(this) { KeepLeadComment = value };
     }
 
     public static class Minifier
@@ -65,6 +76,13 @@ namespace CSharpMinifier
                 Func<Token, TResult> resultSelector) =>
             Minify(source, space, newLine, MinificationOptions.Default, resultSelector);
 
+        enum LeadCommentState
+        {
+            Awaiting,
+            Processing,
+            Processed,
+        }
+
         public static IEnumerable<TResult>
             Minify<TResult>(string source,
                             TResult space, TResult newLine,
@@ -76,22 +94,52 @@ namespace CSharpMinifier
 
             return _(); IEnumerable<TResult> _()
             {
-                var tokens =
-                    from t in Scanner.Scan(source)
-                    where !t.Kind.HasTraits(TokenKindTraits.WhiteSpace)
-                    select t;
-
                 bool IsSpaceOrTab (char ch) => ch == ' ' || ch == '\t';
                 bool IsAsciiLetter(char ch) => (ch = (char) (ch & ~0x20)) >= 'A' && ch <= 'z';
                 bool IsWordChar   (char ch) => char.IsLetter(ch)
                                             || ch >= '0' && ch <= '9'
                                             || ch == '_';
 
+                var lcs = LeadCommentState.Awaiting;
                 var lastCh = (char?)null;
-                foreach (var t in tokens)
+                var lastSingleLineCommentLine = (int?)null;
+
+                TResult NewLineWhileResettingLastChar()
+                {
+                    lastCh = null;
+                    return newLine;
+                }
+
+                foreach (var t in Scanner.Scan(source))
                 {
                     switch (t.Kind)
                     {
+                        case TokenKind.NewLine:
+                        case TokenKind.WhiteSpace:
+                            break;
+
+                        case TokenKind k
+                            when k.HasTraits(TokenKindTraits.Comment)
+                              && options.KeepLeadComment
+                              && lcs != LeadCommentState.Processed
+                              && (   lastSingleLineCommentLine is null
+                                  || lastSingleLineCommentLine is int ln
+                                  && t.Start.Line - ln == 1):
+                        {
+                            yield return resultSelector(t);
+                            if (k == TokenKind.SingleLineComment)
+                            {
+                                lastSingleLineCommentLine = t.Start.Line;
+                                yield return NewLineWhileResettingLastChar();
+                                lcs = LeadCommentState.Processing;
+                            }
+                            else
+                            {
+                                    lcs = LeadCommentState.Processed;
+                            }
+                            break;
+                        }
+
                         case TokenKind k
                             when k.HasTraits(TokenKindTraits.Comment)
                               && options.CommentFilter is Func<Token, string, bool> filter
@@ -99,56 +147,55 @@ namespace CSharpMinifier
                         {
                             yield return resultSelector(t);
                             if (k == TokenKind.SingleLineComment)
-                            {
-                                yield return newLine;
-                                lastCh = null;
-                            }
+                                yield return NewLineWhileResettingLastChar();
                             break;
                         }
 
                         case TokenKind k when k.HasTraits(TokenKindTraits.Comment):
                             continue;
 
-                        case TokenKind.PreprocessorDirective:
-                        {
-                            var tei = t.End.Offset;
-
-                            var si = t.Start.Offset + 1;
-                            while (si < tei && IsSpaceOrTab(source[si]))
-                                si++;
-
-                            var ei = si;
-                            while (ei < tei && IsAsciiLetter(source[ei]))
-                                ei++;
-
-                            var length = ei - si;
-
-                            if (length == 0
-                                || string.CompareOrdinal("region"   , 0, source, si, length) != 0
-                                && string.CompareOrdinal("endregion", 0, source, si, length) != 0)
-                            {
-                                if (lastCh != null)
-                                    yield return newLine;
-
-                                yield return resultSelector(t);
-                                yield return newLine;
-                                lastCh = null;
-                            }
-
-                            break;
-                        }
-
                         default:
                         {
-                            if (lastCh is char lch)
+                            lcs = LeadCommentState.Processed;
+
+                            if (t.Kind == TokenKind.PreprocessorDirective)
                             {
-                                var ch = source[t.Start.Offset];
-                                if (IsWordChar(ch) && IsWordChar(lch) || ch == lch && (ch == '+' || ch == '-' || ch == '*'))
-                                    yield return space;
+                                var tei = t.End.Offset;
+
+                                var si = t.Start.Offset + 1;
+                                while (si < tei && IsSpaceOrTab(source[si]))
+                                    si++;
+
+                                var ei = si;
+                                while (ei < tei && IsAsciiLetter(source[ei]))
+                                    ei++;
+
+                                var length = ei - si;
+
+                                if (length == 0
+                                    || string.CompareOrdinal("region", 0, source, si, length) != 0
+                                    && string.CompareOrdinal("endregion", 0, source, si, length) != 0)
+                                {
+                                    if (lastCh != null)
+                                        yield return newLine;
+
+                                    yield return resultSelector(t);
+                                    yield return NewLineWhileResettingLastChar();
+                                }
+                            }
+                            else
+                            {
+                                if (lastCh is char lch)
+                                {
+                                    var ch = source[t.Start.Offset];
+                                    if (IsWordChar(ch) && IsWordChar(lch) || ch == lch && (ch == '+' || ch == '-' || ch == '*'))
+                                        yield return space;
+                                }
+
+                                yield return resultSelector(t);
+                                lastCh = source[t.End.Offset - 1];
                             }
 
-                            yield return resultSelector(t);
-                            lastCh = source[t.End.Offset - 1];
                             break;
                         }
                     }
