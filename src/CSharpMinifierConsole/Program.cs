@@ -39,6 +39,7 @@ namespace CSharpMinifierConsole
             var validate = false;
             var commentFilterPattern = Ref.Create((string)null);
             var keepLeadComment = Ref.Create(false);
+            var keepImportantComment = Ref.Create(false);
 
             var options = new OptionSet(CreateStrictOptionSetArgumentParser())
             {
@@ -49,6 +50,7 @@ namespace CSharpMinifierConsole
                 { "validate", "validate minified output", _ => validate = true },
                 Options.CommentFilterPattern(commentFilterPattern),
                 Options.KeepLeadComment(keepLeadComment),
+                Options.KeepImportantComments(keepImportantComment)
             };
 
             var tail = options.Parse(args);
@@ -100,7 +102,7 @@ namespace CSharpMinifierConsole
                 void Minify(string source, TextWriter output)
                 {
                     var nl = false;
-                    foreach (var s in Minifier.Minify(source, commentFilterPattern, keepLeadComment))
+                    foreach (var s in Minifier.Minify(source, commentFilterPattern, keepLeadComment, keepImportantComment))
                     {
                         if (nl = s == null)
                             output.WriteLine();
@@ -151,13 +153,18 @@ namespace CSharpMinifierConsole
         static class Minifier
         {
             public static IEnumerable<string> Minify(string source,
-                string commentFilterPattern = null, bool keepLeadComment = false)
+                string commentFilterPattern = null,
+                bool keepLeadComment = false,
+                bool keepImportantComment = false)
             {
                 var options = MinificationOptions.Default
                                                  .WithKeepLeadComment(keepLeadComment);
 
                 if (commentFilterPattern is string s)
                     options = options.FilterCommentMatching(s);
+
+                if (keepImportantComment)
+                    options = options.OrCommentFilterOf(MinificationOptions.Default.FilterImportantComments());
 
                 return CSharpMinifier.Minifier.Minify(source, newLine: null, options);
             }
@@ -274,8 +281,15 @@ namespace CSharpMinifierConsole
                     });
 
             public static Option KeepLeadComment(Ref<bool> value) =>
-                new ActionOption("keep-lead-comment", "keep first multi-line comment or " +
-                                                      "first consecutive set of single-line comments",
+                new ActionOption("keep-lead-comment",
+                                 "keep first multi-line comment or "
+                                 + "first consecutive set of single-line comments",
+                                 _ => value.Value = true);
+
+            public static Option KeepImportantComments(Ref<bool> value) =>
+                new ActionOption("keep-important-comment",
+                                 "keep /*! ... */ comments or "
+                                 + "single-line comments starting with //! ...",
                                  _ => value.Value = true);
         }
 

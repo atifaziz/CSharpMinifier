@@ -88,6 +88,45 @@ namespace CSharpMinifier.Tests
             Assert.That(options.CommentFilter(token, source), Is.EqualTo(match));
         }
 
+        [TestCase("foo"       , false)]
+        [TestCase("/*  foo */", false)]
+        [TestCase("//  foo"   , false)]
+        [TestCase("/*! foo */", true )]
+        [TestCase("//! foo"   , true )]
+        public void ImportantComments(string source, bool match)
+        {
+            var options = MinificationOptions.Default.FilterImportantComments();
+            var token = Scanner.Scan(source).Single();
+            Assert.That(options.CommentFilter(token, source), Is.EqualTo(match));
+        }
+
+        [Test]
+        public void OrCommentFilterOf()
+        {
+            var options = MinificationOptions.Default.WithCommentFilter(delegate { throw new NotImplementedException(); });
+            Assert.That(options, Is.Not.SameAs(MinificationOptions.Default));
+
+            Assert.That(options.OrCommentFilterOf(MinificationOptions.Default),
+                        Is.SameAs(options));
+
+            var options2 = MinificationOptions.Default.OrCommentFilterOf(options);
+            Assert.That(options2, Is.Not.SameAs(MinificationOptions.Default));
+            Assert.That(options2.CommentFilter, Is.SameAs(options.CommentFilter));
+
+            var ar = new[] { true, true , false, false };
+            var br = new[] { true, false, true , false };
+            var ati = 0;
+            var bti = 0;
+
+            var a = MinificationOptions.Default.WithCommentFilter((t, s) => ar[ati++]);
+            var b = MinificationOptions.Default.WithCommentFilter((t, s) => br[bti++]);
+
+            var ab = a.OrCommentFilterOf(b);
+
+            foreach (var (af, bf) in ar.Zip(br, ValueTuple.Create))
+                Assert.That(ab.CommentFilter(default, null), Is.EqualTo(af || bf));
+        }
+
         [Test]
         public void SetKeepLeadComment()
         {

@@ -42,6 +42,7 @@ namespace CSharpMinifierConsole
             var format = HashOutputFormat.Hexadecimal;
             var commentFilterPattern = Ref.Create((string) null);
             var keepLeadComment = Ref.Create(false);
+            var keepImportantComment = Ref.Create(false);
 
             var options = new OptionSet(CreateStrictOptionSetArgumentParser())
             {
@@ -51,6 +52,7 @@ namespace CSharpMinifierConsole
                 Options.Glob(globDir),
                 Options.CommentFilterPattern(commentFilterPattern),
                 Options.KeepLeadComment(keepLeadComment),
+                Options.KeepImportantComments(keepImportantComment),
                 { "c|compare=", "set non-zero exit code if {HASH} (in hexadecimal) is different",
                     v => comparand = TryParseHexadecimalString(v, out var hc) ? hc
                                    : throw new Exception("Hash comparand is not a valid hexadecimal string.")

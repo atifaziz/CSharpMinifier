@@ -42,6 +42,14 @@ namespace CSharpMinifier
              : value == Default.CommentFilter && KeepLeadComment == Default.KeepLeadComment ? Default
              : new MinificationOptions(this) { CommentFilter = value };
 
+        public MinificationOptions OrCommentFilterOf(MinificationOptions other)
+            => CommentFilter == other.CommentFilter || CommentFilter != null && other.CommentFilter == null ? this
+             : CommentFilter == null && other.CommentFilter != null ? WithCommentFilter(other.CommentFilter)
+             : WithCommentFilter((t, s) => CommentFilter(t, s) || other.CommentFilter(t, s));
+
+        public MinificationOptions FilterImportantComments() =>
+            FilterCommentMatching("^/[/*]!");
+
         public MinificationOptions FilterCommentMatching(string pattern) =>
             FilterCommentMatching(pattern, RegexOptions.None);
 
