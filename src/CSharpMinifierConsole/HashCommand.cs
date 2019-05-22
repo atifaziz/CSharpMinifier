@@ -41,6 +41,7 @@ namespace CSharpMinifierConsole
             var comparand = (byte[])null;
             var algoName = HashAlgorithmName.SHA256;
             var format = HashOutputFormat.Hexadecimal;
+            var commentFilterPattern = Ref.Create((string) null);
 
             var options = new OptionSet(CreateStrictOptionSetArgumentParser())
             {
@@ -48,6 +49,7 @@ namespace CSharpMinifierConsole
                 Options.Verbose(Verbose),
                 Options.Debug,
                 Options.Glob(globDir),
+                Options.CommentFilterPattern(commentFilterPattern),
                 { "c|compare=", "set non-zero exit code if {HASH} (in hexadecimal) is different",
                     v => comparand = TryParseHexadecimalString(v, out var hc) ? hc
                                    : throw new Exception("Hash comparand is not a valid hexadecimal string.")
@@ -80,7 +82,7 @@ namespace CSharpMinifierConsole
                 byte[] buffer = null;
                 foreach (var (_, source) in ReadSources(tail, globDir))
                 {
-                    foreach (var s in from s in Minifier.Minify(source, newLine: null)
+                    foreach (var s in from s in Minifier.Minify(source, commentFilterPattern)
                                       where s != null
                                       select s)
                     {

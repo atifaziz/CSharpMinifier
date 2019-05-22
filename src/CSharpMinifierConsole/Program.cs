@@ -22,6 +22,7 @@ namespace CSharpMinifierConsole
     using System.IO;
     using System.Linq;
     using System.Runtime.InteropServices;
+    using System.Text.RegularExpressions;
     using CSharpMinifier;
     using Microsoft.Extensions.FileSystemGlobbing;
     using Mono.Options;
@@ -36,6 +37,7 @@ namespace CSharpMinifierConsole
             var help = Ref.Create(false);
             var globDir = Ref.Create((DirectoryInfo)null);
             var validate = false;
+            var commentFilterPattern = Ref.Create((string)null);
 
             var options = new OptionSet(CreateStrictOptionSetArgumentParser())
             {
@@ -44,6 +46,7 @@ namespace CSharpMinifierConsole
                 Options.Debug,
                 Options.Glob(globDir),
                 { "validate", "validate minified output", _ => validate = true },
+                Options.CommentFilterPattern(commentFilterPattern),
             };
 
             var tail = options.Parse(args);
@@ -95,7 +98,7 @@ namespace CSharpMinifierConsole
                 void Minify(string source, TextWriter output)
                 {
                     var nl = false;
-                    foreach (var s in Minifier.Minify(source, null))
+                    foreach (var s in Minifier.Minify(source, commentFilterPattern))
                     {
                         if (nl = s == null)
                             output.WriteLine();
@@ -140,6 +143,19 @@ namespace CSharpMinifierConsole
                         return process.ExitCode == 0;
                     }
                 }
+            }
+        }
+
+        static class Minifier
+        {
+            public static IEnumerable<string> Minify(string source, string commentFilterPattern = null)
+            {
+                var options
+                    = commentFilterPattern != null
+                    ? MinificationOptions.Default.WithCommentMatching(commentFilterPattern)
+                    : MinificationOptions.Default;
+
+                return CSharpMinifier.Minifier.Minify(source, newLine: null, options);
             }
         }
 
@@ -241,7 +257,17 @@ namespace CSharpMinifierConsole
                 new ActionOption("d|debug", "debug break", vs => Debugger.Launch());
 
             public static Option Glob(Ref<DirectoryInfo> value) =>
-                new ActionOption("glob=", "interpret file path as glob pattern with {DIRECTORY} as base", vs => value.Value = new DirectoryInfo(vs.Last()));
+                new ActionOption("glob=", "interpret file path as glob pattern with {DIRECTORY} as base",
+                    vs => value.Value = new DirectoryInfo(vs.Last()));
+
+            public static Option CommentFilterPattern(Ref<string> value) =>
+                new ActionOption("comment-filter-pattern=", "filter/keep comments matching {PATTERN}",
+                    vs =>
+                    {
+                        var pattern = vs.Last();
+                        var _ = new Regex(pattern); // validate & discard
+                        value.Value = pattern;
+                    });
         }
 
         static OptionSetArgumentParser CreateStrictOptionSetArgumentParser()
