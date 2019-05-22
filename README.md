@@ -103,6 +103,15 @@ be no expectation that such checks will be maintained in future versions.
 After all, as stated earlier, the input C# source is expected to be
 syntactically correct and all results otherwise are undefined.
 
+The minification process can be customized through options to prevent the
+following source code (single- or multi-line) comments from being subject
+to minification:
+
+- those matching a user-defined regular expression pattern
+- those that appear at the start of the source (e.g. typically copyright,
+  notices, terms and conditions)
+- those that are marked important, either `/*! ... */` or `//! ...`
+
 For C# syntax validation, consider using [CSharpSyntaxValidator][csval].
 
 
