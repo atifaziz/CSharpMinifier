@@ -46,8 +46,6 @@ namespace CSharpMinifier
 
     public static class Minifier
     {
-        internal static readonly char[] SpaceOrTab = { ' ', '\t' };
-
         public static IEnumerable<string> Minify(string source) =>
             Minify(source, MinificationOptions.Default);
 

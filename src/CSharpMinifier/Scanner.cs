@@ -732,10 +732,12 @@ namespace CSharpMinifier
                 {
                     var parts = source.Slice(token.Start.Offset + 1, token.End.Offset)
                                       .TrimStart()
-                                      .Split(Minifier.SpaceOrTab, 2);
+                                      .Split(SpaceOrTab, 2);
                     return (parts[0], parts.Length > 1 ? parts[1].Trim() : string.Empty);
                 }
             }
         }
+
+        static readonly char[] SpaceOrTab = { ' ', '\t' };
     }
 }
