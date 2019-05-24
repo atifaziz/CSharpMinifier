@@ -102,7 +102,9 @@ namespace CSharpMinifierConsole
                 void Minify(string source, TextWriter output)
                 {
                     var nl = false;
-                    foreach (var s in Minifier.Minify(source, commentFilterPattern, keepLeadComment, keepImportantComment))
+                    foreach (var s in Minifier.Minify(source, commentFilterPattern,
+                                                              keepLeadComment,
+                                                              keepImportantComment))
                     {
                         if (nl = s == null)
                             output.WriteLine();
