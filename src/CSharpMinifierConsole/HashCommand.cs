@@ -85,7 +85,9 @@ namespace CSharpMinifierConsole
                 byte[] buffer = null;
                 foreach (var (_, source) in ReadSources(tail, globDir))
                 {
-                    foreach (var s in from s in Minifier.Minify(source, commentFilterPattern, keepLeadComment)
+                    foreach (var s in from s in Minifier.Minify(source, commentFilterPattern,
+                                                                        keepLeadComment,
+                                                                        keepImportantComment)
                                       where s != null
                                       select s)
                     {
