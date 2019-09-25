@@ -9,6 +9,11 @@ skip_commits:
 branches:
   only:
     - master
+  except:
+    - /.+[\-.]wip$/
+    - wip
+pull_requests:
+  do_not_increment_build_number: true
 skip_tags: true
 before_build:
 - dotnet --info
@@ -19,6 +24,7 @@ build_script:
     $id = $id.Substring(0, 13)
 
     if ($isWindows) { .\pack.cmd ci-$id } else { ./pack.sh ci-$id }
+sh: export PATH="$HOME/.dotnet:$PATH"
 test_script:
 - cmd: test.cmd
 - sh: ./test.sh
