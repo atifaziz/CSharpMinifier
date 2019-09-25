@@ -49,6 +49,7 @@ namespace CSharpMinifier
             InterpolatedStringEscape,
             InterpolatedStringBrace,
             DollarAt,
+            AtDollar,
             InterpolatedVerbatimString,
             InterpolatedVerbatimStringQuote,
             InterpolatedVerbatimStringBrace,
@@ -103,6 +104,8 @@ namespace CSharpMinifier
 
             Exception SyntaxError(string message) =>
                 throw new SyntaxErrorException($"{message} The syntax error is at line {pos.Line} and column {pos.Col} (or offset {i}). The last anchor was at line {spos.Line} and column {spos.Col} (or offset {si})");
+
+            bool IsDollarOrAt(char ch) => ch == '$' || ch == '@';
 
             //
             // While the C# language specification defines the following line
@@ -334,15 +337,18 @@ namespace CSharpMinifier
                     }
                     case State.At:
                     {
-                        if (ch == '"')
+                        switch (ch)
                         {
-                            if (TextTransit(State.VerbatimString, -1) is Token text)
-                                yield return text;
-                        }
-                        else
-                        {
-                            state = State.Text;
-                            goto restart;
+                            case '"':
+                                if (TextTransit(State.VerbatimString, -1) is Token text)
+                                    yield return text;
+                                break;
+                            case '$':
+                                state = State.AtDollar;
+                                break;
+                            default:
+                                state = State.Text;
+                                goto restart;
                         }
                         break;
                     }
@@ -407,6 +413,7 @@ namespace CSharpMinifier
                         }
                         break;
                     }
+                    case State.AtDollar:
                     case State.DollarAt:
                     {
                         if (ch == '"')
@@ -447,7 +454,7 @@ namespace CSharpMinifier
                         }
                         else
                         {
-                            yield return Transit(source[si] == '$'
+                            yield return Transit(IsDollarOrAt(source[si])
                                                  ? TokenKind.InterpolatedVerbatimStringLiteral
                                                  : TokenKind.InterpolatedVerbatimStringLiteralEnd,
                                                  State.Text);
@@ -463,7 +470,7 @@ namespace CSharpMinifier
                         }
                         else
                         {
-                            yield return Transit(source[si] == '$'
+                            yield return Transit(IsDollarOrAt(source[si])
                                                  ? TokenKind.InterpolatedVerbatimStringLiteralStart
                                                  : TokenKind.InterpolatedVerbatimStringLiteralMid,
                                                  State.Text);
@@ -644,7 +651,7 @@ namespace CSharpMinifier
                                 : state == State.VerbatimStringQuote ? TokenKind.VerbatimStringLiteral
                                 : state == State.PreprocessorDirectiveTrailingWhiteSpaceSlash ? TokenKind.PreprocessorDirective
                                 : state == State.InterpolatedVerbatimStringQuote
-                                  ? source[si] == '$' ? TokenKind.InterpolatedVerbatimStringLiteral
+                                  ? IsDollarOrAt(source[si]) ? TokenKind.InterpolatedVerbatimStringLiteral
                                   : TokenKind.InterpolatedVerbatimStringLiteralEnd
                                 : TokenKind.Text;
 

@@ -415,6 +415,93 @@ namespace CSharpMinifier.Tests
             @"InterpolatedVerbatimStringEnd    5 0  5 "",7}|\""""",
             @"Text                             2 0  2 "");""")]
 
+        //
+        [TestCase("@$$", @"Text                        3 0  3 ""@$$""")]
+        [TestCase("@$\"\"", @"InterpolatedVerbatimString  4 0  4 ""@$\""\""""")]
+        [TestCase("@$\"foobar\"", @"InterpolatedVerbatimString 10 0 10 ""@$\""foobar\""""")]
+        [TestCase("@$\"foo\\\\bar\"", @"InterpolatedVerbatimString 12 0 12 ""@$\""foo\\\\bar\""""")]
+        [TestCase("@$\"foo{{bar}}baz\"", @"InterpolatedVerbatimString 17 0 17 ""@$\""foo{{bar}}baz\""""")]
+        [TestCase("@$\"foo\"\"bar\"\"baz\"", @"InterpolatedVerbatimString 17 0 17 ""@$\""foo\""\""bar\""\""baz\""""")]
+
+        [TestCase("@$\"foo\r\nbar\"", @"InterpolatedVerbatimString 12 1 =5 ""@$\""foo\r\nbar\""""")]
+        [TestCase("@$\"foo\r\rbar\"", @"InterpolatedVerbatimString 12 2 =5 ""@$\""foo\r\rbar\""""")]
+        [TestCase("@$\"foo\n\nbar\"", @"InterpolatedVerbatimString 12 2 =5 ""@$\""foo\n\nbar\""""")]
+        [TestCase("@$\"foo\r\r\nbar\"", @"InterpolatedVerbatimString 13 2 =5 ""@$\""foo\r\r\nbar\""""")]
+        [TestCase("@$\"foo\n\r\rbar\"", @"InterpolatedVerbatimString 13 3 =5 ""@$\""foo\n\r\rbar\""""")]
+        [TestCase("@$\"foo\r\n\r\nbar\"", @"InterpolatedVerbatimString 14 2 =5 ""@$\""foo\r\n\r\nbar\""""")]
+        [TestCase("@$\"foo\r\n\"", @"InterpolatedVerbatimString  9 1 =2 ""@$\""foo\r\n\""""")]
+        [TestCase("@$\"foo\r\r\"", @"InterpolatedVerbatimString  9 2 =2 ""@$\""foo\r\r\""""")]
+        [TestCase("@$\"foo\n\n\"", @"InterpolatedVerbatimString  9 2 =2 ""@$\""foo\n\n\""""")]
+        [TestCase("@$\"foo\r\r\n\"", @"InterpolatedVerbatimString 10 2 =2 ""@$\""foo\r\r\n\""""")]
+        [TestCase("@$\"foo\n\r\r\"", @"InterpolatedVerbatimString 10 3 =2 ""@$\""foo\n\r\r\""""")]
+        [TestCase("@$\"foo\r\n\r\n\"", @"InterpolatedVerbatimString 11 2 =2 ""@$\""foo\r\n\r\n\""""")]
+
+        [TestCase("@$\"foo\n{\n\"bar\"\n}\nbaz\"",
+            @"InterpolatedVerbatimStringStart  8 1 =2 ""@$\""foo\n{""",
+            @"NewLine                          1 1 =1 ""\n""",
+            @"String                           5 0  5 ""\""bar\""""",
+            @"NewLine                          1 1 =1 ""\n""",
+            @"InterpolatedVerbatimStringEnd    6 1 =5 ""}\nbaz\""""")]
+
+        [TestCase("@$\"x = {x}, y = {y}\"",
+            @"InterpolatedVerbatimStringStart 8 0 8 ""@$\""x = {""",
+            @"Text                            1 0 1 ""x""",
+            @"InterpolatedVerbatimStringMid   8 0 8 ""}, y = {""",
+            @"Text                            1 0 1 ""y""",
+            @"InterpolatedVerbatimStringEnd   2 0 2 ""}\""""")]
+
+        [TestCase("@$\"\" // blank",
+            @"InterpolatedVerbatimString 4 0 4 ""@$\""\""""",
+            @"WhiteSpace                 1 0 1 "" """,
+            @"SingleLineComment          8 0 8 ""// blank""")]
+
+        [TestCase("@$\"x = {(x < 0 ? 0 : x)}, y = {y}\"",
+            @"InterpolatedVerbatimStringStart 8 0 8 ""@$\""x = {""",
+            @"Text                            2 0 2 ""(x""",
+            @"WhiteSpace                      1 0 1 "" """,
+            @"Text                            1 0 1 ""<""",
+            @"WhiteSpace                      1 0 1 "" """,
+            @"Text                            1 0 1 ""0""",
+            @"WhiteSpace                      1 0 1 "" """,
+            @"Text                            1 0 1 ""?""",
+            @"WhiteSpace                      1 0 1 "" """,
+            @"Text                            1 0 1 ""0""",
+            @"WhiteSpace                      1 0 1 "" """,
+            @"Text                            1 0 1 "":""",
+            @"WhiteSpace                      1 0 1 "" """,
+            @"Text                            2 0 2 ""x)""",
+            @"InterpolatedVerbatimStringMid   8 0 8 ""}, y = {""",
+            @"Text                            1 0 1 ""y""",
+            @"InterpolatedVerbatimStringEnd   2 0 2 ""}\""""")]
+
+        [TestCase("@$\"today = { $\"{DateTime.Today:MMM dd, yyyy}\" }\"",
+            @"InterpolatedVerbatimStringStart  12 0 12 ""@$\""today = {""",
+            @"WhiteSpace                        1 0  1 "" """,
+            @"InterpolatedStringStart           3 0  3 ""$\""{""",
+            @"Text                             14 0 14 ""DateTime.Today""",
+            @"InterpolatedStringEnd            15 0 15 "":MMM dd, yyyy}\""""",
+            @"WhiteSpace                        1 0  1 "" """,
+            @"InterpolatedVerbatimStringEnd     2 0  2 ""}\""""")]
+
+        [TestCase("Console.WriteLine(@$\"|{\"Left\",-7}|{\"Right\",7}|\");",
+            @"Text                            18 0 18 ""Console.WriteLine(""",
+            @"InterpolatedVerbatimStringStart  5 0  5 ""@$\""|{""",
+            @"String                           6 0  6 ""\""Left\""""",
+            @"InterpolatedVerbatimStringMid    6 0  6 "",-7}|{""",
+            @"String                           7 0  7 ""\""Right\""""",
+            @"InterpolatedVerbatimStringEnd    5 0  5 "",7}|\""""",
+            @"Text                             2 0  2 "");""")]
+
+        [TestCase("Console.WriteLine(@$\"|{foo(12,34),-7}|{bar(56,78),7}|\");",
+            @"Text                            18 0 18 ""Console.WriteLine(""",
+            @"InterpolatedVerbatimStringStart  5 0  5 ""@$\""|{""",
+            @"Text                            10 0 10 ""foo(12,34)""",
+            @"InterpolatedVerbatimStringMid    6 0  6 "",-7}|{""",
+            @"Text                            10 0 10 ""bar(56,78)""",
+            @"InterpolatedVerbatimStringEnd    5 0  5 "",7}|\""""",
+            @"Text                             2 0  2 "");""")]
+
+        //
         [TestCase("// This is a comment\r\n" +
                   "\r\n" +
                   "static class Program\r\n" +
