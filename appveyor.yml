@@ -9,6 +9,9 @@ skip_commits:
 branches:
   only:
     - master
+  except:
+    - /.+[\-.]wip$/
+    - wip
 skip_tags: true
 before_build:
 - dotnet --info
