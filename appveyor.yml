@@ -25,7 +25,10 @@ install:
 - ps: |
     $sdkVersion = (type .\global.json | ConvertFrom-Json).sdk.version
     if ($isWindows) { ./dotnet-install.ps1 -Version $sdkVersion }
-    if ($isLinux)   { ./dotnet-install.sh --version $sdkVersion }
+    if ($isLinux) {
+      ./dotnet-install.sh --version $sdkVersion
+      ./dotnet-install.sh --version 2.1.13 --runtime dotnet
+    }
 - sh: export PATH="$HOME/.dotnet:$PATH"
 before_build:
 - dotnet --info
