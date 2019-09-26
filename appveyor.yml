@@ -20,21 +20,16 @@ environment:
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
 install:
 - cmd: curl -O https://dot.net/v1/dotnet-install.ps1
-- ps:  $env:DOTNET_SDK_VERSION = (type .\global.json | ConvertFrom-Json).sdk.version
-- ps:  if ($isWindows) { ./dotnet-install.ps1 -InstallDir .dotnet -Version $env:DOTNET_SDK_VERSION }
-- ps:  if ($isWindows) { ./dotnet-install.ps1 -InstallDir .dotnet -Version 2.2.7 -Runtime dotnet }
-- ps:  if ($isWindows) { ./dotnet-install.ps1 -InstallDir .dotnet -Version 2.1.3 -Runtime dotnet }
-- cmd: set PATH=%CD%\.dotnet;%PATH%
-- sh:  curl -O https://dot.net/v1/dotnet-install.sh
-- sh:  chmod +x dotnet-install.sh
-- sh:  . dotnet-install.sh --install-dir .dotnet --version $DOTNET_SDK_VERSION
-- sh:  . dotnet-install.sh --install-dir .dotnet --version 2.2.7 --runtime dotnet
-- sh:  . dotnet-install.sh --install-dir .dotnet --version 2.1.3 --runtime dotnet
+- sh: curl -O https://dot.net/v1/dotnet-install.sh
+- sh: chmod +x dotnet-install.sh
 - ps: |
-    if ($isWindows) { $env:PATH -split ';' | echo }
-    if ($isLinux  ) { $env:PATH -split ':' | echo }
+    $sdkVersion = (type .\global.json | ConvertFrom-Json).sdk.version
+    if ($isWindows) { ./dotnet-install.ps1 -Version $sdkVersion }
+    if ($isLinux)   { ./dotnet-install.sh --version $sdkVersion }
+- sh: ./dotnet-install.sh --version 2.2.7 --runtime dotnet
+- sh: ./dotnet-install.sh --version 2.1.3 --runtime dotnet
+- sh: export PATH="$HOME/.dotnet:$PATH"
 before_build:
-- which dotnet
 - dotnet --info
 build_script:
 - ps: >-
@@ -43,6 +38,7 @@ build_script:
     $id = $id.Substring(0, 13)
 
     if ($isWindows) { .\pack.cmd ci-$id } else { ./pack.sh ci-$id }
+- sh: export PATH="$HOME/.dotnet:$PATH"
 test_script:
 - cmd: test.cmd
 - sh: ./test.sh
