@@ -34,6 +34,7 @@ install:
     if ($isWindows) { $env:PATH -split ';' | echo }
     if ($isLinux  ) { $env:PATH -split ':' | echo }
 before_build:
+- which dotnet
 - dotnet --info
 build_script:
 - ps: >-
