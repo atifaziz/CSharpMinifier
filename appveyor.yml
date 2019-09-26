@@ -20,7 +20,7 @@ environment:
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
 install:
 - cmd: curl -O https://download.visualstudio.microsoft.com/download/pr/53f250a1-318f-4350-8bda-3c6e49f40e76/e8cbbd98b08edd6222125268166cfc43/dotnet-sdk-3.0.100-win-x64.exe
-- cmd: dotnet-sdk-3.0.100-win-x64.exe -q
+- cmd: dotnet-sdk-3.0.100-win-x64.exe /quiet /norestart
 - sh: curl -O https://dot.net/v1/dotnet-install.sh
 - sh: chmod +x dotnet-install.sh
 - sh: ./dotnet-install.sh --version 3.0.100
