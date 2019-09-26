@@ -31,6 +31,9 @@ install:
 - sh: ./dotnet-install.sh --version 2.2.7 --runtime dotnet --install-dir .dotnet
 - sh: ./dotnet-install.sh --version 2.1.3 --runtime dotnet --install-dir .dotnet
 - sh: export PATH="$PWD/.dotnet:$PATH"
+- ps: |
+    if ($isWindows) { $env:PATH -split ';' | echo }
+    if ($isLinux  ) { $env:PATH -split ':' | echo }
 before_build:
 - dotnet --info
 build_script:
