@@ -66,6 +66,7 @@ minimal grammar of a C# source, such as:
   - verbatim, e.g. , e.g. `@"..."`
   - interpolated, e.g. `$"..."`
   - interpolated verbatim, e.g. `$@"..."`
+    (or [`@$"..."` starting with C# 8][alt-ivs])
 
 Everything surrounding or in-between the above is treated as raw and unparsed
 _text_. As a consequence, the C# source does not have to be a full C# program
@@ -242,3 +243,4 @@ This will also build the binaries if necessary.
 [lib]: https://www.nuget.org/packages/CSharpMinifier/
 [wiki]: https://github.com/atifaziz/CSharpMinifier/wiki
 [csval]: https://www.nuget.org/packages/CSharpSyntaxValidator/
+[alt-ivs]: https://docs.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-8#enhancement-of-interpolated-verbatim-strings
