@@ -21,9 +21,9 @@ environment:
 install:
 - cmd: curl -O https://dot.net/v1/dotnet-install.ps1
 - ps:  $env:DOTNET_SDK_VERSION = (type .\global.json | ConvertFrom-Json).sdk.version
-- ps:  if ($isWindows) { ./dotnet-install.ps1 -InstallDir .dotnet -Version $sdkVersion }
-- ps:  if ($isWindows) { ./dotnet-install.ps1 -InstallDir .dotnet -Version 2.2.7       }
-- ps:  if ($isWindows) { ./dotnet-install.ps1 -InstallDir .dotnet -Version 2.1.3       }
+- ps:  if ($isWindows) { ./dotnet-install.ps1 -InstallDir .dotnet -Version $env:DOTNET_SDK_VERSION }
+- ps:  if ($isWindows) { ./dotnet-install.ps1 -InstallDir .dotnet -Version 2.2.7 }
+- ps:  if ($isWindows) { ./dotnet-install.ps1 -InstallDir .dotnet -Version 2.1.3 }
 - cmd: set PATH=%CD%\.dotnet;%PATH%
 - sh:  curl -O https://dot.net/v1/dotnet-install.sh
 - sh:  chmod +x dotnet-install.sh
