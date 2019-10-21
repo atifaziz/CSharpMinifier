@@ -34,7 +34,7 @@ namespace CSharpMinifier.Preprocessing
             IdentifierOrFalse,
             True,
             False,
-            Identifier,
+            Symbol,
             Ampersand,     // &
             Pipe,          // |
             Equal,         // =
@@ -44,8 +44,13 @@ namespace CSharpMinifier.Preprocessing
 
         static IEnumerable<Token> ScanImpl(string s)
         {
-            Token Token(TokenKind kind, int fi, int ei) =>
-                new Token(kind, fi, ei);
+            var resetState = false;
+
+            Token Token(TokenKind kind, int fi, int ei)
+            {
+                resetState = true;
+                return new Token(kind, fi, ei);
+            }
 
             var state = State.Initial;
             var si = 0;
@@ -54,6 +59,8 @@ namespace CSharpMinifier.Preprocessing
             {
                 var ch = s[i];
             restart:
+                if (resetState)
+                    (state, resetState) = (State.Initial, false);
                 switch (state)
                 {
                     case State.Initial:
@@ -91,9 +98,13 @@ namespace CSharpMinifier.Preprocessing
                                 si = i;
                                 state = State.Bang;
                                 break;
+                            case '=':
+                                si = i;
+                                state = State.Equal;
+                                break;
                             case var c when char.IsLetterOrDigit(c):
                                 si = i;
-                                state = State.Identifier;
+                                state = State.Symbol;
                                 break;
                             default:
                                 throw new SyntaxErrorException($"Unexpected at {i + 1}: {ch}");
@@ -110,7 +121,7 @@ namespace CSharpMinifier.Preprocessing
                                 state = State.True;
                                 break;
                             default:
-                                state = State.Identifier;
+                                state = State.Symbol;
                                 goto restart;
                         }
                         break;
@@ -126,7 +137,7 @@ namespace CSharpMinifier.Preprocessing
                                 state = State.False;
                                 break;
                             default:
-                                state = State.Identifier;
+                                state = State.Symbol;
                                 goto restart;
                         }
                         break;
@@ -136,22 +147,20 @@ namespace CSharpMinifier.Preprocessing
                     {
                         if (char.IsLetterOrDigit(ch))
                         {
-                            state = State.Identifier;
+                            state = State.Symbol;
                             break;
                         }
                         else
                         {
                             yield return Token(state == State.True ? TokenKind.True : TokenKind.False, si, i);
-                            state = State.Initial;
                             goto restart;
                         }
                     }
-                    case State.Identifier:
+                    case State.Symbol:
                     {
                         if (char.IsLetterOrDigit(ch))
                             break;
-                        yield return Token(TokenKind.Identifier, si, i);
-                        state = State.Initial;
+                        yield return Token(TokenKind.Symbol, si, i);
                         goto restart;
                     }
                     case State.WhiteSpace:
@@ -159,37 +168,39 @@ namespace CSharpMinifier.Preprocessing
                         if (ch == ' ' || ch == '\t')
                             break;
                         yield return Token(TokenKind.WhiteSpace, si, i);
-                        state = State.Initial;
                         goto restart;
                     }
                     case State.Ampersand:
                     {
                         if (ch != '&')
                             throw new SyntaxErrorException($"Unexpected at {i + 1}: {ch}");
-                        yield return Token(TokenKind.And, si, i + 1);
-                        state = State.Initial;
+                        yield return Token(TokenKind.AmpersandAmpersand, si, i + 1);
                         break;
                     }
                     case State.Pipe:
                     {
                         if (ch != '|')
                             throw new SyntaxErrorException($"Unexpected at {i + 1}: {ch}");
-                        yield return Token(TokenKind.Or, si, i + 1);
-                        state = State.Initial;
+                        yield return Token(TokenKind.PipePipe, si, i + 1);
+                        break;
+                    }
+                    case State.Equal:
+                    {
+                        if (ch != '=')
+                            throw new SyntaxErrorException($"Unexpected at {i + 1}: {ch}");
+                        yield return Token(TokenKind.EqualEqual, si, i + 1);
                         break;
                     }
                     case State.Bang:
                     {
                         if (ch == '=')
                         {
-                            yield return Token(TokenKind.NotEqual, si, i + 1);
-                            state = State.Initial;
+                            yield return Token(TokenKind.BangEqual, si, i + 1);
                             break;
                         }
                         else
                         {
-                            yield return Token(TokenKind.Not, si, i);
-                            state = State.Initial;
+                            yield return Token(TokenKind.Bang, si, i);
                             goto restart;
                         }
                     }
@@ -198,24 +209,28 @@ namespace CSharpMinifier.Preprocessing
                 }
             }
 
+            TokenKind kind;
+
             switch (state)
             {
+                case State.Initial:
+                    yield break;
                 case State.IdentifierOrTrue:
                 case State.IdentifierOrFalse:
-                case State.Identifier: yield return Token(TokenKind.Identifier, si, i); break;
-                case State.Initial:
-                case State.WhiteSpace:
-                    break;
-                case State.True: yield return Token(TokenKind.True, si, i); break;
-                case State.False:  yield return Token(TokenKind.False, si, i); break;
-                case State.Ampersand:
+                case State.Symbol    : kind = TokenKind.Symbol; break;
+                case State.WhiteSpace: kind = TokenKind.WhiteSpace; break;
+                case State.True      : kind = TokenKind.True; break;
+                case State.False     : kind = TokenKind.False; break;
+                case State.Bang      : kind = TokenKind.Bang; break;
+                case State.Ampersand :
                 case State.Pipe:
                 case State.Equal:
-                case State.Bang:
                     throw new SyntaxErrorException($"Syntax error at {i + 1}.");
                 default:
                     throw new Exception("Internal error due to unhandled state: " + state);
             }
+
+            yield return Token(kind, si, i);
         }
     }
 }

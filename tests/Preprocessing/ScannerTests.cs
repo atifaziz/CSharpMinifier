@@ -14,7 +14,7 @@
 //
 #endregion
 
-namespace CSharpMinifier.Preprocessing.Tests
+namespace CSharpMinifier.Tests.Preprocessing
 {
     using System;
     using System.Globalization;
@@ -22,6 +22,7 @@ namespace CSharpMinifier.Preprocessing.Tests
     using Internals;
     using MoreLinq;
     using NUnit.Framework;
+    using CSharpMinifier.Preprocessing;
 
     [TestFixture]
     public class ScannerTests

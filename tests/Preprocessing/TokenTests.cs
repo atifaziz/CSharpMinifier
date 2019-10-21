@@ -133,7 +133,7 @@ namespace CSharpMinifier.Preprocessing.Tests
             {
                 var source = $" {keyword} ";
                 var tokens = Scanner.Scan(source);
-                var token = tokens.Single(t => t.Kind == TokenKind.Identifier || t.Kind == TokenKind.True || t.Kind == TokenKind.False);
+                var token = tokens.Single(t => t.Kind == TokenKind.Symbol || t.Kind == TokenKind.True || t.Kind == TokenKind.False);
 
                 var k1 = token.Substring(source);
                 Assert.That(k1, Is.EqualTo(keyword));
@@ -249,7 +249,7 @@ namespace CSharpMinifier.Preprocessing.Tests
             {
                 var source = $" {word} ";
                 var tokens = Scanner.Scan(source);
-                var token = tokens.Single(t => t.Kind == TokenKind.Identifier);
+                var token = tokens.Single(t => t.Kind == TokenKind.Symbol);
 
                 var s1 = token.Substring(source);
                 Assert.That(s1, Is.EqualTo(word));

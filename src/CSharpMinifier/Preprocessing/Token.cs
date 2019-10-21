@@ -21,15 +21,16 @@ namespace CSharpMinifier.Preprocessing
     public enum TokenKind
     {
         WhiteSpace,
-        Identifier,
+        Symbol,
         True,
         False,
-        And,
-        Or,
+        AmpersandAmpersand,
+        PipePipe,
         LParen,
         RParen,
-        Not,
-        NotEqual,
+        Bang,
+        EqualEqual,
+        BangEqual,
     }
 
     public readonly struct Token : IEquatable<Token>
