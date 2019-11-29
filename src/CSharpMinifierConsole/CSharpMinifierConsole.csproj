@@ -3,7 +3,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFrameworks>netcoreapp3.0;netcoreapp2.2;netcoreapp2.1</TargetFrameworks>
-    <VersionPrefix>1.2.0</VersionPrefix>
+    <VersionPrefix>1.2.1</VersionPrefix>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>csmin</ToolCommandName>
     <LangVersion>7.2</LangVersion>
