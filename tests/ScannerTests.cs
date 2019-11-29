@@ -67,6 +67,7 @@ namespace CSharpMinifier.Tests
         [TestCase("@$\"foo = {)}\"")]
         [TestCase("/*")]
         [TestCase("/* foo")]
+        [TestCase("/*\r")]
         public void SyntaxError(string source)
         {
             Assert.Throws<SyntaxErrorException>(() => Scanner.Scan(source).Consume());
@@ -127,7 +128,16 @@ namespace CSharpMinifier.Tests
         [TestCase("/**/"        , @"MultiLineComment  4 0 4 ""/**/""")]
         [TestCase("/***/"       , @"MultiLineComment  5 0 5 ""/***/""")]
         [TestCase("/** foo **/" , @"MultiLineComment  11 0 11 ""/** foo **/""")]
-        [TestCase("/*\n*/"      , @"MultiLineComment  5 0 5 ""/*\n*/""")]
+        [TestCase("/*\n*/"      , @"MultiLineComment  5 1 =3 ""/*\n*/""")]
+        [TestCase("/*\r\n*/"    , @"MultiLineComment  6 1 =3 ""/*\r\n*/""")]
+        [TestCase("/*\n\n*/"    , @"MultiLineComment  6 2 =3 ""/*\n\n*/""")]
+        [TestCase("/*\r\r*/"    , @"MultiLineComment  6 2 =3 ""/*\r\r*/""")]
+        [TestCase("/*\r\r\n*/"  , @"MultiLineComment  7 2 =3 ""/*\r\r\n*/""")]
+        [TestCase("/**\n*/"     , @"MultiLineComment  6 1 =3 ""/**\n*/""")]
+        [TestCase("/**\r\n*/"   , @"MultiLineComment  7 1 =3 ""/**\r\n*/""")]
+        [TestCase("/**\n\n*/"   , @"MultiLineComment  7 2 =3 ""/**\n\n*/""")]
+        [TestCase("/**\r\r*/"   , @"MultiLineComment  7 2 =3 ""/**\r\r*/""")]
+        [TestCase("/**\r\r\n*/" , @"MultiLineComment  8 2 =3 ""/**\r\r\n*/""")]
 
         [TestCase("foo/**/",
             @"Text              3 0 3 ""foo""",
