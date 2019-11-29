@@ -38,6 +38,7 @@ namespace CSharpMinifier
             SingleLineComment,
             MultiLineComment,
             MultiLineCommentStar,
+            MultiLineCommentCr,
             String,
             StringEscape,
             At,
@@ -586,10 +587,25 @@ namespace CSharpMinifier
                     }
                     case State.MultiLineComment:
                     {
-                        if (ch == '*')
-                            state = State.MultiLineCommentStar;
+                        switch (ch)
+                        {
+                            case '*':
+                                state = State.MultiLineCommentStar;
+                                break;
+                            case '\n':
+                                pos = (pos.Line + 1, 0);
+                                break;
+                            case '\r':
+                                state = State.MultiLineCommentCr;
+                                break;
+                        }
                         break;
                     }
+                    case State.MultiLineCommentCr:
+                        if (ch != '\n')
+                            pos = (pos.Line + 1, ch == '\r' ? 0 : 1);
+                        state = State.MultiLineComment;
+                        goto restart;
                     case State.MultiLineCommentStar:
                     {
                         switch (ch)
@@ -598,6 +614,12 @@ namespace CSharpMinifier
                                 yield return Transit(TokenKind.MultiLineComment, State.Text, 1);
                                 break;
                             case '*':
+                                break;
+                            case '\r':
+                                state = State.MultiLineCommentCr;
+                                break;
+                            case '\n':
+                                pos = (pos.Line + 1, 0);
                                 break;
                             default:
                                 state = State.MultiLineComment;
@@ -625,6 +647,7 @@ namespace CSharpMinifier
                     throw SyntaxError("Unterminated character literal.");
                 case State.MultiLineComment:
                 case State.MultiLineCommentStar:
+                case State.MultiLineCommentCr:
                     throw SyntaxError("Unterminated multi-line comment");
                 default:
                 {
