@@ -19,9 +19,9 @@ environment:
   DOTNET_CLI_TELEMETRY_OPTOUT: true
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
 install:
-- cmd: curl -O https://download.visualstudio.microsoft.com/download/pr/73718445-e2bd-40b7-b698-e8a9ac65f4e5/0816570f697c4e8f1b53ecfb33eaed7f/dotnet-sdk-3.1.300-win-x64.exe
+- cmd: curl -OsSL https://download.visualstudio.microsoft.com/download/pr/73718445-e2bd-40b7-b698-e8a9ac65f4e5/0816570f697c4e8f1b53ecfb33eaed7f/dotnet-sdk-3.1.300-win-x64.exe
 - cmd: dotnet-sdk-3.1.300-win-x64.exe /quiet /norestart
-- sh: curl -O https://dot.net/v1/dotnet-install.sh
+- sh: curl -OsSL https://dot.net/v1/dotnet-install.sh
 - sh: chmod +x dotnet-install.sh
 - sh: ./dotnet-install.sh --version 3.1.300
 - sh: ./dotnet-install.sh --version 3.0.3 --runtime dotnet
