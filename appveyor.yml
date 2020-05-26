@@ -26,7 +26,7 @@ install:
 - sh: ./dotnet-install.sh --version 3.1.300
 - sh: ./dotnet-install.sh --version 3.0.3 --runtime dotnet
 - sh: ./dotnet-install.sh --version 2.2.7 --runtime dotnet
-- sh: ./dotnet-install.sh --version 2.1.3 --runtime dotnet
+- sh: ./dotnet-install.sh --version 2.1.18 --runtime dotnet
 - sh: export PATH="$HOME/.dotnet:$PATH"
 before_build:
 - dotnet --info
