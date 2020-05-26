@@ -31,11 +31,8 @@ install:
 before_build:
 - dotnet --info
 build_script:
-- ps: >-
-    $id = $env:APPVEYOR_REPO_COMMIT_TIMESTAMP -replace '([-:]|\.0+Z)', ''
-
-    $id = $id.Substring(0, 13)
-
+- ps: |-
+    $id = ([datetimeoffset]$env:APPVEYOR_REPO_COMMIT_TIMESTAMP).ToUniversalTime().ToString('yyyyMMdd''t''HHmm')
     if ($isWindows) { .\pack.cmd ci-$id } else { ./pack.sh ci-$id }
 test_script:
 - cmd: test.cmd
