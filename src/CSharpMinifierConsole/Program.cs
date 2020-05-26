@@ -128,26 +128,25 @@ namespace CSharpMinifierConsole
 
                     psi.ArgumentList.Add("--langversion=latest");
 
-                    using (var process = Process.Start(psi))
+                    using var process = Process.Start(psi);
+
+                    process.OutputDataReceived += (_, ea) =>
                     {
-                        process.OutputDataReceived += (_, ea) =>
-                        {
-                            if (ea.Data != null)
-                                Console.Error.WriteLine(ea.Data);
-                        };
+                        if (ea.Data != null)
+                            Console.Error.WriteLine(ea.Data);
+                    };
 
-                        process.BeginOutputReadLine();
-                        process.BeginErrorReadLine();
+                    process.BeginOutputReadLine();
+                    process.BeginErrorReadLine();
 
-                        var stdin = process.StandardInput;
-                        minificationAction(stdin);
-                        stdin.Flush();
-                        stdin.Close();
+                    var stdin = process.StandardInput;
+                    minificationAction(stdin);
+                    stdin.Flush();
+                    stdin.Close();
 
-                        process.WaitForExit();
+                    process.WaitForExit();
 
-                        return process.ExitCode == 0;
-                    }
+                    return process.ExitCode == 0;
                 }
             }
         }
@@ -242,19 +241,18 @@ namespace CSharpMinifierConsole
             }
             else
             {
-                using (var e = files.GetEnumerator())
-                {
-                    if (!e.MoveNext())
-                        yield return ("STDIN", stdin());
+                using var e = files.GetEnumerator();
 
-                    do
-                    {
-                        if (string.IsNullOrEmpty(e.Current))
-                            continue;
-                        yield return (e.Current, reader(e.Current));
-                    }
-                    while (e.MoveNext());
+                if (!e.MoveNext())
+                    yield return ("STDIN", stdin());
+
+                do
+                {
+                    if (string.IsNullOrEmpty(e.Current))
+                        continue;
+                    yield return (e.Current, reader(e.Current));
                 }
+                while (e.MoveNext());
             }
         }
 

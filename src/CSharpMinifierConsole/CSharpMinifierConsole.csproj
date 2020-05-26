@@ -6,7 +6,7 @@
     <VersionPrefix>1.2.1</VersionPrefix>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>csmin</ToolCommandName>
-    <LangVersion>7.2</LangVersion>
+    <LangVersion>8</LangVersion>
     <Copyright>Copyright © 2019 Atif Aziz. All rights reserved. Portions Copyright © 2008 Novell.</Copyright>
     <Description>C# Minification Tool</Description>
     <Authors>Atif Aziz</Authors>

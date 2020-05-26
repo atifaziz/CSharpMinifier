@@ -23,23 +23,20 @@ namespace CSharpMinifierConsole
                                                             .AppendLine(VersionInfo.LegalCopyright.Replace("\u00a9", "(C)"))
                                                             .ToString());
 
-            using (var stream = GetManifestResourceStream($"help.{id ?? command}.txt"))
-            using (var reader = new StreamReader(stream))
-            using (var e = reader.ReadLines())
+            using var stream = GetManifestResourceStream($"help.{id ?? command}.txt");
+            using var reader = new StreamReader(stream);
+            using var e = reader.ReadLines();
             while (e.MoveNext())
             {
-                var line = e.Current;
-                line = Regex.Replace(line, @"\$([A-Z][A-Z_]*)\$", m =>
-                {
-                    switch (m.Groups[1].Value)
-                    {
-                        case "NAME": return "csmin";
-                        case "COMMAND": return command;
-                        case "LOGO": return logo.Value;
-                        case "OPTIONS": return opts.Value;
-                        default: return string.Empty;
-                    }
-                });
+                var line = Regex.Replace(e.Current, @"\$([A-Z][A-Z_]*)\$",
+                                         m => m.Groups[1].Value switch
+                                         {
+                                             "NAME"    => "csmin",
+                                             "COMMAND" => command,
+                                             "LOGO"    => logo.Value,
+                                             "OPTIONS" => opts.Value,
+                                             _         => string.Empty
+                                         });
 
                 if (line.Length > 0 && line[line.Length - 1] == '\n')
                     Console.Write(line);
@@ -53,14 +50,12 @@ namespace CSharpMinifierConsole
 
         static string LoadTextResource(Type type, string name, Encoding encoding = null)
         {
-            using (var stream = type != null
-                              ? GetManifestResourceStream(type, name)
-                              : GetManifestResourceStream(null, name))
-            {
-                Debug.Assert(stream != null);
-                using (var reader = new StreamReader(stream, encoding ?? Encoding.UTF8))
-                    return reader.ReadToEnd();
-            }
+            using var stream = type != null
+                             ? GetManifestResourceStream(type, name)
+                             : GetManifestResourceStream(null, name);
+            Debug.Assert(stream != null);
+            using var reader = new StreamReader(stream, encoding ?? Encoding.UTF8);
+            return reader.ReadToEnd();
         }
 
         static Stream GetManifestResourceStream(string name) =>

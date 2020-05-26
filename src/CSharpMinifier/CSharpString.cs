@@ -70,28 +70,19 @@ namespace CSharpMinifier
             => Status == StringValueParseResultStatus.Success ? Value ?? string.Empty
              : $"{Status} @ {ErrorOffset}";
 
-        internal SyntaxErrorException ToSyntaxError()
-        {
-            string message;
-            switch (Status)
+        internal SyntaxErrorException ToSyntaxError() =>
+            throw new SyntaxErrorException(Status switch
             {
-                case StringValueParseResultStatus.InvalidToken:
-                    message = "Token is not a string.";
-                    break;
-                case StringValueParseResultStatus.InvalidEscapeSequence:
-                    message = "Invalid escape sequence in string.";
-                    break;
-                case StringValueParseResultStatus.InvalidUnicodeEscapeCharacterSequence:
-                    message = "Invalid Unicode character escape sequence in string.";
-                    break;
-                case StringValueParseResultStatus.InvalidHexadecimalEscapeSequence:
-                    message = "Invalid hexadecimal escape sequence in string.";
-                    break;
-                default:
-                    throw new InvalidOperationException();
-            }
-            throw new SyntaxErrorException(message);
-        }
+                StringValueParseResultStatus.InvalidToken =>
+                    "Token is not a string.",
+                StringValueParseResultStatus.InvalidEscapeSequence =>
+                    "Invalid escape sequence in string.",
+                StringValueParseResultStatus.InvalidUnicodeEscapeCharacterSequence =>
+                    "Invalid Unicode character escape sequence in string.",
+                StringValueParseResultStatus.InvalidHexadecimalEscapeSequence =>
+                    "Invalid hexadecimal escape sequence in string.",
+                _ => throw new InvalidOperationException()
+            });
 
         public static implicit operator bool(StringValueParseResult result) =>
             result.Status == StringValueParseResultStatus.Success;

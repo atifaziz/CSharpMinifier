@@ -29,11 +29,9 @@ namespace CSharpMinifierConsole
 
             return _(); IEnumerable<string> _()
             {
-                using (var reader = new StringReader(input))
-                {
-                    while (reader.ReadLine() is string line)
-                        yield return line;
-                }
+                using var reader = new StringReader(input);
+                while (reader.ReadLine() is {} line)
+                    yield return line;
             }
         }
 
@@ -41,7 +39,7 @@ namespace CSharpMinifierConsole
         {
             if (reader == null) throw new ArgumentNullException(nameof(reader));
 
-            while (reader.ReadLine() is string line)
+            while (reader.ReadLine() is {} line)
                 yield return line;
         }
 

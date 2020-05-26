@@ -102,11 +102,11 @@ namespace CSharpMinifier
 
             return _(); IEnumerable<TResult> _()
             {
-                bool IsSpaceOrTab (char ch) => ch == ' ' || ch == '\t';
-                bool IsAsciiLetter(char ch) => (ch = (char) (ch & ~0x20)) >= 'A' && ch <= 'z';
-                bool IsWordChar   (char ch) => char.IsLetter(ch)
-                                            || ch >= '0' && ch <= '9'
-                                            || ch == '_';
+                static bool IsSpaceOrTab (char ch) => ch == ' ' || ch == '\t';
+                static bool IsAsciiLetter(char ch) => (ch = (char) (ch & ~0x20)) >= 'A' && ch <= 'z';
+                static bool IsWordChar   (char ch) => char.IsLetter(ch)
+                                                   || ch >= '0' && ch <= '9'
+                                                   || ch == '_';
 
                 var lcs = LeadCommentState.Awaiting;
                 var lastCh = (char?)null;
@@ -131,7 +131,7 @@ namespace CSharpMinifier
                               && options.KeepLeadComment
                               && lcs != LeadCommentState.Processed
                               && (   lastSingleLineCommentLine is null
-                                  || lastSingleLineCommentLine is int ln
+                                  || lastSingleLineCommentLine is {} ln
                                   && t.Start.Line - ln == 1):
                         {
                             yield return resultSelector(t);
@@ -150,7 +150,7 @@ namespace CSharpMinifier
 
                         case TokenKind k
                             when k.HasTraits(TokenKindTraits.Comment)
-                              && options.CommentFilter is Func<Token, string, bool> filter
+                              && options.CommentFilter is {} filter
                               && filter(t, source):
                         {
                             yield return resultSelector(t);
@@ -193,7 +193,7 @@ namespace CSharpMinifier
                             }
                             else
                             {
-                                if (lastCh is char lch)
+                                if (lastCh is {} lch)
                                 {
                                     var ch = source[t.Start.Offset];
                                     if (IsWordChar(ch) && IsWordChar(lch) || ch == lch && (ch == '+' || ch == '-' || ch == '*'))

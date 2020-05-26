@@ -453,7 +453,7 @@ namespace CSharpMinifier
                 }
                 else if (buffer.All(ch, offset, length))
                 {
-                    result = run ?? (run = new string(ch, length));
+                    result = run ??= new string(ch, length);
                     return true;
                 }
             }
