@@ -37,7 +37,6 @@ build_script:
     $id = $id.Substring(0, 13)
 
     if ($isWindows) { .\pack.cmd ci-$id } else { ./pack.sh ci-$id }
-- sh: export PATH="$HOME/.dotnet:$PATH"
 test_script:
 - cmd: test.cmd
 - sh: ./test.sh
