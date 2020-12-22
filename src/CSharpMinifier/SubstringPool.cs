@@ -443,7 +443,7 @@ namespace CSharpMinifier
             {
                 ref var run = ref runs[length - 1];
 
-                if (run is string r)
+                if (run is { } r)
                 {
                     if (string.CompareOrdinal(r, 0, buffer, offset, length) == 0)
                     {

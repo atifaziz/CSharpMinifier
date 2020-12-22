@@ -126,7 +126,7 @@ namespace CSharpMinifier
                         case TokenKind.WhiteSpace:
                             break;
 
-                        case TokenKind k
+                        case var k
                             when k.HasTraits(TokenKindTraits.Comment)
                               && options.KeepLeadComment
                               && lcs != LeadCommentState.Processed
@@ -148,7 +148,7 @@ namespace CSharpMinifier
                             break;
                         }
 
-                        case TokenKind k
+                        case var k
                             when k.HasTraits(TokenKindTraits.Comment)
                               && options.CommentFilter is {} filter
                               && filter(t, source):
@@ -159,7 +159,7 @@ namespace CSharpMinifier
                             break;
                         }
 
-                        case TokenKind k when k.HasTraits(TokenKindTraits.Comment):
+                        case var k when k.HasTraits(TokenKindTraits.Comment):
                             continue;
 
                         default:

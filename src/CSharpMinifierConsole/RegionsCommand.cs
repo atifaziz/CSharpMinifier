@@ -80,7 +80,7 @@ namespace CSharpMinifierConsole
                 }
             }
 
-            if (!string.IsNullOrEmpty(last) && last.Last() is char ch
+            if (!string.IsNullOrEmpty(last) && last.Last() is { } ch
                                             && ch != '\r'
                                             && ch != '\n')
             {
