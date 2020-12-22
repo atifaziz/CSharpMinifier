@@ -34,7 +34,7 @@ namespace CSharpMinifier.Tests
         [Test]
         public void InvalidOffset()
         {
-            var e = Assert.Throws<ArgumentOutOfRangeException>(() => new Position(-42, 1, 1));
+            var e = Assert.Throws<ArgumentOutOfRangeException>(() => _ = new Position(-42, 1, 1));
             Assert.That(e.ParamName, Is.EqualTo("offset"));
             Assert.That(e.ActualValue, Is.EqualTo(-42));
         }
@@ -42,7 +42,7 @@ namespace CSharpMinifier.Tests
         [Test]
         public void InvalidLine()
         {
-            var e = Assert.Throws<ArgumentOutOfRangeException>(() => new Position(0, -42, 1));
+            var e = Assert.Throws<ArgumentOutOfRangeException>(() => _ = new Position(0, -42, 1));
             Assert.That(e.ParamName, Is.EqualTo("line"));
             Assert.That(e.ActualValue, Is.EqualTo(-42));
         }
@@ -50,7 +50,7 @@ namespace CSharpMinifier.Tests
         [Test]
         public void InvalidColumn()
         {
-            var e = Assert.Throws<ArgumentOutOfRangeException>(() => new Position(0, 1, -42));
+            var e = Assert.Throws<ArgumentOutOfRangeException>(() => _ = new Position(0, 1, -42));
             Assert.That(e.ParamName, Is.EqualTo("column"));
             Assert.That(e.ActualValue, Is.EqualTo(-42));
         }
