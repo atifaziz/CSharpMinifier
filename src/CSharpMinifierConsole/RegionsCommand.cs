@@ -80,12 +80,8 @@ namespace CSharpMinifierConsole
                 }
             }
 
-            if (!string.IsNullOrEmpty(last) && last.Last() is { } ch
-                                            && ch != '\r'
-                                            && ch != '\n')
-            {
+            if (!string.IsNullOrEmpty(last) && last.Last() is not '\r' and not '\n')
                 Console.WriteLine();
-            }
         }
     }
 }
