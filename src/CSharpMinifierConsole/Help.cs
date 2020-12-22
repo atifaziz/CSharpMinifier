@@ -1,7 +1,6 @@
 namespace CSharpMinifierConsole
 {
     using System;
-    using System.Diagnostics;
     using System.IO;
     using System.Reflection;
     using System.Text;
@@ -10,20 +9,19 @@ namespace CSharpMinifierConsole
 
     partial class Program
     {
-        static readonly Lazy<FileVersionInfo> CachedVersionInfo = Lazy.Create(() => FileVersionInfo.GetVersionInfo(typeof(Program).Assembly.Location));
-        static FileVersionInfo VersionInfo => CachedVersionInfo.Value;
-
         static void Help(string command, MonoOptionSet options) =>
             Help(command, command, options);
 
-        static void Help(string id, string command, MonoOptionSet options)
+        static void Help(string? id, string command, MonoOptionSet options)
         {
             var opts = Lazy.Create(() => options.WriteOptionDescriptionsReturningWriter(new StringWriter { NewLine = Environment.NewLine }).ToString());
-            var logo = Lazy.Create(() => new StringBuilder().AppendLine($"{VersionInfo.ProductName} (version {new Version(VersionInfo.FileVersion).Trim(3)})")
-                                                            .AppendLine(VersionInfo.LegalCopyright.Replace("\u00a9", "(C)"))
+            var logo = Lazy.Create(() => new StringBuilder().AppendLine($"{ThisAssembly.Info.Product} (version {new Version(ThisAssembly.Info.FileVersion).Trim(3)})")
+                                                            .AppendLine(ThisAssembly.Info.Copyright.Replace("\u00a9", "(C)"))
                                                             .ToString());
 
             using var stream = GetManifestResourceStream($"help.{id ?? command}.txt");
+            if (stream is null)
+                throw new Exception("Help is not available.");
             using var reader = new StreamReader(stream);
             using var e = reader.ReadLines();
             while (e.MoveNext())
@@ -45,23 +43,24 @@ namespace CSharpMinifierConsole
             }
         }
 
-        static string LoadTextResource(string name, Encoding encoding = null) =>
+        static string LoadTextResource(string name, Encoding? encoding = null) =>
             LoadTextResource(typeof(Program), name, encoding);
 
-        static string LoadTextResource(Type type, string name, Encoding encoding = null)
+        static string LoadTextResource(Type? type, string name, Encoding? encoding = null)
         {
             using var stream = type != null
                              ? GetManifestResourceStream(type, name)
                              : GetManifestResourceStream(null, name);
-            Debug.Assert(stream != null);
+            if (stream is null)
+                throw new Exception("Resource not found: " + name + (type != null ? $" ({type})" : null));
             using var reader = new StreamReader(stream, encoding ?? Encoding.UTF8);
             return reader.ReadToEnd();
         }
 
-        static Stream GetManifestResourceStream(string name) =>
+        static Stream? GetManifestResourceStream(string name) =>
             GetManifestResourceStream(typeof(Program), name);
 
-        static Stream GetManifestResourceStream(Type type, string name) =>
+        static Stream? GetManifestResourceStream(Type? type, string name) =>
             type != null ? type.Assembly.GetManifestResourceStream(type, name)
                          : Assembly.GetCallingAssembly().GetManifestResourceStream(name);
     }

@@ -26,7 +26,7 @@ namespace CSharpMinifier.Internals
 
     public static class JsonString
     {
-        [ThreadStatic] static StringBuilder _threadLocalStringBuilder;
+        [ThreadStatic] static StringBuilder? _threadLocalStringBuilder;
 
         public static string Encode(string s) =>
             Encode(s, ref _threadLocalStringBuilder);
@@ -34,10 +34,10 @@ namespace CSharpMinifier.Internals
         public static string Encode(string s, int index, int length) =>
             Encode(s, index, length, ref _threadLocalStringBuilder);
 
-        public static string Encode(string s, ref StringBuilder sb) =>
+        public static string Encode(string s, ref StringBuilder? sb) =>
             Encode(s, 0, s.Length, ref sb);
 
-        public static string Encode(string s, int index, int length, ref StringBuilder sb)
+        public static string Encode(string s, int index, int length, ref StringBuilder? sb)
         {
             if (sb == null)
                 sb = new StringBuilder();

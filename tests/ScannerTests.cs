@@ -30,7 +30,7 @@ namespace CSharpMinifier.Tests
         [Test]
         public void ScanNullSource()
         {
-            var e = Assert.Throws<ArgumentNullException>(() => Scanner.Scan(null));
+            var e = Assert.Throws<ArgumentNullException>(() => Scanner.Scan(null!));
             Assert.That(e.ParamName, Is.EqualTo("source"));
         }
 
@@ -586,7 +586,7 @@ namespace CSharpMinifier.Tests
                                   Kind  = TokenKind.Text,
                                   Start = new Position(0, 1, 1),
                                   End   = new Position(0, 1, 1),
-                                  Text  = (string)null,
+                                  Text  = string.Empty,
                               },
                               (s, e) => new
                               {

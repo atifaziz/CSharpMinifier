@@ -40,7 +40,7 @@ namespace CSharpMinifierConsole
         public bool Equals(Color other) =>
             Foreground == other.Foreground && Background == other.Background;
 
-        public override bool Equals(object obj) =>
+        public override bool Equals(object? obj) =>
             obj is Color color && Equals(color);
 
         public override int GetHashCode() =>

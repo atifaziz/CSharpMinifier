@@ -29,8 +29,8 @@ namespace CSharpMinifierConsole
         static void TokensCommand(IEnumerable<string> args)
         {
             var help = Ref.Create(false);
-            var globDir = Ref.Create((DirectoryInfo)null);
-            var format = (string)null;
+            var globDir = Ref.Create((DirectoryInfo?)null);
+            var format = (string?)null;
 
             var options = new OptionSet(CreateStrictOptionSetArgumentParser())
             {
@@ -56,7 +56,7 @@ namespace CSharpMinifierConsole
                 case null:
                 case "json":
                 {
-                    string indent = null;
+                    string? indent = null;
                     if (isMultiMode)
                     {
                         Console.WriteLine("[");

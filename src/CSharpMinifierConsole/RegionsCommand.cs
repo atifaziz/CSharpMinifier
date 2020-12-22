@@ -28,8 +28,8 @@ namespace CSharpMinifierConsole
         static void RegionsCommand(IEnumerable<string> args)
         {
             var help = Ref.Create(false);
-            var globDir = Ref.Create((DirectoryInfo)null);
-            var grep = (string)null;
+            var globDir = Ref.Create((DirectoryInfo?)null);
+            var grep = (string?)null;
             var isRegex = false;
             var ignoreCase = false;
 
@@ -52,7 +52,7 @@ namespace CSharpMinifierConsole
                 return;
             }
 
-            var last = (string)null;
+            var last = (string?)null;
 
             var regexOptions
                 = ignoreCase

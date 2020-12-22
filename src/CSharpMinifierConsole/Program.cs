@@ -35,9 +35,9 @@ namespace CSharpMinifierConsole
         static int Wain(IEnumerable<string> args)
         {
             var help = Ref.Create(false);
-            var globDir = Ref.Create((DirectoryInfo)null);
+            var globDir = Ref.Create((DirectoryInfo?)null);
             var validate = false;
-            var commentFilterPattern = Ref.Create((string)null);
+            var commentFilterPattern = Ref.Create((string?)null);
             var keepLeadComment = Ref.Create(false);
             var keepImportantComment = Ref.Create(false);
 
@@ -128,7 +128,7 @@ namespace CSharpMinifierConsole
 
                     psi.ArgumentList.Add("--langversion=latest");
 
-                    using var process = Process.Start(psi);
+                    using var process = Process.Start(psi)!;
 
                     process.OutputDataReceived += (_, ea) =>
                     {
@@ -154,7 +154,7 @@ namespace CSharpMinifierConsole
         static class Minifier
         {
             public static IEnumerable<string> Minify(string source,
-                string commentFilterPattern = null,
+                string? commentFilterPattern = null,
                 bool keepLeadComment = false,
                 bool keepImportantComment = false)
             {
@@ -167,7 +167,7 @@ namespace CSharpMinifierConsole
                 if (keepImportantComment)
                     options = options.OrCommentFilterOf(MinificationOptions.Default.FilterImportantComments());
 
-                return CSharpMinifier.Minifier.Minify(source, newLine: null, options);
+                return CSharpMinifier.Minifier.Minify(source, newLine: string.Empty, options);
             }
         }
 
@@ -175,9 +175,10 @@ namespace CSharpMinifierConsole
         {
             var fileName = Path.GetFileName(program);
 
+            var envPath = Environment.GetEnvironmentVariable("PATH") ?? string.Empty;
+
             var paths =
-                from p in Environment.GetEnvironmentVariable("PATH")
-                                     .Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries)
+                from p in envPath.Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries)
                 select p.Length > 0 && p[0] == '~'
                      ? Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.Personal), p.Substring(1))
                      : p
@@ -204,7 +205,7 @@ namespace CSharpMinifierConsole
         }
 
         static IEnumerable<(string File, string Source)>
-            ReadSources(IEnumerable<string> files, DirectoryInfo rootDir = null)
+            ReadSources(IEnumerable<string> files, DirectoryInfo? rootDir = null)
         {
             var stdin = Lazy.Create(() => Console.In.ReadToEnd());
             return ReadSources(files, rootDir, () => stdin.Value, File.ReadAllText);
@@ -212,7 +213,7 @@ namespace CSharpMinifierConsole
 
         static IEnumerable<(string File, T Source)>
             ReadSources<T>(IEnumerable<string> files,
-                           DirectoryInfo rootDir,
+                           DirectoryInfo? rootDir,
                            Func<T> stdin, Func<string, T> reader)
         {
             if (rootDir != null)
@@ -267,11 +268,11 @@ namespace CSharpMinifierConsole
             public static readonly Option Debug =
                 new ActionOption("d|debug", "debug break", vs => Debugger.Launch());
 
-            public static Option Glob(Ref<DirectoryInfo> value) =>
+            public static Option Glob(Ref<DirectoryInfo?> value) =>
                 new ActionOption("glob=", "interpret file path as glob pattern with {DIRECTORY} as base",
                     vs => value.Value = new DirectoryInfo(vs.Last()));
 
-            public static Option CommentFilterPattern(Ref<string> value) =>
+            public static Option CommentFilterPattern(Ref<string?> value) =>
                 new ActionOption("comment-filter-pattern=", "filter/keep comments matching {PATTERN}",
                     vs =>
                     {

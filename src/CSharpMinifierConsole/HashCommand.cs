@@ -18,6 +18,7 @@ namespace CSharpMinifierConsole
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics.CodeAnalysis;
     using System.Globalization;
     using System.IO;
     using System.Linq;
@@ -36,11 +37,11 @@ namespace CSharpMinifierConsole
         static int HashCommand(IEnumerable<string> args)
         {
             var help = Ref.Create(false);
-            var globDir = Ref.Create((DirectoryInfo)null);
-            var comparand = (byte[])null;
+            var globDir = Ref.Create((DirectoryInfo?)null);
+            var comparand = (byte[]?)null;
             var algoName = HashAlgorithmName.SHA256;
             var format = HashOutputFormat.Hexadecimal;
-            var commentFilterPattern = Ref.Create((string) null);
+            var commentFilterPattern = Ref.Create((string?)null);
             var keepLeadComment = Ref.Create(false);
             var keepImportantComment = Ref.Create(false);
 
@@ -82,7 +83,7 @@ namespace CSharpMinifierConsole
 
             using (var ha = IncrementalHash.CreateHash(algoName))
             {
-                byte[] buffer = null;
+                byte[]? buffer = null;
                 foreach (var (_, source) in ReadSources(tail, globDir))
                 {
                     foreach (var s in from s in Minifier.Minify(source, commentFilterPattern,
@@ -144,10 +145,10 @@ namespace CSharpMinifierConsole
                     HashAlgorithmName.SHA384,
                     HashAlgorithmName.SHA512,
                 },
-                e => e.Name,
+                e => e.Name!, // assume above hash algorithm names are always defined
                 StringComparer.OrdinalIgnoreCase);
 
-        static bool TryParseHexadecimalString(string s, out byte[] result)
+        static bool TryParseHexadecimalString(string s, [NotNullWhen(true)]out byte[]? result)
         {
             result = default;
 

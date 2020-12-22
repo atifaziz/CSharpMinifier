@@ -41,7 +41,7 @@ namespace CSharpMinifier
         public bool Equals(Position other) =>
             Offset == other.Offset && Line == other.Line && Column == other.Column;
 
-        public override bool Equals(object obj) =>
+        public override bool Equals(object? obj) =>
             obj is Position other && Equals(other);
 
         public override int GetHashCode() =>

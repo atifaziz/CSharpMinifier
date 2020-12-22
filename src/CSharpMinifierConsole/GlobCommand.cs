@@ -25,7 +25,7 @@ namespace CSharpMinifierConsole
         static void GlobCommand(IEnumerable<string> args)
         {
             var help = Ref.Create(false);
-            var globDir = Ref.Create((DirectoryInfo)null);
+            var globDir = Ref.Create((DirectoryInfo?)null);
 
             var options = new OptionSet(CreateStrictOptionSetArgumentParser())
             {
@@ -47,7 +47,7 @@ namespace CSharpMinifierConsole
                     ? globDir
                     : new DirectoryInfo(Environment.CurrentDirectory);
 
-            foreach (var (p, _) in ReadSources(tail, dir, () => (string)null, _ => null))
+            foreach (var (p, _) in ReadSources(tail, dir, () => (string?)null, _ => null))
                 Console.WriteLine(p);
         }
     }

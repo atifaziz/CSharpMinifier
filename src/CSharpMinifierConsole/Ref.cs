@@ -35,13 +35,8 @@ sealed partial class Ref<T> : IFormattable
     public Ref(T value) => Value = value;
     public override string ToString() => $"{Value}";
 
-    static readonly bool IsFormattable = typeof(IFormattable).IsAssignableFrom(typeof(T));
+    public string ToString(string? format, IFormatProvider? formatProvider) =>
+        Value is IFormattable v ? v.ToString(format, formatProvider) : ToString();
 
-    public string ToString(string format, IFormatProvider formatProvider)
-        => IsFormattable
-         ? ((IFormattable) Value).ToString(format, formatProvider)
-         : ToString();
-
-    public static implicit operator T(Ref<T> reference)
-        => reference == null ? default : reference.Value;
+    public static implicit operator T(Ref<T> reference) => reference.Value;
 }
