@@ -46,9 +46,9 @@ namespace CSharpMinifier
             {
                 (null, null) => this,
                 var (left, right) when left == right => this,
-                ({ }, null) => this,
-                (null, { } right) => WithCommentFilter(right),
-                ({ } left, { } right) => WithCommentFilter((t, s) => left(t, s) || right(t, s)),
+                ({}, null) => this,
+                (null, {} right) => WithCommentFilter(right),
+                ({} left, {} right) => WithCommentFilter((t, s) => left(t, s) || right(t, s)),
             };
 
         public MinificationOptions FilterImportantComments() =>
@@ -67,7 +67,7 @@ namespace CSharpMinifier
              : new MinificationOptions(this) { KeepLeadComment = value };
 
         public bool ShouldFilterComment(Token token, string text) =>
-            CommentFilter is { } filter && filter(token, text);
+            CommentFilter is {} filter && filter(token, text);
     }
 
     public static class Minifier

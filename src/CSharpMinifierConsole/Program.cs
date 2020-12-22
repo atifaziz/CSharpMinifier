@@ -161,7 +161,7 @@ namespace CSharpMinifierConsole
                 var options = MinificationOptions.Default
                                                  .WithKeepLeadComment(keepLeadComment);
 
-                if (commentFilterPattern is { } s)
+                if (commentFilterPattern is {} s)
                     options = options.FilterCommentMatching(s);
 
                 if (keepImportantComment)
@@ -195,10 +195,10 @@ namespace CSharpMinifierConsole
             switch (args.FirstOrDefault())
             {
                 case null:
-                case { } command when command == "help":
+                case {} command when command == "help":
                     Help("help", new Mono.Options.OptionSet());
                     break;
-                case { } command:
+                case {} command:
                     Wain(new [] { command, "--help" });
                         break;
             }

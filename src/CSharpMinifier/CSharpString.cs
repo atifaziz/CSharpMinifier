@@ -109,7 +109,7 @@ namespace CSharpMinifier
                     var result = TryParse(source, token.Kind, token.Start.Offset, token.End.Offset);
                     switch (result.Status, result.Value)
                     {
-                        case (StringValueParseResultStatus.Success, { } value):
+                        case (StringValueParseResultStatus.Success, {} value):
                             yield return selector(token, source, value);
                             break;
                         case (StringValueParseResultStatus.InvalidToken, _):

@@ -176,13 +176,13 @@ namespace CSharpMinifier
                                 break;
                             case '"':
                             {
-                                if (TextTransit(State.String) is { } text)
+                                if (TextTransit(State.String) is {} text)
                                     yield return text;
                                 break;
                             }
                             case '\'':
                             {
-                                if (TextTransit(State.Char) is { } text)
+                                if (TextTransit(State.Char) is {} text)
                                     yield return text;
                                 break;
                             }
@@ -204,7 +204,7 @@ namespace CSharpMinifier
                             case '}' when Interpolated():
                             {
                                 var (verbatim, parens) = interpolated.Pop();
-                                if (TextTransit(verbatim ? State.InterpolatedVerbatimString : State.InterpolatedString) is { } text)
+                                if (TextTransit(verbatim ? State.InterpolatedVerbatimString : State.InterpolatedString) is {} text)
                                     yield return text;
                                 if (parens != 0)
                                     throw SyntaxError("Parentheses mismatch in interpolated string expression.");
@@ -213,19 +213,19 @@ namespace CSharpMinifier
                             case ' ':
                             case '\t':
                             {
-                                if (TextTransit(State.WhiteSpace) is { } text)
+                                if (TextTransit(State.WhiteSpace) is {} text)
                                     yield return text;
                                 break;
                             }
                             case '\r':
                             {
-                                if (TextTransit(State.Cr) is { } text)
+                                if (TextTransit(State.Cr) is {} text)
                                     yield return text;
                                 break;
                             }
                             case '\n':
                             {
-                                if (TextTransit(State.Text) is { } text)
+                                if (TextTransit(State.Text) is {} text)
                                     yield return text;
                                 pos = (pos.Line + 1, 0);
                                 yield return Transit(TokenKind.NewLine, State.NewLine, 1);
@@ -341,7 +341,7 @@ namespace CSharpMinifier
                         switch (ch)
                         {
                             case '"':
-                                if (TextTransit(State.VerbatimString, -1) is { } text)
+                                if (TextTransit(State.VerbatimString, -1) is {} text)
                                     yield return text;
                                 break;
                             case '$':
@@ -361,7 +361,7 @@ namespace CSharpMinifier
                                 state = State.DollarAt;
                                 break;
                             case '"':
-                                if (TextTransit(State.InterpolatedString, -1) is { } text)
+                                if (TextTransit(State.InterpolatedString, -1) is {} text)
                                     yield return text;
                                 break;
                             default:
@@ -419,7 +419,7 @@ namespace CSharpMinifier
                     {
                         if (ch == '"')
                         {
-                            if (TextTransit(State.InterpolatedVerbatimString, -2) is { } text)
+                            if (TextTransit(State.InterpolatedVerbatimString, -2) is {} text)
                                 yield return text;
                         }
                         else
@@ -567,7 +567,7 @@ namespace CSharpMinifier
                         {
                             case '/':
                             case '*':
-                                if (TextTransit(ch == '/' ? State.SingleLineComment : State.MultiLineComment, -1) is { } text)
+                                if (TextTransit(ch == '/' ? State.SingleLineComment : State.MultiLineComment, -1) is {} text)
                                     yield return text;
                                 break;
                             default:
@@ -724,7 +724,7 @@ namespace CSharpMinifier
                                     {
                                         startMessage = specifics;
                                         tokens = new List<Token>();
-                                        if (lwsToken is { } t)
+                                        if (lwsToken is {} t)
                                             tokens.Add(t);
                                     }
                                     level++;
