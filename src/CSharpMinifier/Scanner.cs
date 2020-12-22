@@ -106,7 +106,7 @@ namespace CSharpMinifier
             Exception SyntaxError(string message) =>
                 throw new SyntaxErrorException($"{message} The syntax error is at line {pos.Line} and column {pos.Col} (or offset {i}). The last anchor was at line {spos.Line} and column {spos.Col} (or offset {si})");
 
-            bool IsDollarOrAt(char ch) => ch == '$' || ch == '@';
+            static bool IsDollarOrAt(char ch) => ch == '$' || ch == '@';
 
             //
             // While the C# language specification defines the following line

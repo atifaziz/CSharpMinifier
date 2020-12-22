@@ -167,7 +167,7 @@ namespace CSharpMinifierConsole
                             Console.WriteLine(row);
                     }
 
-                    string Encode(string s)
+                    static string Encode(string s)
                     {
                         const string quote = "\"";
                         const string quotequote = quote + quote;
