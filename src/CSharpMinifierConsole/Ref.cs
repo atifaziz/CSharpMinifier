@@ -1,4 +1,4 @@
-﻿#region Copyright (c) 2014 Atif Aziz. All rights reserved.
+#region Copyright (c) 2014 Atif Aziz. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
@@ -35,12 +35,8 @@ sealed partial class Ref<T> : IFormattable
     public Ref(T value) => Value = value;
     public override string ToString() => $"{Value}";
 
-    static readonly bool IsFormattable = typeof(IFormattable).IsAssignableFrom(typeof(T));
-
-    public string ToString(string? format, IFormatProvider? formatProvider)
-        => IsFormattable && Value is IFormattable v
-         ? v.ToString(format, formatProvider)
-         : ToString();
+    public string ToString(string? format, IFormatProvider? formatProvider) =>
+        Value is IFormattable v ? v.ToString(format, formatProvider) : ToString();
 
     public static implicit operator T(Ref<T> reference) => reference.Value;
 }
