@@ -51,10 +51,10 @@ namespace CSharpMinifierConsole
 
         public static Color Console
         {
-            get => new Color(System.Console.ForegroundColor,
-                System.Console.BackgroundColor);
+            get => new(System.Console.ForegroundColor,
+                       System.Console.BackgroundColor);
             set => value.Do(fg => System.Console.ForegroundColor = fg,
-                bg => System.Console.BackgroundColor = bg);
+                            bg => System.Console.BackgroundColor = bg);
         }
     }
 }

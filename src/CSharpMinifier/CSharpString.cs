@@ -37,10 +37,10 @@ namespace CSharpMinifier
         public string Value { get; }
 
         internal static StringValueParseResult Error(StringValueParseResultStatus status, int offset) =>
-            new StringValueParseResult(status, offset, null);
+            new(status, offset, null);
 
         internal static StringValueParseResult Success(string value) =>
-            new StringValueParseResult(StringValueParseResultStatus.Success, 0, value);
+            new(StringValueParseResultStatus.Success, 0, value);
 
         StringValueParseResult(StringValueParseResultStatus status, int errorOffset, string value)
         {
@@ -92,7 +92,7 @@ namespace CSharpMinifier
     {
         public static IEnumerable<string>
                 ParseValues(IEnumerable<Token> tokens, string source) =>
-            ParseValues(tokens, source, (_, __, str) => str);
+            ParseValues(tokens, source, (_, _, str) => str);
 
         public static IEnumerable<T>
                 ParseValues<T>(IEnumerable<Token> tokens, string source,

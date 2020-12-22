@@ -118,8 +118,8 @@ namespace CSharpMinifier.Tests
             var ati = 0;
             var bti = 0;
 
-            var a = MinificationOptions.Default.WithCommentFilter((t, s) => ar[ati++]);
-            var b = MinificationOptions.Default.WithCommentFilter((t, s) => br[bti++]);
+            var a = MinificationOptions.Default.WithCommentFilter((_, _) => ar[ati++]);
+            var b = MinificationOptions.Default.WithCommentFilter((_, _) => br[bti++]);
 
             var ab = a.OrCommentFilterOf(b);
 

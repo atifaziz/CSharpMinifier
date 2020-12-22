@@ -2,7 +2,6 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <LangVersion>8</LangVersion>
     <VersionPrefix>1.2.1</VersionPrefix>
     <Copyright>Copyright © 2019 Atif Aziz. All rights reserved.</Copyright>
     <Description>C# Minification Library</Description>
