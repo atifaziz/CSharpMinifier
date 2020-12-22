@@ -10,7 +10,7 @@ namespace CSharpMinifierConsole
 
     partial class Program
     {
-        static readonly Lazy<FileVersionInfo> CachedVersionInfo = Lazy.Create(() => FileVersionInfo.GetVersionInfo(new Uri(typeof(Program).Assembly.CodeBase).LocalPath));
+        static readonly Lazy<FileVersionInfo> CachedVersionInfo = Lazy.Create(() => FileVersionInfo.GetVersionInfo(typeof(Program).Assembly.Location));
         static FileVersionInfo VersionInfo => CachedVersionInfo.Value;
 
         static void Help(string command, MonoOptionSet options) =>
