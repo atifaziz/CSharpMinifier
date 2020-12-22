@@ -1,4 +1,4 @@
-#region Copyright (c) 2014 Atif Aziz. All rights reserved.
+﻿#region Copyright (c) 2014 Atif Aziz. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
