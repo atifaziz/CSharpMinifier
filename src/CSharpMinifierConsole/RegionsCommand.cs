@@ -40,8 +40,8 @@ namespace CSharpMinifierConsole
                 Options.Debug,
                 Options.Glob(globDir),
                 { "grep=", "search region message matching {PATTERN}", v => grep = v },
-                { "e"    , "use regular expression for search", v => isRegex = true },
-                { "i"    , "ignore search case", v => ignoreCase = true },
+                { "e"    , "use regular expression for search", _ => isRegex = true },
+                { "i"    , "ignore search case", _ => ignoreCase = true },
             };
 
             var tail = options.Parse(args);

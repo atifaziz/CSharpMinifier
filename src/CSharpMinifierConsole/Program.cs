@@ -266,7 +266,7 @@ namespace CSharpMinifierConsole
                 new ActionOption("verbose|v", "enable additional output", _ => value.Value = true);
 
             public static readonly Option Debug =
-                new ActionOption("d|debug", "debug break", vs => Debugger.Launch());
+                new ActionOption("d|debug", "debug break", _ => Debugger.Launch());
 
             public static Option Glob(Ref<DirectoryInfo?> value) =>
                 new ActionOption("glob=", "interpret file path as glob pattern with {DIRECTORY} as base",
