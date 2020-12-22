@@ -16,6 +16,8 @@
 
 namespace CSharpMinifier
 {
+    using System.Diagnostics.CodeAnalysis;
+
     static class SubstringPool
     {
         const string Str =
