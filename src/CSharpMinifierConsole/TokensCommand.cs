@@ -85,7 +85,7 @@ namespace CSharpMinifierConsole
                         foreach (var token in tokens)
                         {
                             if (j > 0)
-                                Console.WriteLine($",");
+                                Console.WriteLine(",");
                             Console.WriteLine($"{indent}  {{");
                             Console.WriteLine($"{indent}    \"kind\": \"{token.Kind}\",");
                             Console.WriteLine($"{indent}    \"span\": [[{token.Start.Offset}, {token.Start.Line}, {token.Start.Column}], [{token.End.Offset}, {token.End.Line}, {token.End.Column}]],");
