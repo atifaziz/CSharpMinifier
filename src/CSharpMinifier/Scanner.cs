@@ -91,8 +91,8 @@ namespace CSharpMinifier
             }
 
             Token CreateToken(TokenKind kind, int offset = 0) =>
-                new Token(kind, new Position(si, spos.Line, spos.Col),
-                                new Position(i + offset, pos.Line, pos.Col + offset));
+                new(kind, new Position(si, spos.Line, spos.Col),
+                          new Position(i + offset, pos.Line, pos.Col + offset));
 
             Token? TextTransit(State newState, int offset = 0) =>
                 TransitReturn(newState, offset,

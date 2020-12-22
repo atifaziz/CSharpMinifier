@@ -22,8 +22,7 @@ namespace CSharpMinifier
 
     public sealed class MinificationOptions
     {
-        public static readonly MinificationOptions Default =
-            new MinificationOptions(null, false);
+        public static readonly MinificationOptions Default = new(null, false);
 
         public Func<Token, string, bool> CommentFilter { get; private set; }
         public bool KeepLeadComment { get; private set; }
