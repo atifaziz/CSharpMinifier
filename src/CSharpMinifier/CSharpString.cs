@@ -34,7 +34,7 @@ namespace CSharpMinifier
     {
         public StringValueParseResultStatus Status { get; }
         public int ErrorOffset { get; }
-        public string Value { get; }
+        public string? Value { get; }
 
         internal static StringValueParseResult Error(StringValueParseResultStatus status, int offset) =>
             new(status, offset, null);
@@ -42,7 +42,7 @@ namespace CSharpMinifier
         internal static StringValueParseResult Success(string value) =>
             new(StringValueParseResultStatus.Success, 0, value);
 
-        StringValueParseResult(StringValueParseResultStatus status, int errorOffset, string value)
+        StringValueParseResult(StringValueParseResultStatus status, int errorOffset, string? value)
         {
             Status      = status;
             ErrorOffset = errorOffset;
@@ -107,12 +107,12 @@ namespace CSharpMinifier
                 foreach (var token in tokens)
                 {
                     var result = TryParse(source, token.Kind, token.Start.Offset, token.End.Offset);
-                    switch (result.Status)
+                    switch (result.Status, result.Value)
                     {
-                        case StringValueParseResultStatus.Success:
-                            yield return selector(token, source, result.Value);
+                        case (StringValueParseResultStatus.Success, { } value):
+                            yield return selector(token, source, value);
                             break;
-                        case StringValueParseResultStatus.InvalidToken:
+                        case (StringValueParseResultStatus.InvalidToken, _):
                             break;
                         default:
                             throw result.ToSyntaxError();
@@ -128,7 +128,7 @@ namespace CSharpMinifier
             var end = endIndex - 1;
             var verbatim = false;
             var interpolated = false;
-            string s;
+            string? s;
             StringValueParseResult r = default;
 
             switch (kind)
@@ -180,7 +180,7 @@ namespace CSharpMinifier
 
             return StringValueParseResult.Success(s);
 
-            StringValueParseResult Decode(int si, int ei, out string decoded)
+            StringValueParseResult Decode(int si, int ei, out string? decoded)
             {
                 var length = ei - si;
                 if (length == 0)

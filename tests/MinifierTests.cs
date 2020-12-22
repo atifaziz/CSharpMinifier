@@ -27,7 +27,7 @@ namespace CSharpMinifier.Tests
         [Test]
         public void MinifyNullSource()
         {
-            var e = Assert.Throws<ArgumentNullException>(() => Minifier.Minify(null));
+            var e = Assert.Throws<ArgumentNullException>(() => Minifier.Minify(null!));
             Assert.That(e.ParamName, Is.EqualTo("source"));
         }
 

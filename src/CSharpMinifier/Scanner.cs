@@ -18,6 +18,7 @@ namespace CSharpMinifier
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
 
     public static class Scanner
     {
@@ -700,12 +701,12 @@ namespace CSharpMinifier
 
             return _(); IEnumerable<Region> _()
             {
-                var tokens = (List<Token>)null;
+                var tokens = (List<Token>?)null;
                 var level = 0;
                 var awaitingEndRegionLineEnding = false;
                 var lwsToken = (Token?)null;
-                var startMessage = (string)null;
-                var endMessage = (string)null;
+                var startMessage = string.Empty;
+                var endMessage = string.Empty;
 
                 foreach (var token in Scan(source))
                 {

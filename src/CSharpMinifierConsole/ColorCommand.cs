@@ -27,7 +27,7 @@ namespace CSharpMinifierConsole
         static void ColorCommand(IEnumerable<string> args)
         {
             var help = Ref.Create(false);
-            var globDir = Ref.Create((DirectoryInfo)null);
+            var globDir = Ref.Create((DirectoryInfo?)null);
             var showLineEndings = false;
 
             var options = new OptionSet(CreateStrictOptionSetArgumentParser())

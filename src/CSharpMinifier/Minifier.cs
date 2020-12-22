@@ -24,10 +24,10 @@ namespace CSharpMinifier
     {
         public static readonly MinificationOptions Default = new(null, false);
 
-        public Func<Token, string, bool> CommentFilter { get; private set; }
+        public Func<Token, string, bool>? CommentFilter { get; private set; }
         public bool KeepLeadComment { get; private set; }
 
-        MinificationOptions(Func<Token, string, bool> commentFilter, bool keepLeadComment)
+        MinificationOptions(Func<Token, string, bool>? commentFilter, bool keepLeadComment)
         {
             CommentFilter = commentFilter;
             KeepLeadComment = keepLeadComment;
@@ -36,15 +36,20 @@ namespace CSharpMinifier
         MinificationOptions(MinificationOptions options) :
             this(options.CommentFilter, options.KeepLeadComment) {}
 
-        public MinificationOptions WithCommentFilter(Func<Token, string, bool> value)
+        public MinificationOptions WithCommentFilter(Func<Token, string, bool>? value)
             => CommentFilter == value ? this
              : value == Default.CommentFilter && KeepLeadComment == Default.KeepLeadComment ? Default
              : new MinificationOptions(this) { CommentFilter = value };
 
-        public MinificationOptions OrCommentFilterOf(MinificationOptions other)
-            => CommentFilter == other.CommentFilter || CommentFilter != null && other.CommentFilter == null ? this
-             : CommentFilter == null && other.CommentFilter != null ? WithCommentFilter(other.CommentFilter)
-             : WithCommentFilter((t, s) => CommentFilter(t, s) || other.CommentFilter(t, s));
+        public MinificationOptions OrCommentFilterOf(MinificationOptions other) =>
+            (CommentFilter, other.CommentFilter) switch
+            {
+                (null, null) => this,
+                var (left, right) when left == right => this,
+                ({ }, null) => this,
+                (null, { } right) => WithCommentFilter(right),
+                ({ } left, { } right) => WithCommentFilter((t, s) => left(t, s) || right(t, s)),
+            };
 
         public MinificationOptions FilterImportantComments() =>
             FilterCommentMatching("^/[/*]!");
@@ -60,6 +65,9 @@ namespace CSharpMinifier
             => KeepLeadComment == value ? this
              : value == Default.KeepLeadComment && CommentFilter == Default.CommentFilter ? Default
              : new MinificationOptions(this) { KeepLeadComment = value };
+
+        public bool ShouldFilterComment(Token token, string text) =>
+            CommentFilter is { } filter && filter(token, text);
     }
 
     public static class Minifier
@@ -149,8 +157,7 @@ namespace CSharpMinifier
 
                         case var k
                             when k.HasTraits(TokenKindTraits.Comment)
-                              && options.CommentFilter is {} filter
-                              && filter(t, source):
+                              && options.ShouldFilterComment(t, source):
                         {
                             yield return resultSelector(t);
                             if (k == TokenKind.SingleLineComment)

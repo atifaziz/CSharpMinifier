@@ -16,6 +16,8 @@
 
 namespace CSharpMinifier
 {
+    using System.Diagnostics.CodeAnalysis;
+
     static class SubstringPool
     {
         const string Str =
@@ -437,7 +439,7 @@ namespace CSharpMinifier
         }
 
         static bool TrySegmentRun(string buffer, int offset, int length,
-                                    char ch, string[] runs, out string result)
+                                    char ch, string?[] runs, [NotNullWhen(true)] out string? result)
         {
             if (length <= runs.Length && buffer[offset] == ch)
             {

@@ -29,7 +29,7 @@ namespace CSharpMinifierConsole
         static void GrepCommand(IEnumerable<string> args)
         {
             var help = Ref.Create(false);
-            var globDir = Ref.Create((DirectoryInfo)null);
+            var globDir = Ref.Create((DirectoryInfo?)null);
 
             var options = new OptionSet(CreateStrictOptionSetArgumentParser())
             {

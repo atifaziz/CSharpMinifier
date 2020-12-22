@@ -67,11 +67,11 @@ namespace CSharpMinifier.Tests
         public void CommentMatchingWithNullPattern()
         {
             var e = Assert.Throws<ArgumentNullException>(() =>
-                MinificationOptions.Default.FilterCommentMatching(null));
+                MinificationOptions.Default.FilterCommentMatching(null!));
             Assert.That(e.ParamName, Is.EqualTo("pattern"));
 
             e = Assert.Throws<ArgumentNullException>(() =>
-                MinificationOptions.Default.FilterCommentMatching(null, RegexOptions.None));
+                MinificationOptions.Default.FilterCommentMatching(null!, RegexOptions.None));
             Assert.That(e.ParamName, Is.EqualTo("pattern"));
         }
 
@@ -85,7 +85,10 @@ namespace CSharpMinifier.Tests
         {
             var options = MinificationOptions.Default.FilterCommentMatching(pattern);
             var token = Scanner.Scan(source).Single();
-            Assert.That(options.CommentFilter(token, source), Is.EqualTo(match));
+            if (options.CommentFilter is not null)
+                Assert.That(options.CommentFilter(token, source), Is.EqualTo(match));
+            else
+                Assert.That(options.CommentFilter, Is.Not.Null);
         }
 
         [TestCase("foo"       , false)]
@@ -97,7 +100,7 @@ namespace CSharpMinifier.Tests
         {
             var options = MinificationOptions.Default.FilterImportantComments();
             var token = Scanner.Scan(source).Single();
-            Assert.That(options.CommentFilter(token, source), Is.EqualTo(match));
+            Assert.That(options.ShouldFilterComment(token, source), Is.EqualTo(match));
         }
 
         [Test]
@@ -124,7 +127,7 @@ namespace CSharpMinifier.Tests
             var ab = a.OrCommentFilterOf(b);
 
             foreach (var (af, bf) in ar.Zip(br, ValueTuple.Create))
-                Assert.That(ab.CommentFilter(default, null), Is.EqualTo(af || bf));
+                Assert.That(ab.ShouldFilterComment(default, string.Empty), Is.EqualTo(af || bf));
         }
 
         [Test]
