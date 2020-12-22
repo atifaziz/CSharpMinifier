@@ -109,11 +109,10 @@ namespace CSharpMinifier
 
             return _(); IEnumerable<TResult> _()
             {
-                static bool IsSpaceOrTab (char ch) => ch == ' ' || ch == '\t';
-                static bool IsAsciiLetter(char ch) => (ch = (char) (ch & ~0x20)) >= 'A' && ch <= 'z';
+                static bool IsSpaceOrTab (char ch) => ch is ' ' or '\t';
+                static bool IsAsciiLetter(char ch) => (ch & ~0x20) is >= 'A' and <= 'z';
                 static bool IsWordChar   (char ch) => char.IsLetter(ch)
-                                                   || ch >= '0' && ch <= '9'
-                                                   || ch == '_';
+                                                   || ch is (>= '0' and <= '9') or '_';
 
                 var lcs = LeadCommentState.Awaiting;
                 var lastCh = (char?)null;
