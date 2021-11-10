@@ -17,6 +17,7 @@
 namespace CSharpMinifier.Tests
 {
     using System;
+    using System.Diagnostics;
     using System.Globalization;
     using System.Linq;
     using System.Text.RegularExpressions;
@@ -31,6 +32,7 @@ namespace CSharpMinifier.Tests
         public void ScanNullSource()
         {
             var e = Assert.Throws<ArgumentNullException>(() => Scanner.Scan(null!));
+            Debug.Assert(e is not null);
             Assert.That(e.ParamName, Is.EqualTo("source"));
         }
 
@@ -686,6 +688,7 @@ namespace CSharpMinifier.Tests
         {
             var e = Assert.Throws<SyntaxErrorException>(() =>
                 Scanner.ParseStrings(source).Consume());
+            Debug.Assert(e is not null);
             Assert.That(e.Message, Is.EqualTo("Invalid hexadecimal escape sequence in string."));
         }
 
@@ -707,6 +710,7 @@ namespace CSharpMinifier.Tests
         {
             var e = Assert.Throws<SyntaxErrorException>(() =>
                 Scanner.ParseStrings(source).Consume());
+            Debug.Assert(e is not null);
             Assert.That(e.Message, Is.EqualTo("Invalid Unicode character escape sequence in string."));
         }
 
@@ -739,6 +743,7 @@ namespace CSharpMinifier.Tests
         {
             var e = Assert.Throws<SyntaxErrorException>(() =>
                 Scanner.ParseStrings($@"""\{ch}""").Consume());
+            Debug.Assert(e is not null);
             Assert.That(e.Message, Is.EqualTo("Invalid escape sequence in string."));
         }
 

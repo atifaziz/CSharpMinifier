@@ -17,6 +17,7 @@
 namespace CSharpMinifier.Tests
 {
     using System;
+    using System.Diagnostics;
     using System.Text.RegularExpressions;
     using MoreLinq;
     using NUnit.Framework;
@@ -28,6 +29,7 @@ namespace CSharpMinifier.Tests
         public void MinifyNullSource()
         {
             var e = Assert.Throws<ArgumentNullException>(() => Minifier.Minify(null!));
+            Debug.Assert(e is not null);
             Assert.That(e.ParamName, Is.EqualTo("source"));
         }
 

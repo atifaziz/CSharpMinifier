@@ -17,6 +17,7 @@
 namespace CSharpMinifier.Tests
 {
     using System;
+    using System.Diagnostics;
     using System.Linq;
     using System.Text.RegularExpressions;
     using NUnit.Framework;
@@ -68,10 +69,12 @@ namespace CSharpMinifier.Tests
         {
             var e = Assert.Throws<ArgumentNullException>(() =>
                 MinificationOptions.Default.FilterCommentMatching(null!));
+            Debug.Assert(e is not null);
             Assert.That(e.ParamName, Is.EqualTo("pattern"));
 
             e = Assert.Throws<ArgumentNullException>(() =>
                 MinificationOptions.Default.FilterCommentMatching(null!, RegexOptions.None));
+            Debug.Assert(e is not null);
             Assert.That(e.ParamName, Is.EqualTo("pattern"));
         }
 
