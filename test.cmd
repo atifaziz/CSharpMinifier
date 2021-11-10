@@ -6,9 +6,7 @@ goto :EOF
 
 :main
     call build ^
- && call :test Debug -p:CollectCoverage=true ^
-                     -p:CoverletOutputFormat=opencover ^
-                     -p:Exclude=[NUnit*]* ^
+ && call :test Debug --collect:"XPlat Code Coverage"
  && call :test Release
 goto :EOF
 
