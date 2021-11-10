@@ -45,7 +45,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.FileSystemGlobbing" Version="5.0.0" />
-    <PackageReference Include="ThisAssembly.AssemblyInfo" Version="1.0.3" />
+    <PackageReference Include="ThisAssembly.AssemblyInfo" Version="1.0.9" />
   </ItemGroup>
 
 </Project>
