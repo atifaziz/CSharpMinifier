@@ -1,1 +1,1 @@
-@dotnet run --no-launch-profile -f net5.0 -p "%~dp0src\CSharpMinifierConsole" -- %*
+@dotnet run --no-launch-profile -f net6.0 --project "%~dp0src\CSharpMinifierConsole" -- %*
