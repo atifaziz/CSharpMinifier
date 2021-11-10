@@ -36,7 +36,7 @@ build_script:
 test_script:
 - cmd: test.cmd
 - ps: Invoke-WebRequest -Uri https://uploader.codecov.io/latest/windows/codecov.exe -Outfile codecov.exe
-- cmd: codecov.exe -f tests\coverage.opencover.xml
+- cmd: codecov.exe
 - sh: ./test.sh
 artifacts:
 - path: dist\*.nupkg
