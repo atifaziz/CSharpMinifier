@@ -14,34 +14,31 @@
 //
 #endregion
 
-namespace CSharpMinifierConsole
+using System;
+using Mono.Options;
+
+sealed class OptionSet : Mono.Options.OptionSet
 {
-    using System;
-    using Mono.Options;
+    readonly Func<Func<string, OptionContext, bool>, string, OptionContext, bool> _parser;
 
-    sealed class OptionSet : Mono.Options.OptionSet
-    {
-        readonly Func<Func<string, OptionContext, bool>, string, OptionContext, bool> _parser;
+    public OptionSet(Func<Func<string, OptionContext, bool>, string, OptionContext, bool> parser) =>
+        _parser = parser ?? throw new ArgumentNullException(nameof(parser));
 
-        public OptionSet(Func<Func<string, OptionContext, bool>, string, OptionContext, bool> parser) =>
-            _parser = parser ?? throw new ArgumentNullException(nameof(parser));
+    protected override bool Parse(string argument, OptionContext c) =>
+        _parser(base.Parse, argument, c);
+}
 
-        protected override bool Parse(string argument, OptionContext c) =>
-            _parser(base.Parse, argument, c);
-    }
+sealed class ActionOption : Option
+{
+    readonly Action<OptionValueCollection> _action;
 
-    sealed class ActionOption : Option
-    {
-        readonly Action<OptionValueCollection> _action;
+    public ActionOption(string prototype, string description, Action<OptionValueCollection> action) :
+        this(prototype, description, 1, action) {}
 
-        public ActionOption(string prototype, string description, Action<OptionValueCollection> action) :
-            this(prototype, description, 1, action) {}
+    public ActionOption(string prototype, string description, int count, Action<OptionValueCollection> action) :
+        base (prototype, description, count) =>
+        _action = action ?? throw new ArgumentNullException(nameof(action));
 
-        public ActionOption(string prototype, string description, int count, Action<OptionValueCollection> action) :
-            base (prototype, description, count) =>
-            _action = action ?? throw new ArgumentNullException(nameof(action));
-
-        protected override void OnParseComplete(OptionContext c) =>
-            _action(c.OptionValues);
-    }
+    protected override void OnParseComplete(OptionContext c) =>
+        _action(c.OptionValues);
 }

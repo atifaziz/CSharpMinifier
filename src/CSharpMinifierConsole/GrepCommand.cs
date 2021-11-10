@@ -14,52 +14,49 @@
 //
 #endregion
 
-namespace CSharpMinifierConsole
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text.RegularExpressions;
+using CSharpMinifier;
+using CSharpMinifier.Internals;
+
+partial class Program
 {
-    using System;
-    using System.Collections.Generic;
-    using System.IO;
-    using System.Linq;
-    using System.Text.RegularExpressions;
-    using CSharpMinifier;
-    using CSharpMinifier.Internals;
-
-    partial class Program
+    static void GrepCommand(IEnumerable<string> args)
     {
-        static void GrepCommand(IEnumerable<string> args)
+        var help = Ref.Create(false);
+        var globDir = Ref.Create((DirectoryInfo?)null);
+
+        var options = new OptionSet(CreateStrictOptionSetArgumentParser())
         {
-            var help = Ref.Create(false);
-            var globDir = Ref.Create((DirectoryInfo?)null);
+            Options.Help(help),
+            Options.Verbose(Verbose),
+            Options.Debug,
+            Options.Glob(globDir),
+        };
 
-            var options = new OptionSet(CreateStrictOptionSetArgumentParser())
+        var tail = new Queue<string>(options.Parse(args));
+
+        if (help)
+        {
+            Help("grep", options);
+            return;
+        }
+
+        if (!tail.Any())
+            throw new Exception("Missing search regular expression.");
+
+        var pattern = tail.Dequeue();
+
+        foreach (var (path, source) in ReadSources(tail, globDir))
+        {
+            foreach (var t in from e in Scanner.ParseStrings(source, (t, _, s) => (Token: t, Value: s))
+                                where Regex.IsMatch(e.Value, pattern)
+                                select e.Token)
             {
-                Options.Help(help),
-                Options.Verbose(Verbose),
-                Options.Debug,
-                Options.Glob(globDir),
-            };
-
-            var tail = new Queue<string>(options.Parse(args));
-
-            if (help)
-            {
-                Help("grep", options);
-                return;
-            }
-
-            if (!tail.Any())
-                throw new Exception("Missing search regular expression.");
-
-            var pattern = tail.Dequeue();
-
-            foreach (var (path, source) in ReadSources(tail, globDir))
-            {
-                foreach (var t in from e in Scanner.ParseStrings(source, (t, _, s) => (Token: t, Value: s))
-                                  where Regex.IsMatch(e.Value, pattern)
-                                  select e.Token)
-                {
-                    Console.WriteLine($"{path}({t.Start.Line},{t.Start.Column}): {JsonString.Encode(source, t.Start.Offset, t.Length)}");
-                }
+                Console.WriteLine($"{path}({t.Start.Line},{t.Start.Column}): {JsonString.Encode(source, t.Start.Offset, t.Length)}");
             }
         }
     }

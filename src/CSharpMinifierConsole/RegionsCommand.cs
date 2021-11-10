@@ -14,74 +14,71 @@
 //
 #endregion
 
-namespace CSharpMinifierConsole
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text.RegularExpressions;
+using CSharpMinifier;
+
+partial class Program
 {
-    using System;
-    using System.Collections.Generic;
-    using System.IO;
-    using System.Linq;
-    using System.Text.RegularExpressions;
-    using CSharpMinifier;
-
-    partial class Program
+    static void RegionsCommand(IEnumerable<string> args)
     {
-        static void RegionsCommand(IEnumerable<string> args)
+        var help = Ref.Create(false);
+        var globDir = Ref.Create((DirectoryInfo?)null);
+        var grep = (string?)null;
+        var isRegex = false;
+        var ignoreCase = false;
+
+        var options = new OptionSet(CreateStrictOptionSetArgumentParser())
         {
-            var help = Ref.Create(false);
-            var globDir = Ref.Create((DirectoryInfo?)null);
-            var grep = (string?)null;
-            var isRegex = false;
-            var ignoreCase = false;
+            Options.Help(help),
+            Options.Verbose(Verbose),
+            Options.Debug,
+            Options.Glob(globDir),
+            { "grep=", "search region message matching {PATTERN}", v => grep = v },
+            { "e"    , "use regular expression for search", _ => isRegex = true },
+            { "i"    , "ignore search case", _ => ignoreCase = true },
+        };
 
-            var options = new OptionSet(CreateStrictOptionSetArgumentParser())
-            {
-                Options.Help(help),
-                Options.Verbose(Verbose),
-                Options.Debug,
-                Options.Glob(globDir),
-                { "grep=", "search region message matching {PATTERN}", v => grep = v },
-                { "e"    , "use regular expression for search", _ => isRegex = true },
-                { "i"    , "ignore search case", _ => ignoreCase = true },
-            };
+        var tail = options.Parse(args);
 
-            var tail = options.Parse(args);
-
-            if (help)
-            {
-                Help("regions", options);
-                return;
-            }
-
-            var last = (string?)null;
-
-            var regexOptions
-                = ignoreCase
-                ? RegexOptions.IgnoreCase | RegexOptions.CultureInvariant
-                : RegexOptions.None;
-
-            var comparison
-                = ignoreCase
-                ? StringComparison.OrdinalIgnoreCase
-                : StringComparison.Ordinal;
-
-            foreach (var (_, source) in ReadSources(tail, globDir))
-            {
-                var regions =
-                    from r in Scanner.ScanRegions(source)
-                    where grep == null
-                       || (isRegex ? Regex.IsMatch(r.Message, grep, regexOptions)
-                                   : r.Message.Contains(grep, comparison))
-                    select r;
-
-                foreach (var region in regions)
-                {
-                    foreach (var token in region.Tokens)
-                        Console.Write(last = token.Substring(source));
-                }
-            }
-
-            if (!string.IsNullOrEmpty(last) && last.Last() is not '\r' and not '\n')
-                Console.WriteLine();
+        if (help)
+        {
+            Help("regions", options);
+            return;
         }
+
+        var last = (string?)null;
+
+        var regexOptions
+            = ignoreCase
+            ? RegexOptions.IgnoreCase | RegexOptions.CultureInvariant
+            : RegexOptions.None;
+
+        var comparison
+            = ignoreCase
+            ? StringComparison.OrdinalIgnoreCase
+            : StringComparison.Ordinal;
+
+        foreach (var (_, source) in ReadSources(tail, globDir))
+        {
+            var regions =
+                from r in Scanner.ScanRegions(source)
+                where grep == null
+                    || (isRegex ? Regex.IsMatch(r.Message, grep, regexOptions)
+                                : r.Message.Contains(grep, comparison))
+                select r;
+
+            foreach (var region in regions)
+            {
+                foreach (var token in region.Tokens)
+                    Console.Write(last = token.Substring(source));
+            }
+        }
+
+        if (!string.IsNullOrEmpty(last) && last.Last() is not '\r' and not '\n')
+            Console.WriteLine();
     }
 }

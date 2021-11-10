@@ -14,100 +14,97 @@
 //
 #endregion
 
-namespace CSharpMinifierConsole
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using CSharpMinifier;
+
+partial class Program
 {
-    using System;
-    using System.Collections.Generic;
-    using System.IO;
-    using System.Linq;
-    using CSharpMinifier;
-
-    partial class Program
+    static void ColorCommand(IEnumerable<string> args)
     {
-        static void ColorCommand(IEnumerable<string> args)
+        var help = Ref.Create(false);
+        var globDir = Ref.Create((DirectoryInfo?)null);
+        var showLineEndings = false;
+
+        var options = new OptionSet(CreateStrictOptionSetArgumentParser())
         {
-            var help = Ref.Create(false);
-            var globDir = Ref.Create((DirectoryInfo?)null);
-            var showLineEndings = false;
+            Options.Help(help),
+            Options.Verbose(Verbose),
+            Options.Debug,
+            Options.Glob(globDir),
+            { "eol", "Show line endings", _ => showLineEndings = true }
+        };
 
-            var options = new OptionSet(CreateStrictOptionSetArgumentParser())
+        var tail = options.Parse(args);
+
+        if (help)
+        {
+            Help("color", options);
+            return;
+        }
+
+        var defaultColor = Color.Console;
+
+        var magenta = new Color(ConsoleColor.Magenta, defaultColor.Background);
+        var black   = new Color(ConsoleColor.Black  , ConsoleColor.DarkGray);
+        var green   = new Color(ConsoleColor.Green  , defaultColor.Background);
+        var yellow  = new Color(ConsoleColor.Yellow , defaultColor.Background);
+        var cyan    = new Color(ConsoleColor.Cyan   , defaultColor.Background);
+        var blue    = new Color(ConsoleColor.Blue   , defaultColor.Background);
+        var gray    = new Color(ConsoleColor.Gray   , defaultColor.Background);
+
+        var defaultPalette = new(TokenKind TokenKind, Color)[]
+        {
+            (TokenKind.Text                                  , gray),
+            (TokenKind.WhiteSpace                            , defaultColor),
+            (TokenKind.NewLine                               , black),
+            (TokenKind.SingleLineComment                     , green),
+            (TokenKind.MultiLineComment                      , green),
+            (TokenKind.StringLiteral                         , yellow),
+            (TokenKind.VerbatimStringLiteral                 , yellow),
+            (TokenKind.InterpolatedStringLiteral             , magenta),
+            (TokenKind.InterpolatedStringLiteralStart        , magenta),
+            (TokenKind.InterpolatedStringLiteralMid          , magenta),
+            (TokenKind.InterpolatedStringLiteralEnd          , magenta),
+            (TokenKind.InterpolatedVerbatimStringLiteral     , magenta),
+            (TokenKind.InterpolatedVerbatimStringLiteralStart, magenta),
+            (TokenKind.InterpolatedVerbatimStringLiteralMid  , magenta),
+            (TokenKind.InterpolatedVerbatimStringLiteralEnd  , magenta),
+            (TokenKind.CharLiteral                           , cyan),
+            (TokenKind.PreprocessorDirective                 , blue),
+        };
+
+        var colorByTokenKind = new Color[defaultPalette.Max(e => (int)e.TokenKind) + 1];
+        foreach (var (kind, color) in defaultPalette)
+            colorByTokenKind[(int)kind] = color;
+
+        try
+        {
+            foreach (var (_, source) in ReadSources(tail, globDir))
             {
-                Options.Help(help),
-                Options.Verbose(Verbose),
-                Options.Debug,
-                Options.Glob(globDir),
-                { "eol", "Show line endings", _ => showLineEndings = true }
-            };
-
-            var tail = options.Parse(args);
-
-            if (help)
-            {
-                Help("color", options);
-                return;
-            }
-
-            var defaultColor = Color.Console;
-
-            var magenta = new Color(ConsoleColor.Magenta, defaultColor.Background);
-            var black   = new Color(ConsoleColor.Black  , ConsoleColor.DarkGray);
-            var green   = new Color(ConsoleColor.Green  , defaultColor.Background);
-            var yellow  = new Color(ConsoleColor.Yellow , defaultColor.Background);
-            var cyan    = new Color(ConsoleColor.Cyan   , defaultColor.Background);
-            var blue    = new Color(ConsoleColor.Blue   , defaultColor.Background);
-            var gray    = new Color(ConsoleColor.Gray   , defaultColor.Background);
-
-            var defaultPalette = new(TokenKind TokenKind, Color)[]
-            {
-                (TokenKind.Text                                  , gray),
-                (TokenKind.WhiteSpace                            , defaultColor),
-                (TokenKind.NewLine                               , black),
-                (TokenKind.SingleLineComment                     , green),
-                (TokenKind.MultiLineComment                      , green),
-                (TokenKind.StringLiteral                         , yellow),
-                (TokenKind.VerbatimStringLiteral                 , yellow),
-                (TokenKind.InterpolatedStringLiteral             , magenta),
-                (TokenKind.InterpolatedStringLiteralStart        , magenta),
-                (TokenKind.InterpolatedStringLiteralMid          , magenta),
-                (TokenKind.InterpolatedStringLiteralEnd          , magenta),
-                (TokenKind.InterpolatedVerbatimStringLiteral     , magenta),
-                (TokenKind.InterpolatedVerbatimStringLiteralStart, magenta),
-                (TokenKind.InterpolatedVerbatimStringLiteralMid  , magenta),
-                (TokenKind.InterpolatedVerbatimStringLiteralEnd  , magenta),
-                (TokenKind.CharLiteral                           , cyan),
-                (TokenKind.PreprocessorDirective                 , blue),
-            };
-
-            var colorByTokenKind = new Color[defaultPalette.Max(e => (int)e.TokenKind) + 1];
-            foreach (var (kind, color) in defaultPalette)
-                colorByTokenKind[(int)kind] = color;
-
-            try
-            {
-                foreach (var (_, source) in ReadSources(tail, globDir))
+                foreach (var token in Scanner.Scan(source))
                 {
-                    foreach (var token in Scanner.Scan(source))
+                    Color.Console = colorByTokenKind[(int)token.Kind];
+                    var text = source.Substring(token.Start.Offset, token.Length);
+                    if (token.Kind == TokenKind.NewLine)
                     {
-                        Color.Console = colorByTokenKind[(int)token.Kind];
-                        var text = source.Substring(token.Start.Offset, token.Length);
-                        if (token.Kind == TokenKind.NewLine)
-                        {
-                            if (showLineEndings)
-                                Console.Write(text.Replace("\r", "[CR]").Replace("\n", "[LF]"));
-                            Color.Console = defaultColor;
-                            Console.WriteLine();
-                        }
-                        else
-                        {
-                            Console.Write(text);
-                        }
+                        if (showLineEndings)
+                            Console.Write(text.Replace("\r", "[CR]").Replace("\n", "[LF]"));
+                        Color.Console = defaultColor;
+                        Console.WriteLine();
+                    }
+                    else
+                    {
+                        Console.Write(text);
                     }
                 }
             }
-            finally
-            {
-                Color.Console = defaultColor;
-            }
+        }
+        finally
+        {
+            Color.Console = defaultColor;
         }
     }
 }

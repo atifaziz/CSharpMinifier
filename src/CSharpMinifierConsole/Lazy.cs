@@ -14,13 +14,10 @@
 //
 #endregion
 
-namespace CSharpMinifierConsole
-{
-    using System;
+using System;
 
-    static class Lazy
-    {
-        public static Lazy<T> Value<T>(T value) => Create(() => value);
-        public static Lazy<T> Create<T>(Func<T> factory) => new(factory);
-    }
+static class Lazy
+{
+    public static Lazy<T> Value<T>(T value) => Create(() => value);
+    public static Lazy<T> Create<T>(Func<T> factory) => new(factory);
 }

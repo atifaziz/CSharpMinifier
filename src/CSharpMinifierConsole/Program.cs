@@ -14,236 +14,211 @@
 //
 #endregion
 
-namespace CSharpMinifierConsole
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
+using CSharpMinifier;
+using Microsoft.Extensions.FileSystemGlobbing;
+using Mono.Options;
+using OptionSetArgumentParser = System.Func<System.Func<string, Mono.Options.OptionContext, bool>, string, Mono.Options.OptionContext, bool>;
+
+static partial class Program
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Diagnostics;
-    using System.IO;
-    using System.Linq;
-    using System.Runtime.InteropServices;
-    using System.Text.RegularExpressions;
-    using CSharpMinifier;
-    using Microsoft.Extensions.FileSystemGlobbing;
-    using Mono.Options;
-    using OptionSetArgumentParser = System.Func<System.Func<string, Mono.Options.OptionContext, bool>, string, Mono.Options.OptionContext, bool>;
+    static readonly Ref<bool> Verbose = Ref.Create(false);
 
-    static partial class Program
+    static int Wain(IEnumerable<string> args)
     {
-        static readonly Ref<bool> Verbose = Ref.Create(false);
+        var help = Ref.Create(false);
+        var globDir = Ref.Create((DirectoryInfo?)null);
+        var validate = false;
+        var commentFilterPattern = Ref.Create((string?)null);
+        var keepLeadComment = Ref.Create(false);
+        var keepImportantComment = Ref.Create(false);
 
-        static int Wain(IEnumerable<string> args)
+        var options = new OptionSet(CreateStrictOptionSetArgumentParser())
         {
-            var help = Ref.Create(false);
-            var globDir = Ref.Create((DirectoryInfo?)null);
-            var validate = false;
-            var commentFilterPattern = Ref.Create((string?)null);
-            var keepLeadComment = Ref.Create(false);
-            var keepImportantComment = Ref.Create(false);
+            Options.Help(help),
+            Options.Verbose(Verbose),
+            Options.Debug,
+            Options.Glob(globDir),
+            { "validate", "validate minified output", _ => validate = true },
+            Options.CommentFilterPattern(commentFilterPattern),
+            Options.KeepLeadComment(keepLeadComment),
+            Options.KeepImportantComments(keepImportantComment)
+        };
 
-            var options = new OptionSet(CreateStrictOptionSetArgumentParser())
+        var tail = options.Parse(args);
+
+        if (help)
+        {
+            Help("min", "[min]", options);
+            return 0;
+        }
+
+        var command = tail.FirstOrDefault();
+        var commandArgs = tail.Skip(1);
+        var result = 0;
+
+        switch (command)
+        {
+            case "min"    : Wain(commandArgs); break;
+            case "help"   : HelpCommand(commandArgs); break;
+            case "tokens" : TokensCommand(commandArgs); break;
+            case "grep"   : GrepCommand(commandArgs); break;
+            case "hash"   : result = HashCommand(commandArgs); break;
+            case "regions": RegionsCommand(commandArgs); break;
+            case "color"  :
+            case "colour" : ColorCommand(commandArgs); break;
+            case "glob"   : GlobCommand(commandArgs); break;
+            default       : DefaultCommand(); break;
+        }
+
+        return result;
+
+        void DefaultCommand()
+        {
+            const string validatorExecutableName = "csval";
+
+            var validator = Lazy.Create(() =>
+                    RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
+                || RuntimeInformation.IsOSPlatform(OSPlatform.OSX)
+                    ? FindProgramPath(validatorExecutableName)
+                    : validatorExecutableName);
+
+            foreach (var (_, source) in ReadSources(tail, globDir))
             {
-                Options.Help(help),
-                Options.Verbose(Verbose),
-                Options.Debug,
-                Options.Glob(globDir),
-                { "validate", "validate minified output", _ => validate = true },
-                Options.CommentFilterPattern(commentFilterPattern),
-                Options.KeepLeadComment(keepLeadComment),
-                Options.KeepImportantComments(keepImportantComment)
-            };
+                Minify(source, Console.Out);
 
-            var tail = options.Parse(args);
-
-            if (help)
-            {
-                Help("min", "[min]", options);
-                return 0;
+                if (validate && !Validate(stdin => Minify(source, stdin)))
+                    throw new Exception("Minified version is invalid.");
             }
 
-            var command = tail.FirstOrDefault();
-            var commandArgs = tail.Skip(1);
-            var result = 0;
-
-            switch (command)
+            void Minify(string source, TextWriter output)
             {
-                case "min"    : Wain(commandArgs); break;
-                case "help"   : HelpCommand(commandArgs); break;
-                case "tokens" : TokensCommand(commandArgs); break;
-                case "grep"   : GrepCommand(commandArgs); break;
-                case "hash"   : result = HashCommand(commandArgs); break;
-                case "regions": RegionsCommand(commandArgs); break;
-                case "color"  :
-                case "colour" : ColorCommand(commandArgs); break;
-                case "glob"   : GlobCommand(commandArgs); break;
-                default       : DefaultCommand(); break;
-            }
-
-            return result;
-
-            void DefaultCommand()
-            {
-                const string validatorExecutableName = "csval";
-
-                var validator = Lazy.Create(() =>
-                       RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
-                    || RuntimeInformation.IsOSPlatform(OSPlatform.OSX)
-                     ? FindProgramPath(validatorExecutableName)
-                     : validatorExecutableName);
-
-                foreach (var (_, source) in ReadSources(tail, globDir))
+                var nl = false;
+                foreach (var s in Minifier.Minify(source, commentFilterPattern,
+                                                            keepLeadComment,
+                                                            keepImportantComment))
                 {
-                    Minify(source, Console.Out);
-
-                    if (validate && !Validate(stdin => Minify(source, stdin)))
-                        throw new Exception("Minified version is invalid.");
-                }
-
-                void Minify(string source, TextWriter output)
-                {
-                    var nl = false;
-                    foreach (var s in Minifier.Minify(source, commentFilterPattern,
-                                                              keepLeadComment,
-                                                              keepImportantComment))
-                    {
-                        if (nl = s == null)
-                            output.WriteLine();
-                        else
-                            output.Write(s);
-                    }
-                    if (!nl)
+                    if (nl = s == null)
                         output.WriteLine();
+                    else
+                        output.Write(s);
                 }
+                if (!nl)
+                    output.WriteLine();
+            }
 
-                bool Validate(Action<TextWriter> minificationAction)
+            bool Validate(Action<TextWriter> minificationAction)
+            {
+                var psi = new ProcessStartInfo(validator.Value)
                 {
-                    var psi = new ProcessStartInfo(validator.Value)
-                    {
-                        UseShellExecute        = false,
-                        CreateNoWindow         = true,
-                        RedirectStandardOutput = true,
-                        RedirectStandardError  = true,
-                        RedirectStandardInput  = true,
-                    };
+                    UseShellExecute        = false,
+                    CreateNoWindow         = true,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError  = true,
+                    RedirectStandardInput  = true,
+                };
 
-                    psi.ArgumentList.Add("--langversion=latest");
+                psi.ArgumentList.Add("--langversion=latest");
 
-                    using var process = Process.Start(psi)!;
+                using var process = Process.Start(psi)!;
 
-                    process.OutputDataReceived += (_, ea) =>
-                    {
-                        if (ea.Data != null)
-                            Console.Error.WriteLine(ea.Data);
-                    };
+                process.OutputDataReceived += (_, ea) =>
+                {
+                    if (ea.Data != null)
+                        Console.Error.WriteLine(ea.Data);
+                };
 
-                    process.BeginOutputReadLine();
-                    process.BeginErrorReadLine();
+                process.BeginOutputReadLine();
+                process.BeginErrorReadLine();
 
-                    var stdin = process.StandardInput;
-                    minificationAction(stdin);
-                    stdin.Flush();
-                    stdin.Close();
+                var stdin = process.StandardInput;
+                minificationAction(stdin);
+                stdin.Flush();
+                stdin.Close();
 
-                    process.WaitForExit();
+                process.WaitForExit();
 
-                    return process.ExitCode == 0;
-                }
+                return process.ExitCode == 0;
             }
         }
+    }
 
-        static class Minifier
+    static class Minifier
+    {
+        public static IEnumerable<string> Minify(string source,
+            string? commentFilterPattern = null,
+            bool keepLeadComment = false,
+            bool keepImportantComment = false)
         {
-            public static IEnumerable<string> Minify(string source,
-                string? commentFilterPattern = null,
-                bool keepLeadComment = false,
-                bool keepImportantComment = false)
-            {
-                var options = MinificationOptions.Default
-                                                 .WithKeepLeadComment(keepLeadComment);
+            var options = MinificationOptions.Default
+                                                .WithKeepLeadComment(keepLeadComment);
 
-                if (commentFilterPattern is {} s)
-                    options = options.FilterCommentMatching(s);
+            if (commentFilterPattern is {} s)
+                options = options.FilterCommentMatching(s);
 
-                if (keepImportantComment)
-                    options = options.OrCommentFilterOf(MinificationOptions.Default.FilterImportantComments());
+            if (keepImportantComment)
+                options = options.OrCommentFilterOf(MinificationOptions.Default.FilterImportantComments());
 
-                return CSharpMinifier.Minifier.Minify(source, newLine: string.Empty, options);
-            }
+            return CSharpMinifier.Minifier.Minify(source, newLine: string.Empty, options);
         }
+    }
 
-        static string FindProgramPath(string program)
+    static string FindProgramPath(string program)
+    {
+        var fileName = Path.GetFileName(program);
+
+        var envPath = Environment.GetEnvironmentVariable("PATH") ?? string.Empty;
+
+        var paths =
+            from p in envPath.Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries)
+            select p.Length > 0 && p[0] == '~'
+                    ? Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.Personal), p.Substring(1))
+                    : p
+            into p
+            select Path.Join(p, fileName) into p
+            where File.Exists(p)
+            select p;
+
+        return paths.FirstOrDefault() ?? program;
+    }
+
+    static void HelpCommand(IEnumerable<string> args)
+    {
+        switch (args.FirstOrDefault())
         {
-            var fileName = Path.GetFileName(program);
-
-            var envPath = Environment.GetEnvironmentVariable("PATH") ?? string.Empty;
-
-            var paths =
-                from p in envPath.Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries)
-                select p.Length > 0 && p[0] == '~'
-                     ? Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.Personal), p.Substring(1))
-                     : p
-                into p
-                select Path.Join(p, fileName) into p
-                where File.Exists(p)
-                select p;
-
-            return paths.FirstOrDefault() ?? program;
-        }
-
-        static void HelpCommand(IEnumerable<string> args)
-        {
-            switch (args.FirstOrDefault())
-            {
-                case null:
-                case {} command when command == "help":
-                    Help("help", new Mono.Options.OptionSet());
+            case null:
+            case {} command when command == "help":
+                Help("help", new Mono.Options.OptionSet());
+                break;
+            case {} command:
+                Wain(new [] { command, "--help" });
                     break;
-                case {} command:
-                    Wain(new [] { command, "--help" });
-                        break;
-            }
         }
+    }
 
-        static IEnumerable<(string File, string Source)>
-            ReadSources(IEnumerable<string> files, DirectoryInfo? rootDir = null)
+    static IEnumerable<(string File, string Source)>
+        ReadSources(IEnumerable<string> files, DirectoryInfo? rootDir = null)
+    {
+        var stdin = Lazy.Create(() => Console.In.ReadToEnd());
+        return ReadSources(files, rootDir, () => stdin.Value, File.ReadAllText);
+    }
+
+    static IEnumerable<(string File, T Source)>
+        ReadSources<T>(IEnumerable<string> files,
+                        DirectoryInfo? rootDir,
+                        Func<T> stdin, Func<string, T> reader)
+    {
+        if (rootDir != null)
         {
-            var stdin = Lazy.Create(() => Console.In.ReadToEnd());
-            return ReadSources(files, rootDir, () => stdin.Value, File.ReadAllText);
-        }
-
-        static IEnumerable<(string File, T Source)>
-            ReadSources<T>(IEnumerable<string> files,
-                           DirectoryInfo? rootDir,
-                           Func<T> stdin, Func<string, T> reader)
-        {
-            if (rootDir != null)
+            var matcher = new Matcher();
+            using (var e = files.GetEnumerator())
             {
-                var matcher = new Matcher();
-                using (var e = files.GetEnumerator())
-                {
-                    if (!e.MoveNext())
-                        yield return ("STDIN", stdin());
-
-                    do
-                    {
-                        if (string.IsNullOrEmpty(e.Current))
-                            continue;
-
-                        if (e.Current[0] == '!')
-                            matcher.AddExclude(e.Current.Substring(1));
-                        else
-                            matcher.AddInclude(e.Current);
-                    }
-                    while (e.MoveNext());
-                }
-
-                foreach (var r in matcher.GetResultsInFullPath(rootDir.FullName))
-                    yield return (Path.GetRelativePath(rootDir.FullName, r), reader(r));
-            }
-            else
-            {
-                using var e = files.GetEnumerator();
-
                 if (!e.MoveNext())
                     yield return ("STDIN", stdin());
 
@@ -251,84 +226,106 @@ namespace CSharpMinifierConsole
                 {
                     if (string.IsNullOrEmpty(e.Current))
                         continue;
-                    yield return (e.Current, reader(e.Current));
+
+                    if (e.Current[0] == '!')
+                        matcher.AddExclude(e.Current.Substring(1));
+                    else
+                        matcher.AddInclude(e.Current);
                 }
                 while (e.MoveNext());
             }
+
+            foreach (var r in matcher.GetResultsInFullPath(rootDir.FullName))
+                yield return (Path.GetRelativePath(rootDir.FullName, r), reader(r));
         }
-
-        static class Options
+        else
         {
-            public static Option Help(Ref<bool> value) =>
-                new ActionOption("?|help|h", "prints out the options", _ => value.Value = true);
+            using var e = files.GetEnumerator();
 
-            public static Option Verbose(Ref<bool> value) =>
-                new ActionOption("verbose|v", "enable additional output", _ => value.Value = true);
+            if (!e.MoveNext())
+                yield return ("STDIN", stdin());
 
-            public static readonly Option Debug =
-                new ActionOption("d|debug", "debug break", _ => Debugger.Launch());
-
-            public static Option Glob(Ref<DirectoryInfo?> value) =>
-                new ActionOption("glob=", "interpret file path as glob pattern with {DIRECTORY} as base",
-                    vs => value.Value = new DirectoryInfo(vs.Last()));
-
-            public static Option CommentFilterPattern(Ref<string?> value) =>
-                new ActionOption("comment-filter-pattern=", "filter/keep comments matching {PATTERN}",
-                    vs =>
-                    {
-                        var pattern = vs.Last();
-                        var _ = new Regex(pattern); // validate & discard
-                        value.Value = pattern;
-                    });
-
-            public static Option KeepLeadComment(Ref<bool> value) =>
-                new ActionOption("keep-lead-comment",
-                                 "keep first multi-line comment or "
-                                 + "first consecutive set of single-line comments",
-                                 _ => value.Value = true);
-
-            public static Option KeepImportantComments(Ref<bool> value) =>
-                new ActionOption("keep-important-comment",
-                                 "keep /*! ... */ comments or "
-                                 + "single-line comments starting with //! ...",
-                                 _ => value.Value = true);
-        }
-
-        static OptionSetArgumentParser CreateStrictOptionSetArgumentParser()
-        {
-            var hasTailStarted = false;
-            return (impl, arg, context) =>
+            do
             {
-                if (hasTailStarted) // once a tail, always a tail
-                    return false;
+                if (string.IsNullOrEmpty(e.Current))
+                    continue;
+                yield return (e.Current, reader(e.Current));
+            }
+            while (e.MoveNext());
+        }
+    }
 
-                var isOption = impl(arg, context);
-                if (!isOption && !hasTailStarted)
+    static class Options
+    {
+        public static Option Help(Ref<bool> value) =>
+            new ActionOption("?|help|h", "prints out the options", _ => value.Value = true);
+
+        public static Option Verbose(Ref<bool> value) =>
+            new ActionOption("verbose|v", "enable additional output", _ => value.Value = true);
+
+        public static readonly Option Debug =
+            new ActionOption("d|debug", "debug break", _ => Debugger.Launch());
+
+        public static Option Glob(Ref<DirectoryInfo?> value) =>
+            new ActionOption("glob=", "interpret file path as glob pattern with {DIRECTORY} as base",
+                vs => value.Value = new DirectoryInfo(vs.Last()));
+
+        public static Option CommentFilterPattern(Ref<string?> value) =>
+            new ActionOption("comment-filter-pattern=", "filter/keep comments matching {PATTERN}",
+                vs =>
                 {
-                    if (arg.Length > 1 && arg[0] == '-')
-                        throw new Exception("Invalid argument: " + arg);
+                    var pattern = vs.Last();
+                    var _ = new Regex(pattern); // validate & discard
+                    value.Value = pattern;
+                });
 
-                    hasTailStarted = true;
-                }
+        public static Option KeepLeadComment(Ref<bool> value) =>
+            new ActionOption("keep-lead-comment",
+                                "keep first multi-line comment or "
+                                + "first consecutive set of single-line comments",
+                                _ => value.Value = true);
 
-                return isOption;
-            };
-        }
+        public static Option KeepImportantComments(Ref<bool> value) =>
+            new ActionOption("keep-important-comment",
+                                "keep /*! ... */ comments or "
+                                + "single-line comments starting with //! ...",
+                                _ => value.Value = true);
+    }
 
-        static int Main(string[] args)
+    static OptionSetArgumentParser CreateStrictOptionSetArgumentParser()
+    {
+        var hasTailStarted = false;
+        return (impl, arg, context) =>
         {
-            try
+            if (hasTailStarted) // once a tail, always a tail
+                return false;
+
+            var isOption = impl(arg, context);
+            if (!isOption && !hasTailStarted)
             {
-                return Wain(args);
+                if (arg.Length > 1 && arg[0] == '-')
+                    throw new Exception("Invalid argument: " + arg);
+
+                hasTailStarted = true;
             }
-            catch (Exception e)
-            {
-                if (Verbose)
-                    Console.Error.WriteLine(e);
-                else
-                    Console.Error.WriteLine(e.GetBaseException().Message);
-                return 0xbad;
-            }
+
+            return isOption;
+        };
+    }
+
+    static int Main(string[] args)
+    {
+        try
+        {
+            return Wain(args);
+        }
+        catch (Exception e)
+        {
+            if (Verbose)
+                Console.Error.WriteLine(e);
+            else
+                Console.Error.WriteLine(e.GetBaseException().Message);
+            return 0xbad;
         }
     }
 }
