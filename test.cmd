@@ -6,7 +6,7 @@ goto :EOF
 
 :main
     call build ^
- && call :test Debug --collect:"XPlat Code Coverage"
+ && call :test Debug --collect:"XPlat Code Coverage" ^
  && call :test Release
 goto :EOF
 
