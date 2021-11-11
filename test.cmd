@@ -5,9 +5,12 @@ popd
 goto :EOF
 
 :main
-    call build ^
+dotnet tool restore ^
+ && call build ^
  && call :test Debug --collect:"XPlat Code Coverage" ^
- && call :test Release
+ && call :test Release ^
+ && dotnet reportgenerator -reports:.\tests\TestResults\*\coverage.cobertura.xml -targetdir:tmp -reporttypes:TextSummary ^
+ && type tmp\Summary.txt
 goto :EOF
 
 :test
