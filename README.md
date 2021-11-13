@@ -123,7 +123,7 @@ To install the library for use in a project, do either:
     nuget install CSharpMinifier
 
 or for projects based on .NET Core SDK:
-    
+
     dotnet add package CSharpMinifier
 
 See also the various installation instructions on [the library package
