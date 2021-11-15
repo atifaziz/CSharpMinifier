@@ -1,0 +1,10 @@
+<Project>
+
+  <!-- The following disables incremental clean that seems to cause problems
+       with the Nullable package, giving zero coverage on incremental builds.
+       For more, see:
+       https://github.com/dotnet/msbuild/issues/1054#issuecomment-313218030 -->
+
+  <Target Name="IncrementalClean" />
+
+</Project>
