@@ -5,13 +5,14 @@ popd
 goto :EOF
 
 :main
-    call build ^
- && call :test Debug -p:CollectCoverage=true ^
-                     -p:CoverletOutputFormat=opencover ^
-                     -p:Exclude=[NUnit*]* ^
- && call :test Release
+dotnet tool restore ^
+ && call build ^
+ && call :test Debug ^
+ && call :test Release ^
+ && dotnet reportgenerator -reports:.\tests\TestResults\*\coverage.cobertura.xml -targetdir:tmp -reporttypes:TextSummary ^
+ && type tmp\Summary.txt
 goto :EOF
 
 :test
-dotnet test --no-build tests -c %*
+dotnet test --no-build --collect:"XPlat Code Coverage" -c %1 tests
 goto :EOF
