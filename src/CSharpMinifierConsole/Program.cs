@@ -84,10 +84,10 @@ static partial class Program
             const string validatorExecutableName = "csval";
 
             var validator = Lazy.Create(() =>
-                    RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
+                   RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
                 || RuntimeInformation.IsOSPlatform(OSPlatform.OSX)
-                    ? FindProgramPath(validatorExecutableName)
-                    : validatorExecutableName);
+                 ? FindProgramPath(validatorExecutableName)
+                 : validatorExecutableName);
 
             foreach (var (_, source) in ReadSources(tail, globDir))
             {
@@ -101,8 +101,8 @@ static partial class Program
             {
                 var nl = false;
                 foreach (var s in Minifier.Minify(source, commentFilterPattern,
-                                                            keepLeadComment,
-                                                            keepImportantComment))
+                                                          keepLeadComment,
+                                                          keepImportantComment))
                 {
                     if (nl = s == null)
                         output.WriteLine();
@@ -157,7 +157,7 @@ static partial class Program
             bool keepImportantComment = false)
         {
             var options = MinificationOptions.Default
-                                                .WithKeepLeadComment(keepLeadComment);
+                                             .WithKeepLeadComment(keepLeadComment);
 
             if (commentFilterPattern is {} s)
                 options = options.FilterCommentMatching(s);
@@ -178,8 +178,8 @@ static partial class Program
         var paths =
             from p in envPath.Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries)
             select p.Length > 0 && p[0] == '~'
-                    ? Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.Personal), p.Substring(1))
-                    : p
+                 ? Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.Personal), p.Substring(1))
+                 : p
             into p
             select Path.Join(p, fileName) into p
             where File.Exists(p)
@@ -211,8 +211,8 @@ static partial class Program
 
     static IEnumerable<(string File, T Source)>
         ReadSources<T>(IEnumerable<string> files,
-                        DirectoryInfo? rootDir,
-                        Func<T> stdin, Func<string, T> reader)
+                       DirectoryInfo? rootDir,
+                       Func<T> stdin, Func<string, T> reader)
     {
         if (rootDir != null)
         {
@@ -281,15 +281,15 @@ static partial class Program
 
         public static Option KeepLeadComment(Ref<bool> value) =>
             new ActionOption("keep-lead-comment",
-                                "keep first multi-line comment or "
-                                + "first consecutive set of single-line comments",
-                                _ => value.Value = true);
+                             "keep first multi-line comment or "
+                             + "first consecutive set of single-line comments",
+                             _ => value.Value = true);
 
         public static Option KeepImportantComments(Ref<bool> value) =>
             new ActionOption("keep-important-comment",
-                                "keep /*! ... */ comments or "
-                                + "single-line comments starting with //! ...",
-                                _ => value.Value = true);
+                             "keep /*! ... */ comments or "
+                             + "single-line comments starting with //! ...",
+                             _ => value.Value = true);
     }
 
     static OptionSetArgumentParser CreateStrictOptionSetArgumentParser()

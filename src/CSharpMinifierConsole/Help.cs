@@ -41,14 +41,14 @@ partial class Program
         while (e.MoveNext())
         {
             var line = Regex.Replace(e.Current, @"\$([A-Z][A-Z_]*)\$",
-                                        m => m.Groups[1].Value switch
-                                        {
-                                            "NAME"    => "csmin",
-                                            "COMMAND" => command,
-                                            "LOGO"    => logo.Value,
-                                            "OPTIONS" => opts.Value,
-                                            _         => string.Empty
-                                        });
+                                     m => m.Groups[1].Value switch
+                                     {
+                                         "NAME"    => "csmin",
+                                         "COMMAND" => command,
+                                         "LOGO"    => logo.Value,
+                                         "OPTIONS" => opts.Value,
+                                         _         => string.Empty
+                                     });
 
             if (line.Length > 0 && line[line.Length - 1] == '\n')
                 Console.Write(line);
@@ -63,8 +63,8 @@ partial class Program
     static string LoadTextResource(Type? type, string name, Encoding? encoding = null)
     {
         using var stream = type != null
-                            ? GetManifestResourceStream(type, name)
-                            : GetManifestResourceStream(null, name);
+                         ? GetManifestResourceStream(type, name)
+                         : GetManifestResourceStream(null, name);
         if (stream is null)
             throw new Exception("Resource not found: " + name + (type != null ? $" ({type})" : null));
         using var reader = new StreamReader(stream, encoding ?? Encoding.UTF8);
@@ -76,5 +76,5 @@ partial class Program
 
     static Stream? GetManifestResourceStream(Type? type, string name) =>
         type != null ? type.Assembly.GetManifestResourceStream(type, name)
-                        : Assembly.GetCallingAssembly().GetManifestResourceStream(name);
+                     : Assembly.GetCallingAssembly().GetManifestResourceStream(name);
 }

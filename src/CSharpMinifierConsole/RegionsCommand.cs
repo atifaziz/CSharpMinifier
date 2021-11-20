@@ -67,8 +67,8 @@ partial class Program
             var regions =
                 from r in Scanner.ScanRegions(source)
                 where grep == null
-                    || (isRegex ? Regex.IsMatch(r.Message, grep, regexOptions)
-                                : r.Message.Contains(grep, comparison))
+                   || (isRegex ? Regex.IsMatch(r.Message, grep, regexOptions)
+                               : r.Message.Contains(grep, comparison))
                 select r;
 
             foreach (var region in regions)

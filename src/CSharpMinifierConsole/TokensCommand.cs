@@ -172,9 +172,9 @@ partial class Program
 
                     var json = JsonString.Encode(s);
                     return quote
-                            + json.Substring(1, json.Length - 2)
-                                .Replace(quote, quotequote)
-                            + quote;
+                         + json.Substring(1, json.Length - 2)
+                               .Replace(quote, quotequote)
+                         + quote;
                 }
 
                 break;

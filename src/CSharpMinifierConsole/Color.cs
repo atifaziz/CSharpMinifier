@@ -50,7 +50,7 @@ readonly struct Color : IEquatable<Color>
     public static Color Console
     {
         get => new(System.Console.ForegroundColor,
-                    System.Console.BackgroundColor);
+                   System.Console.BackgroundColor);
         set => value.Do(fg => System.Console.ForegroundColor = fg,
                         bg => System.Console.BackgroundColor = bg);
     }

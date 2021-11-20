@@ -56,15 +56,15 @@ static class Extensions
         if (version.Revision < 0 || version.Build < 0)
         {
             version = new Version(version.Major,
-                                    version.Minor,
-                                    version.Build    < 0 ? 0 : version.Build,
-                                    version.Revision < 0 ? 0 : version.Revision);
+                                  version.Minor,
+                                  version.Build    < 0 ? 0 : version.Build,
+                                  version.Revision < 0 ? 0 : version.Revision);
         }
 
         return minFieldCount < 4 && version.Revision == 0
-                ? minFieldCount < 3 && version.Build == 0 ? new Version(version.Major, version.Minor)
-                : new Version(version.Major, version.Minor, version.Build)
-                : version;
+             ? minFieldCount < 3 && version.Build == 0 ? new Version(version.Major, version.Minor)
+             : new Version(version.Major, version.Minor, version.Build)
+             : version;
     }
 }
 

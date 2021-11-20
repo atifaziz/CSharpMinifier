@@ -54,16 +54,16 @@ partial class Program
             Options.KeepImportantComments(keepImportantComment),
             { "c|compare=", "set non-zero exit code if {HASH} (in hexadecimal) is different",
                 v => comparand = TryParseHexadecimalString(v, out var hc) ? hc
-                                : throw new Exception("Hash comparand is not a valid hexadecimal string.")
+                               : throw new Exception("Hash comparand is not a valid hexadecimal string.")
             },
             { "a|algo=", $"hash algorithm to use (default = {algoName})",
                 v => algoName = HashAlgorithmNames.TryGetValue(v, out var name)
-                                ? name
-                                : new HashAlgorithmName(v) },
+                              ? name
+                              : new HashAlgorithmName(v) },
             { "f|format=", "output hash format; where {FORMAT} is one of: " +
-                            "hexadecimal (default), base32 (Crockford), json",
+                           "hexadecimal (default), base32 (Crockford), json",
                 v => format = Enum.TryParse<HashOutputFormat>(v, true, out var f)
-                                && Enum.IsDefined(typeof(HashOutputFormat), f) ? f
+                              && Enum.IsDefined(typeof(HashOutputFormat), f) ? f
                             : throw new Exception("Invalid hash format.")
             }
         };
@@ -87,8 +87,8 @@ partial class Program
                 foreach (var s in from s in Minifier.Minify(source, commentFilterPattern,
                                                                     keepLeadComment,
                                                                     keepImportantComment)
-                                    where s != null
-                                    select s)
+                                  where s != null
+                                  select s)
                 {
                     if (Verbose)
                         Console.Error.Write(s);
@@ -107,8 +107,8 @@ partial class Program
             case HashOutputFormat.Hexadecimal:
             {
                 Console.WriteLine(BitConverter.ToString(hash)
-                                                .Replace("-", string.Empty)
-                                                .ToLowerInvariant());
+                                              .Replace("-", string.Empty)
+                                              .ToLowerInvariant());
                 break;
             }
             case HashOutputFormat.Base32:
@@ -120,8 +120,8 @@ partial class Program
             {
                 Console.WriteLine(
                     "[" + string.Join(",",
-                                from b in hash
-                                select b.ToString(CultureInfo.InvariantCulture))
+                              from b in hash
+                              select b.ToString(CultureInfo.InvariantCulture))
                         + "]");
                 break;
             }

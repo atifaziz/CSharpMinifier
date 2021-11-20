@@ -53,8 +53,8 @@ partial class Program
         foreach (var (path, source) in ReadSources(tail, globDir))
         {
             foreach (var t in from e in Scanner.ParseStrings(source, (t, _, s) => (Token: t, Value: s))
-                                where Regex.IsMatch(e.Value, pattern)
-                                select e.Token)
+                              where Regex.IsMatch(e.Value, pattern)
+                              select e.Token)
             {
                 Console.WriteLine($"{path}({t.Start.Line},{t.Start.Column}): {JsonString.Encode(source, t.Start.Offset, t.Length)}");
             }
