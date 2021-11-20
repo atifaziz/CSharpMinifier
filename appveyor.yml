@@ -4,6 +4,7 @@ image:
   - Ubuntu
 skip_commits:
   files:
+    - '.editorconfig'
     - '*.md'
     - '*.txt'
 branches:
