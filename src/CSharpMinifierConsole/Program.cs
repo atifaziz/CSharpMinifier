@@ -198,7 +198,7 @@ static partial class Program
                 break;
             case {} command:
                 Wain(new [] { command, "--help" });
-                    break;
+                break;
         }
     }
 
