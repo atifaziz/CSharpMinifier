@@ -14,47 +14,44 @@
 //
 #endregion
 
-namespace CSharpMinifierConsole
+using System;
+using System.Diagnostics;
+
+[DebuggerDisplay("Foreground = {Foreground}, Background = {Background}")]
+readonly struct Color : IEquatable<Color>
 {
-    using System;
-    using System.Diagnostics;
+    public ConsoleColor? Foreground { get; }
+    public ConsoleColor? Background { get; }
 
-    [DebuggerDisplay("Foreground = {Foreground}, Background = {Background}")]
-    readonly struct Color : IEquatable<Color>
+    public Color(ConsoleColor? foreground, ConsoleColor? background = null) : this()
     {
-        public ConsoleColor? Foreground { get; }
-        public ConsoleColor? Background { get; }
+        Foreground = foreground;
+        Background = background;
+    }
 
-        public Color(ConsoleColor? foreground, ConsoleColor? background = null) : this()
-        {
-            Foreground = foreground;
-            Background = background;
-        }
+    public void Do(Action<ConsoleColor> onForeground, Action<ConsoleColor> onBackground)
+    {
+        if (Background is {} bg) onBackground(bg);
+        if (Foreground is {} fg) onForeground(fg);
+    }
 
-        public void Do(Action<ConsoleColor> onForeground, Action<ConsoleColor> onBackground)
-        {
-            if (Background is {} bg) onBackground(bg);
-            if (Foreground is {} fg) onForeground(fg);
-        }
+    public bool Equals(Color other) =>
+        Foreground == other.Foreground && Background == other.Background;
 
-        public bool Equals(Color other) =>
-            Foreground == other.Foreground && Background == other.Background;
+    public override bool Equals(object? obj) =>
+        obj is Color color && Equals(color);
 
-        public override bool Equals(object? obj) =>
-            obj is Color color && Equals(color);
+    public override int GetHashCode() =>
+        unchecked((Foreground.GetHashCode() * 397) ^ Background.GetHashCode());
 
-        public override int GetHashCode() =>
-            unchecked((Foreground.GetHashCode() * 397) ^ Background.GetHashCode());
+    public static bool operator ==(Color a, Color b) => a.Equals(b);
+    public static bool operator !=(Color a, Color b) => !(a == b);
 
-        public static bool operator ==(Color a, Color b) => a.Equals(b);
-        public static bool operator !=(Color a, Color b) => !(a == b);
-
-        public static Color Console
-        {
-            get => new(System.Console.ForegroundColor,
-                       System.Console.BackgroundColor);
-            set => value.Do(fg => System.Console.ForegroundColor = fg,
-                            bg => System.Console.BackgroundColor = bg);
-        }
+    public static Color Console
+    {
+        get => new(System.Console.ForegroundColor,
+                   System.Console.BackgroundColor);
+        set => value.Do(fg => System.Console.ForegroundColor = fg,
+                        bg => System.Console.BackgroundColor = bg);
     }
 }
