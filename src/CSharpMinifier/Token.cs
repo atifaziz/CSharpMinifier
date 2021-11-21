@@ -45,13 +45,10 @@ namespace CSharpMinifier
 
     public static partial class TokenKindExtensions
     {
-        public static TokenKindTraits GetTraits(this TokenKind kind)
-        {
-            var i = (int)kind;
-            return i >= 0 && i < TraitsByKind.Length
-                 ? TraitsByKind[i]
-                 : throw new ArgumentOutOfRangeException(nameof(kind));
-        }
+        public static TokenKindTraits GetTraits(this TokenKind kind) =>
+            (int)kind is var i and >= 0 && i < TraitsByKind.Length
+            ? TraitsByKind[i]
+            : throw new ArgumentOutOfRangeException(nameof(kind));
 
         public static bool HasTraits(this TokenKind kind, TokenKindTraits traits) =>
             (kind.GetTraits() & traits) == traits;
