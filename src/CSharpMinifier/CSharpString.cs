@@ -30,7 +30,7 @@ namespace CSharpMinifier
         InvalidHexadecimalEscapeSequence,
     }
 
-    readonly struct StringValueParseResult : IEquatable<StringValueParseResult>
+    readonly record struct StringValueParseResult
     {
         public StringValueParseResultStatus Status { get; }
         public int ErrorOffset { get; }
@@ -48,23 +48,6 @@ namespace CSharpMinifier
             ErrorOffset = errorOffset;
             Value       = value;
         }
-
-        public bool Equals(StringValueParseResult other)
-            => Status == other.Status
-            && ErrorOffset == other.ErrorOffset
-            && string.Equals(Value, other.Value);
-
-        public override bool Equals(object obj) =>
-            obj is StringValueParseResult other && Equals(other);
-
-        public override int GetHashCode() =>
-            unchecked(((int) Status * 397) ^ ErrorOffset * 397 ^ (Value != null ? Value.GetHashCode() : 0));
-
-        public static bool operator ==(StringValueParseResult left, StringValueParseResult right) =>
-            left.Equals(right);
-
-        public static bool operator !=(StringValueParseResult left, StringValueParseResult right) =>
-            !left.Equals(right);
 
         public override string ToString()
             => Status == StringValueParseResultStatus.Success ? Value ?? string.Empty

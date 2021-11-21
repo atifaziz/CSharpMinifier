@@ -22,6 +22,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="IsExternalInit" Version="1.0.1" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Include="..\..\COPYING.txt" Pack="true" PackagePath="$(PackageLicenseFile)" />
   </ItemGroup>
 

@@ -57,31 +57,12 @@ namespace CSharpMinifier
             (kind.GetTraits() & traits) == traits;
     }
 
-    public readonly struct Token : IEquatable<Token>
+    public readonly record struct Token(TokenKind Kind, Position Start, Position End)
     {
-        public readonly TokenKind Kind;
-        public readonly Position Start;
-        public readonly Position End;
-
-        public Token(TokenKind kind, Position start, Position end) =>
-            (Kind, Start, End) = (kind, start, end);
-
         public int Length => End.Offset - Start.Offset;
 
         [Obsolete("Use " + nameof(TokenKindExtensions) + "." + nameof(TokenKindExtensions.GetTraits) + " instead.")]
         public TokenKindTraits Traits => Kind.GetTraits();
-
-        public bool Equals(Token other) =>
-            Kind == other.Kind && Start.Equals(other.Start) && End.Equals(other.End);
-
-        public override bool Equals(object obj) =>
-            obj is Token other && Equals(other);
-
-        public override int GetHashCode() =>
-            unchecked(((((int)Kind * 397) ^ Start.GetHashCode()) * 397) ^ End.GetHashCode());
-
-        public static bool operator ==(Token left, Token right) => left.Equals(right);
-        public static bool operator !=(Token left, Token right) => !left.Equals(right);
 
         public override string ToString() =>
             $"{Kind} [{Start}..{End})";

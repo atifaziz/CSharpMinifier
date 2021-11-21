@@ -18,7 +18,7 @@ namespace CSharpMinifier
 {
     using System;
 
-    public readonly struct Position : IEquatable<Position>
+    public readonly record struct Position
     {
         readonly int _line;
         readonly int _column;
@@ -37,21 +37,6 @@ namespace CSharpMinifier
             _line   = line - 1;
             _column = column - 1;
         }
-
-        public bool Equals(Position other) =>
-            Offset == other.Offset && Line == other.Line && Column == other.Column;
-
-        public override bool Equals(object? obj) =>
-            obj is Position other && Equals(other);
-
-        public override int GetHashCode() =>
-            unchecked((((Offset * 397) ^ Line) * 397) ^ Column);
-
-        public static bool operator ==(Position left, Position right) =>
-            left.Equals(right);
-
-        public static bool operator !=(Position left, Position right) =>
-            !left.Equals(right);
 
         public override string ToString() => $"{Offset}/{Line}:{Column}";
     }
