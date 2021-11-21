@@ -61,11 +61,7 @@ namespace CSharpMinifier
     {
         public int Length => End.Offset - Start.Offset;
 
-        [Obsolete("Use " + nameof(TokenKindExtensions) + "." + nameof(TokenKindExtensions.GetTraits) + " instead.")]
-        public TokenKindTraits Traits => Kind.GetTraits();
-
-        public override string ToString() =>
-            $"{Kind} [{Start}..{End})";
+        public override string ToString() => $"{Kind} [{Start}..{End})";
     }
 
     public static class TokenExtensions
