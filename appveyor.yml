@@ -39,6 +39,10 @@ test_script:
 - ps: Invoke-WebRequest -Uri https://uploader.codecov.io/latest/windows/codecov.exe -Outfile codecov.exe
 - cmd: codecov.exe
 - sh: ./test.sh
+- pwsh: |
+    Invoke-RestMethod -Method Post `
+      -Uri "https://ci.appveyor.com/api/testresults/xunit/$($env:APPVEYOR_JOB_ID)" `
+      -Form @{ file = Get-Item -Path (Join-Path tests TestResults TestResults.xml) }
 artifacts:
 - path: dist\*.nupkg
 deploy:
