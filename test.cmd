@@ -14,5 +14,5 @@ dotnet tool restore ^
 goto :EOF
 
 :test
-dotnet test --no-build --collect:"XPlat Code Coverage" -c %1 tests
+dotnet test --no-build --collect:"XPlat Code Coverage" --logger:nunit -c %1 tests
 goto :EOF
