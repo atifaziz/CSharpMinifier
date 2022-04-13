@@ -28,11 +28,6 @@ Usage:
   csmin glob [-hdv] [<FILE>...]
     [--glob=<DIRECTORY>]
   csmin help (min|tokens|color|colour|hash|grep|regions)
-  csmin [-hdv] [<FILE>...]
-    [--glob=<DIRECTORY>]
-    [--validate]
-    [--comment-filter-pattern=<PATTERN>]
-    [--keep-lead-comment] [--keep-important-comment]
   csmin -h | --help
   csmin --version
 
@@ -46,6 +41,8 @@ Sub-commands:
   grep     Searches in strings scanned from C# source.
   regions  Lists top-level regions (#region...#endregion).
   help     Displays sub-command help (obsolete).
+
+The "min" sub-command is the default if no sub-command is specified.
 
 where FILES is a list of zero or more paths to files containing
 syntactically correct C# source. If FILES is not given then STDIN is

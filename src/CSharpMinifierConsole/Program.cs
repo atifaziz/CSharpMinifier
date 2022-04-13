@@ -42,7 +42,6 @@ static partial class Program
                                        ColorCommand(args); break;
             case { CmdGlob   : true }: GlobCommand(args); break;
             case { CmdMin    : true }: DefaultCommand(); break;
-            default                  : DefaultCommand(); break;
         }
 
         return result;
@@ -226,13 +225,19 @@ static partial class Program
 
         try
         {
+            if (args.Length == 0 || args[0] is var arg && (arg.Length == 0 || arg[1] == '-'))
+                return Main(Enumerable.Repeat("min", 1).Concat(args).ToArray());
+
             return ProgramArguments.CreateParser()
                                    .WithVersion(ThisAssembly.Info.FileVersion)
                                    .Parse(args)
                                    .Match(args => Wain(args, out verbose),
                                           r => ShowHelp(r.Help),
                                           r => Print(Console.Out, 0, r.Version),
-                                          r => Print(Console.Error, 1, r.Usage));
+                                          r => new ProgramArguments().Select(arg => arg.Key)
+                                                                     .Any(arg => arg[0] is not '-' and not '<' && arg == args[0])
+                                             ? Print(Console.Error, 1, r.Usage)
+                                             : Main(Enumerable.Repeat("min", 1).Concat(args).ToArray()));
         }
         catch (Exception e)
         {
