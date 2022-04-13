@@ -15,7 +15,6 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -24,33 +23,12 @@ using CSharpMinifier.Internals;
 
 partial class Program
 {
-    static void GrepCommand(IEnumerable<string> args)
+    static void GrepCommand(ProgramArguments args)
     {
-        var help = Ref.Create(false);
-        var globDir = Ref.Create((DirectoryInfo?)null);
+        var globDir = args.OptGlob is { } glob ? new DirectoryInfo(glob) : null;
+        var pattern = args.ArgPattern!;
 
-        var options = new OptionSet(CreateStrictOptionSetArgumentParser())
-        {
-            Options.Help(help),
-            Options.Verbose(Verbose),
-            Options.Debug,
-            Options.Glob(globDir),
-        };
-
-        var tail = new Queue<string>(options.Parse(args));
-
-        if (help)
-        {
-            Help("grep", options);
-            return;
-        }
-
-        if (!tail.Any())
-            throw new Exception("Missing search regular expression.");
-
-        var pattern = tail.Dequeue();
-
-        foreach (var (path, source) in ReadSources(tail, globDir))
+        foreach (var (path, source) in ReadSources(args.ArgFile, globDir))
         {
             foreach (var t in from e in Scanner.ParseStrings(source, (t, _, s) => (Token: t, Value: s))
                               where Regex.IsMatch(e.Value, pattern)

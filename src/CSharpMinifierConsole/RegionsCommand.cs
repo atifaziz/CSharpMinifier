@@ -15,7 +15,6 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -23,32 +22,12 @@ using CSharpMinifier;
 
 partial class Program
 {
-    static void RegionsCommand(IEnumerable<string> args)
+    static void RegionsCommand(ProgramArguments args)
     {
-        var help = Ref.Create(false);
-        var globDir = Ref.Create((DirectoryInfo?)null);
-        var grep = (string?)null;
-        var isRegex = false;
-        var ignoreCase = false;
-
-        var options = new OptionSet(CreateStrictOptionSetArgumentParser())
-        {
-            Options.Help(help),
-            Options.Verbose(Verbose),
-            Options.Debug,
-            Options.Glob(globDir),
-            { "grep=", "search region message matching {PATTERN}", v => grep = v },
-            { "e"    , "use regular expression for search", _ => isRegex = true },
-            { "i"    , "ignore search case", _ => ignoreCase = true },
-        };
-
-        var tail = options.Parse(args);
-
-        if (help)
-        {
-            Help("regions", options);
-            return;
-        }
+        var globDir = args.OptGlob is { } glob ? new DirectoryInfo(glob) : null;
+        var grep = args.OptGrep;
+        var isRegex = args.OptE;
+        var ignoreCase = args.OptI;
 
         var last = (string?)null;
 
@@ -62,7 +41,7 @@ partial class Program
             ? StringComparison.OrdinalIgnoreCase
             : StringComparison.Ordinal;
 
-        foreach (var (_, source) in ReadSources(tail, globDir))
+        foreach (var (_, source) in ReadSources(args.ArgFile, globDir))
         {
             var regions =
                 from r in Scanner.ScanRegions(source)

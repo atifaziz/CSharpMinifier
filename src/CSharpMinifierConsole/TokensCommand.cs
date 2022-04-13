@@ -15,7 +15,6 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -24,30 +23,12 @@ using CSharpMinifier.Internals;
 
 partial class Program
 {
-    static void TokensCommand(IEnumerable<string> args)
+    static void TokensCommand(ProgramArguments args)
     {
-        var help = Ref.Create(false);
-        var globDir = Ref.Create((DirectoryInfo?)null);
-        var format = (string?)null;
+        var globDir = args.OptGlob is { } glob ? new DirectoryInfo(glob) : null;
+        var format = args.OptFormat?.ToLowerInvariant();
 
-        var options = new OptionSet(CreateStrictOptionSetArgumentParser())
-        {
-            Options.Help(help),
-            Options.Verbose(Verbose),
-            Options.Debug,
-            Options.Glob(globDir),
-            { "f|format=", "where {FORMAT} is one of: json (default), csv, line", v => format = v.ToLowerInvariant() },
-        };
-
-        var tail = options.Parse(args);
-
-        if (help)
-        {
-            Help("tokens", options);
-            return;
-        }
-
-        var isMultiMode = tail.Count > 1;
+        var isMultiMode = args.ArgFile.Count > 1;
 
         switch (format)
         {
@@ -62,7 +43,7 @@ partial class Program
                 }
 
                 var i = 0;
-                foreach (var (path, source) in ReadSources(tail, globDir))
+                foreach (var (path, source) in ReadSources(args.ArgFile, globDir))
                 {
                     if (isMultiMode)
                     {
@@ -113,7 +94,7 @@ partial class Program
             }
             case "line":
             {
-                foreach (var (path, source) in ReadSources(tail))
+                foreach (var (path, source) in ReadSources(args.ArgFile))
                 {
                     var lines =
                         from token in Scanner.Scan(source)
@@ -141,7 +122,7 @@ partial class Program
                     "start_line,start_column,end_line,end_column"
                     + (isMultiMode ? ",file" : null));
 
-                foreach (var (path, source) in ReadSources(tail))
+                foreach (var (path, source) in ReadSources(args.ArgFile))
                 {
                     var rows =
                         from t in Scanner.Scan(source)

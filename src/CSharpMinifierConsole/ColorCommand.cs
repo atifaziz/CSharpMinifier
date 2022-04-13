@@ -15,35 +15,16 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using CSharpMinifier;
 
 partial class Program
 {
-    static void ColorCommand(IEnumerable<string> args)
+    static void ColorCommand(ProgramArguments args)
     {
-        var help = Ref.Create(false);
-        var globDir = Ref.Create((DirectoryInfo?)null);
-        var showLineEndings = false;
-
-        var options = new OptionSet(CreateStrictOptionSetArgumentParser())
-        {
-            Options.Help(help),
-            Options.Verbose(Verbose),
-            Options.Debug,
-            Options.Glob(globDir),
-            { "eol", "Show line endings", _ => showLineEndings = true }
-        };
-
-        var tail = options.Parse(args);
-
-        if (help)
-        {
-            Help("color", options);
-            return;
-        }
+        var globDir = args.OptGlob is { } glob ? new DirectoryInfo(glob) : null;
+        var showLineEndings = args.OptEol;
 
         var defaultColor = Color.Console;
 
@@ -82,7 +63,7 @@ partial class Program
 
         try
         {
-            foreach (var (_, source) in ReadSources(tail, globDir))
+            foreach (var (_, source) in ReadSources(args.ArgFile, globDir))
             {
                 foreach (var token in Scanner.Scan(source))
                 {

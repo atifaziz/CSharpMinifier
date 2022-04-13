@@ -32,49 +32,27 @@ partial class Program
         Json,
     }
 
-    static int HashCommand(IEnumerable<string> args)
+    static int HashCommand(ProgramArguments args)
     {
-        var help = Ref.Create(false);
-        var globDir = Ref.Create((DirectoryInfo?)null);
-        var comparand = (byte[]?)null;
-        var algoName = HashAlgorithmName.SHA256;
-        var format = HashOutputFormat.Hexadecimal;
-        var commentFilterPattern = Ref.Create((string?)null);
-        var keepLeadComment = Ref.Create(false);
-        var keepImportantComment = Ref.Create(false);
-
-        var options = new OptionSet(CreateStrictOptionSetArgumentParser())
-        {
-            Options.Help(help),
-            Options.Verbose(Verbose),
-            Options.Debug,
-            Options.Glob(globDir),
-            Options.CommentFilterPattern(commentFilterPattern),
-            Options.KeepLeadComment(keepLeadComment),
-            Options.KeepImportantComments(keepImportantComment),
-            { "c|compare=", "set non-zero exit code if {HASH} (in hexadecimal) is different",
-                v => comparand = TryParseHexadecimalString(v, out var hc) ? hc
-                               : throw new Exception("Hash comparand is not a valid hexadecimal string.")
-            },
-            { "a|algo=", $"hash algorithm to use (default = {algoName})",
-                v => algoName = HashAlgorithmNames.TryGetValue(v, out var name)
-                              ? name
-                              : new HashAlgorithmName(v) },
-            { "f|format=", "output hash format; where {FORMAT} is one of: " +
-                           "hexadecimal (default), base32 (Crockford), json",
-                v => format = Enum.TryParse<HashOutputFormat>(v, true, out var f)
-                              && Enum.IsDefined(typeof(HashOutputFormat), f) ? f
-                            : throw new Exception("Invalid hash format.")
-            }
-        };
-
-        var tail = options.Parse(args);
-
-        if (help)
-        {
-            Help("hash", options);
-            return 0;
-        }
+        var globDir = args.OptGlob is { } glob ? new DirectoryInfo(glob) : null;
+        var comparand
+            = args.OptCompare is { } compare
+            ? TryParseHexadecimalString(compare, out var hc) ? hc
+            : throw new Exception("Hash comparand is not a valid hexadecimal string.")
+            : null;
+        var algoName
+            = args.OptAlgo is var algo && HashAlgorithmNames.TryGetValue(algo, out var name)
+            ? name
+            : new HashAlgorithmName(algo);
+        var format
+            = args.OptFormat is { } fs
+            ? Enum.TryParse<HashOutputFormat>(fs, true, out var fv)
+              && Enum.IsDefined(typeof(HashOutputFormat), fv) ? fv
+            : throw new Exception("Invalid hash format.")
+            : HashOutputFormat.Hexadecimal;
+        var commentFilterPattern = args.OptCommentFilterPattern;
+        var keepLeadComment = args.OptKeepLeadComment;
+        var keepImportantComment = args.OptKeepImportantComment;
 
         byte[] hash;
         var utf8 = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
@@ -82,7 +60,7 @@ partial class Program
         using (var ha = IncrementalHash.CreateHash(algoName))
         {
             byte[]? buffer = null;
-            foreach (var (_, source) in ReadSources(tail, globDir))
+            foreach (var (_, source) in ReadSources(args.ArgFile, globDir))
             {
                 foreach (var s in from s in Minifier.Minify(source, commentFilterPattern,
                                                                     keepLeadComment,
@@ -90,7 +68,7 @@ partial class Program
                                   where s != null
                                   select s)
                 {
-                    if (Verbose)
+                    if (args.OptVerbose)
                         Console.Error.Write(s);
                     var desiredBufferLength = utf8.GetByteCount(s);
                     Array.Resize(ref buffer, Math.Max(desiredBufferLength, buffer?.Length ?? 0));
