@@ -34,13 +34,16 @@ static partial class Program
 
         switch (args)
         {
-            case { CmdHelp   : true }: Console.WriteLine("This command is now obsolete. Re-run with -h or --help."); break;
+            case { CmdHelp   : true }:
+                Console.WriteLine(ProgramArguments.FormattedHelp);
+                Console.Error.WriteLine("NOTE! This command is now obsolete. Use -h or --help instead.");
+                break;
+
             case { CmdTokens : true }: TokensCommand(args); break;
             case { CmdGrep   : true }: GrepCommand(args); break;
             case { CmdHash   : true }: result = HashCommand(args); break;
             case { CmdRegions: true }: RegionsCommand(args); break;
-            case { CmdColor  : true } or { CmdColour: true }:
-                                       ColorCommand(args); break;
+            case { CmdColor  : true } or { CmdColour: true }: ColorCommand(args); break;
             case { CmdGlob   : true }: GlobCommand(args); break;
             case { CmdMin    : true }: DefaultCommand(); break;
         }
@@ -235,7 +238,7 @@ static partial class Program
                                    .WithVersion(ThisAssembly.Info.FileVersion)
                                    .Parse(args)
                                    .Match(args => Wain(args, out verbose),
-                                          r => ShowHelp(r.Help),
+                                          _ => Print(Console.Out, 0, ProgramArguments.FormattedHelp),
                                           r => Print(Console.Out, 0, r.Version),
                                           r => SubCommandNames.Any(cmd => args[0] == cmd)
                                              ? Print(Console.Error, 1, r.Usage)
@@ -250,18 +253,18 @@ static partial class Program
             return 0xbad;
         }
 
-        static int ShowHelp(string help)
-        {
-            var logo = $"{ThisAssembly.Info.Product} (version {new Version(ThisAssembly.Info.FileVersion).Trim(3)})"
-                     + Environment.NewLine
-                     + ThisAssembly.Info.Copyright.Replace("\u00a9", "(C)");
-            return Print(Console.Out, 0, help.Replace("$LOGO$", logo));
-        }
-
         static int Print(TextWriter writer, int exitCode, string message)
         {
             writer.WriteLine(message);
             return exitCode;
         }
     }
+}
+
+partial class ProgramArguments
+{
+    public static string FormattedHelp =>
+        Help.Replace("$LOGO$", $"{ThisAssembly.Info.Product} (version {new Version(ThisAssembly.Info.FileVersion).Trim(3)})"
+                               + Environment.NewLine
+                               + ThisAssembly.Info.Copyright.Replace("\u00a9", "(C)"));
 }
