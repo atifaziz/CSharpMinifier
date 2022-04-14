@@ -22,6 +22,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="AngryArrays" Version="1.1.0" />
     <PackageReference Include="IsExternalInit" Version="1.0.1" PrivateAssets="all" />
   </ItemGroup>
 

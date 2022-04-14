@@ -20,6 +20,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using AngryArrays.Unshift;
 using CSharpMinifier;
 using Microsoft.Extensions.FileSystemGlobbing;
 
@@ -228,7 +229,7 @@ static partial class Program
         try
         {
             if (args.Length == 0 || args[0] is var arg && (arg.Length == 0 || arg[1] == '-'))
-                return Main(Enumerable.Repeat("min", 1).Concat(args).ToArray());
+                return Main(args.Unshift("min"));
 
             return ProgramArguments.CreateParser()
                                    .WithVersion(ThisAssembly.Info.FileVersion)
@@ -238,7 +239,7 @@ static partial class Program
                                           r => Print(Console.Out, 0, r.Version),
                                           r => SubCommandNames.Any(cmd => args[0] == cmd)
                                              ? Print(Console.Error, 1, r.Usage)
-                                             : Main(Enumerable.Repeat("min", 1).Concat(args).ToArray()));
+                                             : Main(args.Unshift("min")));
         }
         catch (Exception e)
         {
