@@ -33,7 +33,7 @@ static partial class Program
 
         switch (args)
         {
-            case { CmdHelp   : true }: HelpCommand(args); break;
+            case { CmdHelp   : true }: Console.WriteLine("This command is now obsolete. Re-run with -h or --help."); break;
             case { CmdTokens : true }: TokensCommand(args); break;
             case { CmdGrep   : true }: GrepCommand(args); break;
             case { CmdHash   : true }: result = HashCommand(args); break;
@@ -159,11 +159,6 @@ static partial class Program
             select p;
 
         return paths.FirstOrDefault() ?? program;
-    }
-
-    static void HelpCommand(ProgramArguments _)
-    {
-        Console.Out.WriteLine("This command is now obsolete. Re-run with -h or --help.");
     }
 
     static IEnumerable<(string File, string Source)>
