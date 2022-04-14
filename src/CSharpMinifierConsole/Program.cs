@@ -214,6 +214,13 @@ static partial class Program
         }
     }
 
+    static string[]? _subCommandNames;
+
+    public static string[] SubCommandNames =>
+        _subCommandNames ??= new ProgramArguments().Select(arg => arg.Key)
+                                                   .Where(arg => arg[0] is not '-' and not '<')
+                                                   .ToArray();
+
     static int Main(string[] args)
     {
         var verbose = false;
@@ -229,8 +236,7 @@ static partial class Program
                                    .Match(args => Wain(args, out verbose),
                                           r => ShowHelp(r.Help),
                                           r => Print(Console.Out, 0, r.Version),
-                                          r => new ProgramArguments().Select(arg => arg.Key)
-                                                                     .Any(arg => arg[0] is not '-' and not '<' && arg == args[0])
+                                          r => SubCommandNames.Any(cmd => args[0] == cmd)
                                              ? Print(Console.Error, 1, r.Usage)
                                              : Main(Enumerable.Repeat("min", 1).Concat(args).ToArray()));
         }
