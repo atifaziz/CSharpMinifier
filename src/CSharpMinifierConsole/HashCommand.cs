@@ -18,7 +18,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
-using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
@@ -34,7 +33,6 @@ partial class Program
 
     static int HashCommand(ProgramArguments args)
     {
-        var globDir = args.OptGlob is { } glob ? new DirectoryInfo(glob) : null;
         var comparand
             = args.OptCompare is { } compare
             ? TryParseHexadecimalString(compare, out var hc) ? hc
@@ -60,7 +58,7 @@ partial class Program
         using (var ha = IncrementalHash.CreateHash(algoName))
         {
             byte[]? buffer = null;
-            foreach (var (_, source) in ReadSources(args.ArgFile, globDir))
+            foreach (var (_, source) in ReadSources(args.ArgFile, args.OptGlobDirInfo))
             {
                 foreach (var s in from s in Minifier.Minify(source, commentFilterPattern,
                                                                     keepLeadComment,

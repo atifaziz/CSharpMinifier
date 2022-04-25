@@ -15,7 +15,6 @@
 #endregion
 
 using System;
-using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using CSharpMinifier;
@@ -24,7 +23,6 @@ partial class Program
 {
     static void RegionsCommand(ProgramArguments args)
     {
-        var globDir = args.OptGlob is { } glob ? new DirectoryInfo(glob) : null;
         var grep = args.OptGrep;
         var isRegex = args.OptE;
         var ignoreCase = args.OptI;
@@ -41,7 +39,7 @@ partial class Program
             ? StringComparison.OrdinalIgnoreCase
             : StringComparison.Ordinal;
 
-        foreach (var (_, source) in ReadSources(args.ArgFile, globDir))
+        foreach (var (_, source) in ReadSources(args.ArgFile, args.OptGlobDirInfo))
         {
             var regions =
                 from r in Scanner.ScanRegions(source)

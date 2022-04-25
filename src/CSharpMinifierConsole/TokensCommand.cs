@@ -16,7 +16,6 @@
 
 using System;
 using System.Globalization;
-using System.IO;
 using System.Linq;
 using CSharpMinifier;
 using CSharpMinifier.Internals;
@@ -25,12 +24,9 @@ partial class Program
 {
     static void TokensCommand(ProgramArguments args)
     {
-        var globDir = args.OptGlob is { } glob ? new DirectoryInfo(glob) : null;
-        var format = args.OptFormat?.ToLowerInvariant();
-
         var isMultiMode = args.ArgFile.Count > 1;
 
-        switch (format)
+        switch (args.OptFormat?.ToLowerInvariant())
         {
             case null:
             case "json":
@@ -43,7 +39,7 @@ partial class Program
                 }
 
                 var i = 0;
-                foreach (var (path, source) in ReadSources(args.ArgFile, globDir))
+                foreach (var (path, source) in ReadSources(args.ArgFile, args.OptGlobDirInfo))
                 {
                     if (isMultiMode)
                     {

@@ -15,7 +15,6 @@
 #endregion
 
 using System;
-using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using CSharpMinifier;
@@ -25,10 +24,9 @@ partial class Program
 {
     static void GrepCommand(ProgramArguments args)
     {
-        var globDir = args.OptGlob is { } glob ? new DirectoryInfo(glob) : null;
         var pattern = args.ArgPattern!;
 
-        foreach (var (path, source) in ReadSources(args.ArgFile, globDir))
+        foreach (var (path, source) in ReadSources(args.ArgFile, args.OptGlobDirInfo))
         {
             foreach (var t in from e in Scanner.ParseStrings(source, (t, _, s) => (Token: t, Value: s))
                               where Regex.IsMatch(e.Value, pattern)

@@ -15,7 +15,6 @@
 #endregion
 
 using System;
-using System.IO;
 using System.Linq;
 using CSharpMinifier;
 
@@ -23,7 +22,6 @@ partial class Program
 {
     static void ColorCommand(ProgramArguments args)
     {
-        var globDir = args.OptGlob is { } glob ? new DirectoryInfo(glob) : null;
         var showLineEndings = args.OptEol;
 
         var defaultColor = Color.Console;
@@ -63,7 +61,7 @@ partial class Program
 
         try
         {
-            foreach (var (_, source) in ReadSources(args.ArgFile, globDir))
+            foreach (var (_, source) in ReadSources(args.ArgFile, args.OptGlobDirInfo))
             {
                 foreach (var token in Scanner.Scan(source))
                 {

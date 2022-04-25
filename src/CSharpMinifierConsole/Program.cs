@@ -52,7 +52,6 @@ static partial class Program
 
         void DefaultCommand()
         {
-            var globDir = args.OptGlob is { } glob ? new DirectoryInfo(glob) : null;
             var validate = args.OptValidate;
             var commentFilterPattern = args.OptCommentFilterPattern;
             var keepLeadComment = args.OptKeepLeadComment;
@@ -66,7 +65,7 @@ static partial class Program
                  ? FindProgramPath(validatorExecutableName)
                  : validatorExecutableName);
 
-            foreach (var (_, source) in ReadSources(args.ArgFile, globDir))
+            foreach (var (_, source) in ReadSources(args.ArgFile, args.OptGlobDirInfo))
             {
                 Minify(source, Console.Out);
 
@@ -263,6 +262,8 @@ static partial class Program
 
 partial class ProgramArguments
 {
+    public DirectoryInfo? OptGlobDirInfo => OptGlob is { } glob ? new DirectoryInfo(glob) : null;
+
     public static string FormattedHelp =>
         Help.Replace("$LOGO$", $"{ThisAssembly.Info.Product} (version {new Version(ThisAssembly.Info.FileVersion).Trim(3)})"
                                + Environment.NewLine

@@ -21,7 +21,7 @@ partial class Program
 {
     static void GlobCommand(ProgramArguments args)
     {
-        var dir = new DirectoryInfo(args.OptGlob ?? Environment.CurrentDirectory);
+        var dir = args.OptGlobDirInfo ?? new DirectoryInfo(Environment.CurrentDirectory);
 
         foreach (var (p, _) in ReadSources(args.ArgFile, dir, () => (string?)null, _ => null))
             Console.WriteLine(p);
