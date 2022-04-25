@@ -52,11 +52,6 @@ static partial class Program
 
         void DefaultCommand()
         {
-            var validate = args.OptValidate;
-            var commentFilterPattern = args.OptCommentFilterPattern;
-            var keepLeadComment = args.OptKeepLeadComment;
-            var keepImportantComment = args.OptKeepImportantComment;
-
             const string validatorExecutableName = "csval";
 
             var validator = Lazy.Create(() =>
@@ -69,16 +64,16 @@ static partial class Program
             {
                 Minify(source, Console.Out);
 
-                if (validate && !Validate(stdin => Minify(source, stdin)))
+                if (args.OptValidate && !Validate(stdin => Minify(source, stdin)))
                     throw new Exception("Minified version is invalid.");
             }
 
             void Minify(string source, TextWriter output)
             {
                 var nl = false;
-                foreach (var s in Minifier.Minify(source, commentFilterPattern,
-                                                          keepLeadComment,
-                                                          keepImportantComment))
+                foreach (var s in Minifier.Minify(source, args.OptCommentFilterPattern,
+                                                          args.OptKeepLeadComment,
+                                                          args.OptKeepImportantComment))
                 {
                     if (nl = s == null)
                         output.WriteLine();

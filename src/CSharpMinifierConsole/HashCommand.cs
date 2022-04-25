@@ -48,9 +48,6 @@ partial class Program
               && Enum.IsDefined(typeof(HashOutputFormat), fv) ? fv
             : throw new Exception("Invalid hash format.")
             : HashOutputFormat.Hexadecimal;
-        var commentFilterPattern = args.OptCommentFilterPattern;
-        var keepLeadComment = args.OptKeepLeadComment;
-        var keepImportantComment = args.OptKeepImportantComment;
 
         byte[] hash;
         var utf8 = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
@@ -60,9 +57,9 @@ partial class Program
             byte[]? buffer = null;
             foreach (var (_, source) in ReadSources(args.ArgFile, args.OptGlobDirInfo))
             {
-                foreach (var s in from s in Minifier.Minify(source, commentFilterPattern,
-                                                                    keepLeadComment,
-                                                                    keepImportantComment)
+                foreach (var s in from s in Minifier.Minify(source, args.OptCommentFilterPattern,
+                                                                    args.OptKeepLeadComment,
+                                                                    args.OptKeepImportantComment)
                                   where s != null
                                   select s)
                 {
