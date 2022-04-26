@@ -17,30 +17,9 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using MonoOptionSet = Mono.Options.OptionSet;
 
 static class Extensions
 {
-    public static IEnumerable<string> Lines(this string input)
-    {
-        if (input == null) throw new ArgumentNullException(nameof(input));
-
-        return _(); IEnumerable<string> _()
-        {
-            using var reader = new StringReader(input);
-            while (reader.ReadLine() is {} line)
-                yield return line;
-        }
-    }
-
-    public static IEnumerator<string> ReadLines(this TextReader reader)
-    {
-        if (reader == null) throw new ArgumentNullException(nameof(reader));
-
-        while (reader.ReadLine() is {} line)
-            yield return line;
-    }
-
     /// <summary>
     /// Trims version build and revision fields if they are both zero or
     /// just the revision if build is non-zero. An additional parameter
@@ -65,15 +44,5 @@ static class Extensions
              ? minFieldCount < 3 && version.Build == 0 ? new Version(version.Major, version.Minor)
              : new Version(version.Major, version.Minor, version.Build)
              : version;
-    }
-}
-
-static class OptionSetExtensions
-{
-    public static T WriteOptionDescriptionsReturningWriter<T>(this MonoOptionSet options, T writer)
-        where T : TextWriter
-    {
-        options.WriteOptionDescriptions(writer);
-        return writer;
     }
 }

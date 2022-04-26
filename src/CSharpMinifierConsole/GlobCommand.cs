@@ -15,37 +15,15 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
 using System.IO;
 
 partial class Program
 {
-    static void GlobCommand(IEnumerable<string> args)
+    static void GlobCommand(ProgramArguments args)
     {
-        var help = Ref.Create(false);
-        var globDir = Ref.Create((DirectoryInfo?)null);
+        var dir = args.OptGlobDirInfo ?? new DirectoryInfo(Environment.CurrentDirectory);
 
-        var options = new OptionSet(CreateStrictOptionSetArgumentParser())
-        {
-            Options.Help(help),
-            Options.Verbose(Verbose),
-            Options.Debug,
-            Options.Glob(globDir)
-        };
-
-        var tail = options.Parse(args);
-
-        if (help)
-        {
-            Help("glob", options);
-            return;
-        }
-
-        var dir = globDir.Value != null
-                ? globDir
-                : new DirectoryInfo(Environment.CurrentDirectory);
-
-        foreach (var (p, _) in ReadSources(tail, dir, () => (string?)null, _ => null))
+        foreach (var (p, _) in ReadSources(args.ArgFile, dir, () => (string?)null, _ => null))
             Console.WriteLine(p);
     }
 }

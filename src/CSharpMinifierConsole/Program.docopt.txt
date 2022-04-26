@@ -1,0 +1,92 @@
+$LOGO$
+
+Minifies C# source, removing comments and whitespace that would not
+affect the behaviour of the compiled code.
+
+Usage:
+  csmin min [-dv] [<FILE>...]
+    [--glob=<DIRECTORY>]
+    [--validate]
+    [--comment-filter-pattern=<PATTERN>]
+    [--keep-lead-comment] [--keep-important-comment]
+  csmin tokens [-dv] [<FILE>...]
+    [--glob=<DIRECTORY>]
+    [--format=<FORMAT>]
+  csmin (color|colour) [-dv] [<FILE>...]
+    [--glob=<DIRECTORY>] [--validate]
+    [--eol]
+  csmin hash [-dv] [<FILE>...]
+    [--glob=<DIRECTORY>]
+    [--comment-filter-pattern=<PATTERN>]
+    [--keep-lead-comment] [--keep-important-comment]
+    [--compare=<HASH>] [--algo=<ALGO>] [--format=<FORMAT>]
+  csmin grep [-dv] <PATTERN> [<FILE>...]
+    [--glob=<DIRECTORY>]
+  csmin regions [-dvei] [<FILE>]
+    [--glob=<DIRECTORY>]
+    [--grep=<PATTERN>]
+  csmin glob [-dv] [<FILE>...]
+    [--glob=<DIRECTORY>]
+  csmin help (min|tokens|color|colour|hash|grep|regions)
+  csmin -h | --help
+  csmin --version
+
+Sub-commands:
+  min      Minifies C# source, removing comments and whitespace that would not
+             affect the behaviour of the compiled code.
+  tokens   Lists tokens scanned from C# source in various formats.
+  color    Colors tokens scanned from C# source.
+  colour   Same as "color".
+  hash     Computes and prints the hexadecimal hash of minified C# source.
+  grep     Searches in strings scanned from C# source.
+  regions  Lists top-level regions (#region...#endregion).
+  help     Displays sub-command help (obsolete).
+
+The "min" sub-command is the default if no sub-command is specified.
+
+where FILES is a list of zero or more paths to files containing
+syntactically correct C# source. If FILES is not given then STDIN is
+read for syntactically correct C# source. If the "--glob" option is used
+then FILES is interpreted as glob patterns.
+
+Options:
+  -h, --help                 Prints out the options.
+  -v, --verbose              Enable additional output.
+  -d, --debug                Break into debugger.
+      --version              Print program version.
+      --glob=<DIRECTORY>     Interpret file path as glob pattern with
+                               DIRECTORY as base.
+      --validate             Validate minified output.
+      --comment-filter-pattern=<PATTERN>
+                             Filter/keep comments matching PATTERN.
+      --keep-lead-comment    Keep first multi-line comment or first
+                               consecutive set of single-line comments.
+      --keep-important-comment
+                             Keep /*! ... */ comments or single-line comments
+                               starting with //! ...
+      --eol                  Show line endings.
+  -c, --compare=<HASH>       Set non-zero exit code if HASH (in hexadecimal)
+                               is different.
+  -a, --algo=<ALGO>          Hash algorithm to use [default: SHA256].
+  -f, --format=<FORMAT>      Output hash format; where FORMAT is one of:
+                               hexadecimal (default), base32 (Crockford), json
+      --grep=<PATTERN>       Search region message matching PATTERN.
+  -e                         Use regular expression for search.
+  -i                         Ignore search case.
+
+Validation requires CSharpSyntaxValidator to be installed and available
+via the system PATH. For more information on CSharpSyntaxValidator, see:
+
+    https://www.nuget.org/packages/CSharpSyntaxValidator/
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.

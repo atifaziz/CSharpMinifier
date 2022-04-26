@@ -20,61 +20,32 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text.RegularExpressions;
+using AngryArrays.Unshift;
 using CSharpMinifier;
 using Microsoft.Extensions.FileSystemGlobbing;
-using Mono.Options;
-using OptionSetArgumentParser = System.Func<System.Func<string, Mono.Options.OptionContext, bool>, string, Mono.Options.OptionContext, bool>;
 
 static partial class Program
 {
-    static readonly Ref<bool> Verbose = Ref.Create(false);
-
-    static int Wain(IEnumerable<string> args)
+    static int Wain(ProgramArguments args, out bool verbose)
     {
-        var help = Ref.Create(false);
-        var globDir = Ref.Create((DirectoryInfo?)null);
-        var validate = false;
-        var commentFilterPattern = Ref.Create((string?)null);
-        var keepLeadComment = Ref.Create(false);
-        var keepImportantComment = Ref.Create(false);
+        verbose = args.OptVerbose;
 
-        var options = new OptionSet(CreateStrictOptionSetArgumentParser())
-        {
-            Options.Help(help),
-            Options.Verbose(Verbose),
-            Options.Debug,
-            Options.Glob(globDir),
-            { "validate", "validate minified output", _ => validate = true },
-            Options.CommentFilterPattern(commentFilterPattern),
-            Options.KeepLeadComment(keepLeadComment),
-            Options.KeepImportantComments(keepImportantComment)
-        };
-
-        var tail = options.Parse(args);
-
-        if (help)
-        {
-            Help("min", "[min]", options);
-            return 0;
-        }
-
-        var command = tail.FirstOrDefault();
-        var commandArgs = tail.Skip(1);
         var result = 0;
 
-        switch (command)
+        switch (args)
         {
-            case "min"    : Wain(commandArgs); break;
-            case "help"   : HelpCommand(commandArgs); break;
-            case "tokens" : TokensCommand(commandArgs); break;
-            case "grep"   : GrepCommand(commandArgs); break;
-            case "hash"   : result = HashCommand(commandArgs); break;
-            case "regions": RegionsCommand(commandArgs); break;
-            case "color"  :
-            case "colour" : ColorCommand(commandArgs); break;
-            case "glob"   : GlobCommand(commandArgs); break;
-            default       : DefaultCommand(); break;
+            case { CmdHelp   : true }:
+                Console.WriteLine(ProgramArguments.FormattedHelp);
+                Console.Error.WriteLine("NOTE! This command is now obsolete. Use -h or --help instead.");
+                break;
+
+            case { CmdTokens : true }: TokensCommand(args); break;
+            case { CmdGrep   : true }: GrepCommand(args); break;
+            case { CmdHash   : true }: result = HashCommand(args); break;
+            case { CmdRegions: true }: RegionsCommand(args); break;
+            case { CmdColor  : true } or { CmdColour: true }: ColorCommand(args); break;
+            case { CmdGlob   : true }: GlobCommand(args); break;
+            case { CmdMin    : true }: DefaultCommand(); break;
         }
 
         return result;
@@ -89,20 +60,20 @@ static partial class Program
                  ? FindProgramPath(validatorExecutableName)
                  : validatorExecutableName);
 
-            foreach (var (_, source) in ReadSources(tail, globDir))
+            foreach (var (_, source) in ReadSources(args.ArgFile, args.OptGlobDirInfo))
             {
                 Minify(source, Console.Out);
 
-                if (validate && !Validate(stdin => Minify(source, stdin)))
+                if (args.OptValidate && !Validate(stdin => Minify(source, stdin)))
                     throw new Exception("Minified version is invalid.");
             }
 
             void Minify(string source, TextWriter output)
             {
                 var nl = false;
-                foreach (var s in Minifier.Minify(source, commentFilterPattern,
-                                                          keepLeadComment,
-                                                          keepImportantComment))
+                foreach (var s in Minifier.Minify(source, args.OptCommentFilterPattern,
+                                                          args.OptKeepLeadComment,
+                                                          args.OptKeepImportantComment))
                 {
                     if (nl = s == null)
                         output.WriteLine();
@@ -188,20 +159,6 @@ static partial class Program
         return paths.FirstOrDefault() ?? program;
     }
 
-    static void HelpCommand(IEnumerable<string> args)
-    {
-        switch (args.FirstOrDefault())
-        {
-            case null:
-            case {} command when command == "help":
-                Help("help", new Mono.Options.OptionSet());
-                break;
-            case {} command:
-                Wain(new [] { command, "--help" });
-                break;
-        }
-    }
-
     static IEnumerable<(string File, string Source)>
         ReadSources(IEnumerable<string> files, DirectoryInfo? rootDir = null)
     {
@@ -255,77 +212,55 @@ static partial class Program
         }
     }
 
-    static class Options
-    {
-        public static Option Help(Ref<bool> value) =>
-            new ActionOption("?|help|h", "prints out the options", _ => value.Value = true);
+    static string[]? _subCommandNames;
 
-        public static Option Verbose(Ref<bool> value) =>
-            new ActionOption("verbose|v", "enable additional output", _ => value.Value = true);
-
-        public static readonly Option Debug =
-            new ActionOption("d|debug", "debug break", _ => Debugger.Launch());
-
-        public static Option Glob(Ref<DirectoryInfo?> value) =>
-            new ActionOption("glob=", "interpret file path as glob pattern with {DIRECTORY} as base",
-                vs => value.Value = new DirectoryInfo(vs.Last()));
-
-        public static Option CommentFilterPattern(Ref<string?> value) =>
-            new ActionOption("comment-filter-pattern=", "filter/keep comments matching {PATTERN}",
-                vs =>
-                {
-                    var pattern = vs.Last();
-                    var _ = new Regex(pattern); // validate & discard
-                    value.Value = pattern;
-                });
-
-        public static Option KeepLeadComment(Ref<bool> value) =>
-            new ActionOption("keep-lead-comment",
-                             "keep first multi-line comment or "
-                             + "first consecutive set of single-line comments",
-                             _ => value.Value = true);
-
-        public static Option KeepImportantComments(Ref<bool> value) =>
-            new ActionOption("keep-important-comment",
-                             "keep /*! ... */ comments or "
-                             + "single-line comments starting with //! ...",
-                             _ => value.Value = true);
-    }
-
-    static OptionSetArgumentParser CreateStrictOptionSetArgumentParser()
-    {
-        var hasTailStarted = false;
-        return (impl, arg, context) =>
-        {
-            if (hasTailStarted) // once a tail, always a tail
-                return false;
-
-            var isOption = impl(arg, context);
-            if (!isOption && !hasTailStarted)
-            {
-                if (arg.Length > 1 && arg[0] == '-')
-                    throw new Exception("Invalid argument: " + arg);
-
-                hasTailStarted = true;
-            }
-
-            return isOption;
-        };
-    }
+    public static string[] SubCommandNames =>
+        _subCommandNames ??= new ProgramArguments().Select(arg => arg.Key)
+                                                   .Where(arg => arg[0] is not '-' and not '<')
+                                                   .ToArray();
 
     static int Main(string[] args)
     {
+        var verbose = false;
+
         try
         {
-            return Wain(args);
+            if (args.Length == 0 || args[0] is var arg && (arg.Length == 0 || arg[1] == '-'))
+                return Main(args.Unshift("min"));
+
+            return ProgramArguments.CreateParser()
+                                   .WithVersion(ThisAssembly.Info.FileVersion)
+                                   .Parse(args)
+                                   .Match(args => Wain(args, out verbose),
+                                          _ => Print(Console.Out, 0, ProgramArguments.FormattedHelp),
+                                          r => Print(Console.Out, 0, r.Version),
+                                          r => SubCommandNames.Any(cmd => args[0] == cmd)
+                                             ? Print(Console.Error, 1, r.Usage)
+                                             : Main(args.Unshift("min")));
         }
         catch (Exception e)
         {
-            if (Verbose)
+            if (verbose)
                 Console.Error.WriteLine(e);
             else
                 Console.Error.WriteLine(e.GetBaseException().Message);
             return 0xbad;
         }
+
+        static int Print(TextWriter writer, int exitCode, string message)
+        {
+            writer.WriteLine(message);
+            return exitCode;
+        }
     }
+}
+
+partial class ProgramArguments
+{
+    public DirectoryInfo? OptGlobDirInfo => OptGlob is { } glob ? new DirectoryInfo(glob) : null;
+
+    public static string FormattedHelp =>
+        Help.Replace("$LOGO$", $"{ThisAssembly.Info.Product} (version {new Version(ThisAssembly.Info.FileVersion).Trim(3)})"
+                               + Environment.NewLine
+                               + ThisAssembly.Info.Copyright.Replace("\u00a9", "(C)"));
 }

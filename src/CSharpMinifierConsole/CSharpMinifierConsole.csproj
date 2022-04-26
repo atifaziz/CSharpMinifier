@@ -7,7 +7,7 @@
     <VersionPrefix>2.0.0</VersionPrefix>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>csmin</ToolCommandName>
-    <Copyright>Copyright © 2019 Atif Aziz. All rights reserved. Portions Copyright © 2008 Novell.</Copyright>
+    <Copyright>Copyright © 2019 Atif Aziz. All rights reserved.</Copyright>
     <Description>C# Minification Tool</Description>
     <Authors>Atif Aziz</Authors>
     <Owners>Atif Aziz</Owners>
@@ -26,17 +26,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="help\color.txt" />
-    <EmbeddedResource Include="help\glob.txt" />
-    <EmbeddedResource Include="help\grep.txt" />
-    <EmbeddedResource Include="help\hash.txt" />
-    <EmbeddedResource Include="help\help.txt" />
-    <EmbeddedResource Include="help\min.txt" />
-    <EmbeddedResource Include="help\regions.txt" />
-    <EmbeddedResource Include="help\tokens.txt" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\CSharpMinifier\CSharpMinifier.csproj" />
   </ItemGroup>
 
@@ -45,6 +34,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="docopt.net" Version="0.8.1" />
     <PackageReference Include="IsExternalInit" Version="1.0.1" PrivateAssets="all" />
     <PackageReference Include="Microsoft.Extensions.FileSystemGlobbing" Version="6.0.0" />
     <PackageReference Include="ThisAssembly.AssemblyInfo" Version="1.0.9" />
