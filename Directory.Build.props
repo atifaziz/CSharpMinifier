@@ -4,8 +4,7 @@
     <LangVersion>10</LangVersion>
     <Nullable>enable</Nullable>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <EnableNETAnalyzers>true</EnableNETAnalyzers>
-    <AnalysisLevel>8.0</AnalysisLevel>
+    <AnalysisLevel>8.0-all</AnalysisLevel>
   </PropertyGroup>
 
 </Project>

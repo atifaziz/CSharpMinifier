@@ -155,7 +155,9 @@ namespace CSharpMinifier
             public const string Stackalloc = "stackalloc";
         }
 
+#pragma warning disable CA1810 // Initialize reference type static fields inline (TODO)
         static SubstringPool()
+#pragma warning restore CA1810 // Initialize reference type static fields inline
         {
             Singletons = new string[Str.Length];
             foreach (var ch in Str)

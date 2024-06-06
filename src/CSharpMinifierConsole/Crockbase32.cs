@@ -86,7 +86,9 @@ static partial class Crockbase32
         if (buffer == null) throw new ArgumentNullException(nameof(buffer));
         if (offset < 0) throw new ArgumentOutOfRangeException(nameof(offset));
         if (length < 0) throw new ArgumentOutOfRangeException(nameof(length));
+#pragma warning disable CA2208 // Instantiate argument exceptions correctly (ambiguous)
         if (offset + length > buffer.Length) throw new ArgumentOutOfRangeException();
+#pragma warning restore CA2208 // Instantiate argument exceptions correctly
         if (output == null) throw new ArgumentNullException(nameof(output));
 
         ushort bb = 0;

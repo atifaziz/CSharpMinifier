@@ -34,6 +34,14 @@ namespace CSharpMinifier.Tests
         }
 
         [Test]
+        public void MinifyNullOptions()
+        {
+            var e = Assert.Throws<ArgumentNullException>(() => Minifier.Minify("", options: null!));
+            Debug.Assert(e is not null);
+            Assert.That(e.ParamName, Is.EqualTo("options"));
+        }
+
+        [Test]
         public void Minify()
         {
             const string source = @"

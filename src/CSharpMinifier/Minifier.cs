@@ -42,14 +42,16 @@ namespace CSharpMinifier
              : new MinificationOptions(this) { CommentFilter = value };
 
         public MinificationOptions OrCommentFilterOf(MinificationOptions other) =>
-            (CommentFilter, other.CommentFilter) switch
-            {
-                (null, null) => this,
-                var (left, right) when left == right => this,
-                ({}, null) => this,
-                (null, {} right) => WithCommentFilter(right),
-                ({} left, {} right) => WithCommentFilter((t, s) => left(t, s) || right(t, s)),
-            };
+            other is not { CommentFilter: var otherCommentFilter }
+            ? throw new ArgumentNullException(nameof(other))
+            : (CommentFilter, otherCommentFilter) switch
+              {
+                  (null, null) => this,
+                  var (left, right) when left == right => this,
+                  ({}, null) => this,
+                  (null, {} right) => WithCommentFilter(right),
+                  ({} left, {} right) => WithCommentFilter((t, s) => left(t, s) || right(t, s)),
+              };
 
         public MinificationOptions FilterImportantComments() =>
             FilterCommentMatching("^/[/*]!");
@@ -105,6 +107,7 @@ namespace CSharpMinifier
                             Func<Token, TResult> resultSelector)
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
+            if (options == null) throw new ArgumentNullException(nameof(options));
             if (resultSelector == null) throw new ArgumentNullException(nameof(resultSelector));
 
             return _(); IEnumerable<TResult> _()

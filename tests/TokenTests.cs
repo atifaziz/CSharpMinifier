@@ -20,7 +20,9 @@ namespace CSharpMinifier.Tests
     using NUnit.Framework;
 
     [TestFixture]
+#pragma warning disable CA1052 // Static holder types should be Static or NotInheritable
     public class TokenTests
+#pragma warning restore CA1052 // Static holder types should be Static or NotInheritable
     {
         public class Substring
         {

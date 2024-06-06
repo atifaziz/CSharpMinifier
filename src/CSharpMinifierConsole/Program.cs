@@ -65,7 +65,11 @@ static partial class Program
                 Minify(source, Console.Out);
 
                 if (args.OptValidate && !Validate(stdin => Minify(source, stdin)))
+                {
+#pragma warning disable CA2201 // Do not raise reserved exception types (intended)
                     throw new Exception("Minified version is invalid.");
+#pragma warning restore CA2201 // Do not raise reserved exception types
+                }
             }
 
             void Minify(string source, TextWriter output)
@@ -238,7 +242,9 @@ static partial class Program
                                              ? Print(Console.Error, 1, r.Usage)
                                              : Main(args.Unshift("min")));
         }
+#pragma warning disable CA1031 // Do not catch general exception types (entry-point)
         catch (Exception e)
+#pragma warning restore CA1031 // Do not catch general exception types
         {
             if (verbose)
                 Console.Error.WriteLine(e);
@@ -255,12 +261,14 @@ static partial class Program
     }
 }
 
-partial class ProgramArguments
+sealed partial class ProgramArguments
 {
     public DirectoryInfo? OptGlobDirInfo => OptGlob is { } glob ? new DirectoryInfo(glob) : null;
 
     public static string FormattedHelp =>
-        Help.Replace("$LOGO$", $"{ThisAssembly.Info.Product} (version {new Version(ThisAssembly.Info.FileVersion).Trim(3)})"
-                               + Environment.NewLine
-                               + ThisAssembly.Info.Copyright.Replace("\u00a9", "(C)"));
+        Help.Replace("$LOGO$",
+                     $"{ThisAssembly.Info.Product} (version {new Version(ThisAssembly.Info.FileVersion).Trim(3)})"
+                         + Environment.NewLine
+                         + ThisAssembly.Info.Copyright.Replace("\u00a9", "(C)", StringComparison.Ordinal),
+                     StringComparison.OrdinalIgnoreCase);
 }

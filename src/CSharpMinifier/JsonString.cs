@@ -14,6 +14,8 @@
 //
 #endregion
 
+#pragma warning disable CA1062 // Validate arguments of public methods (internal)
+
 namespace CSharpMinifier.Internals
 {
     using System;

@@ -29,7 +29,7 @@ static class Extensions
 
     public static Version Trim(this Version version, int minFieldCount = 2)
     {
-        if (version == null) throw new ArgumentNullException(nameof(version));
+        ArgumentNullException.ThrowIfNull(version);
         if (minFieldCount < 2 || minFieldCount > 4) throw new ArgumentOutOfRangeException(nameof(minFieldCount), minFieldCount, null);
 
         if (version.Revision < 0 || version.Build < 0)

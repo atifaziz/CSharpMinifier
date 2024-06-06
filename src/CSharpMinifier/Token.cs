@@ -63,7 +63,10 @@ namespace CSharpMinifier
 
     public static class TokenExtensions
     {
-        public static string Substring(this Token token, string source) =>
-            SubstringPool.GetOrCreate(source, token.Start.Offset, token.Length);
+        public static string Substring(this Token token, string source)
+        {
+            if (source == null) throw new ArgumentNullException(nameof(source));
+            return SubstringPool.GetOrCreate(source, token.Start.Offset, token.Length);
+        }
     }
 }

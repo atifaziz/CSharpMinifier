@@ -580,7 +580,7 @@ namespace CSharpMinifier.Tests
                                  OffsetChange = int.Parse(oc, NumberStyles.None, CultureInfo.InvariantCulture),
                                  LineChange   = int.Parse(lc, NumberStyles.None, CultureInfo.InvariantCulture),
                                  ColumnChange = cc[0] != '=' ? int.Parse(cc, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture)  : 0,
-                                 Column       = cc[0] == '=' ? int.Parse(cc.Substring(1), NumberStyles.None, CultureInfo.InvariantCulture) : 0,
+                                 Column       = cc[0] == '=' ? int.Parse(cc.AsSpan(1), NumberStyles.None, CultureInfo.InvariantCulture) : 0,
                                  Text         = txt,
                              }))
                         .Scan(new

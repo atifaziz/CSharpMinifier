@@ -25,7 +25,9 @@ namespace CSharpMinifier
         Comment                 = 0x001,
         WhiteSpace              = 0x002,
         Literal                 = 0x004,
+#pragma warning disable CA1720 // Identifier contains type name (by-design)
         String                  = 0x008,
+#pragma warning restore CA1720 // Identifier contains type name
         VerbatimString          = 0x010,
         InterpolatedString      = 0x020,
         InterpolatedStringStart = 0x040,

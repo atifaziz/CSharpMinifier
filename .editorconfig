@@ -58,3 +58,6 @@ csharp_space_between_method_declaration_parameter_list_parentheses = false
 # Wrapping
 csharp_preserve_single_line_statements = true
 csharp_preserve_single_line_blocks = true
+
+# CA1308: Normalize strings to uppercase
+dotnet_diagnostic.CA1308.severity = suggestion

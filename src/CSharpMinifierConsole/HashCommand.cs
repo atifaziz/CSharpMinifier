@@ -80,7 +80,7 @@ partial class Program
             case HashOutputFormat.Hexadecimal:
             {
                 Console.WriteLine(BitConverter.ToString(hash)
-                                              .Replace("-", string.Empty)
+                                              .Replace("-", string.Empty, StringComparison.Ordinal)
                                               .ToLowerInvariant());
                 break;
             }
