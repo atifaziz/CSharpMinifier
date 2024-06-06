@@ -3,8 +3,8 @@
   <PropertyGroup>
     <RootNamespace></RootNamespace>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>net6.0;net5.0;netcoreapp3.1</TargetFrameworks>
-    <VersionPrefix>2.0.0</VersionPrefix>
+    <TargetFrameworks>net8.0;net6.0</TargetFrameworks>
+    <VersionPrefix>2.1.0</VersionPrefix>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>csmin</ToolCommandName>
     <Copyright>Copyright © 2019 Atif Aziz. All rights reserved.</Copyright>
@@ -35,9 +35,9 @@
 
   <ItemGroup>
     <PackageReference Include="docopt.net" Version="0.8.1" />
-    <PackageReference Include="IsExternalInit" Version="1.0.1" PrivateAssets="all" />
-    <PackageReference Include="Microsoft.Extensions.FileSystemGlobbing" Version="6.0.0" />
-    <PackageReference Include="ThisAssembly.AssemblyInfo" Version="1.0.9" />
+    <PackageReference Include="IsExternalInit" Version="1.0.3" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.Extensions.FileSystemGlobbing" Version="8.0.0" />
+    <PackageReference Include="ThisAssembly.AssemblyInfo" Version="1.4.3" />
   </ItemGroup>
 
 </Project>

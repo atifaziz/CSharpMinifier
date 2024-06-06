@@ -25,8 +25,7 @@ install:
 - sh: curl -OsSL https://dot.net/v1/dotnet-install.sh
 - sh: chmod +x dotnet-install.sh
 - sh: ./dotnet-install.sh --jsonfile global.json
-- sh: ./dotnet-install.sh --version 5.0.12 --runtime dotnet
-- sh: ./dotnet-install.sh --version 3.1.10 --runtime dotnet
+- sh: ./dotnet-install.sh --version 6.0.25 --runtime dotnet
 - sh: export PATH="$HOME/.dotnet:$PATH"
 before_build:
 - dotnet --info
