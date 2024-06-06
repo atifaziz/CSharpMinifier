@@ -23,11 +23,21 @@
 
   <ItemGroup>
     <PackageReference Include="AngryArrays" Version="1.1.0" />
-    <PackageReference Include="IsExternalInit" Version="1.0.3" PrivateAssets="all" />
+    <PackageReference Include="PolySharp" Version="1.14.1">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
   </ItemGroup>
 
   <ItemGroup>
     <None Include="..\..\COPYING.txt" Pack="true" PackagePath="$(PackageLicenseFile)" />
   </ItemGroup>
+
+  <PropertyGroup>
+    <PolySharpIncludeGeneratedTypes>
+      System.Diagnostics.CodeAnalysis.NotNullWhenAttribute;
+      System.Runtime.CompilerServices.IsExternalInit;
+    </PolySharpIncludeGeneratedTypes>
+  </PropertyGroup>
 
 </Project>

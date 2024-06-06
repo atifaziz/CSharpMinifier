@@ -35,8 +35,11 @@
 
   <ItemGroup>
     <PackageReference Include="docopt.net" Version="0.8.1" />
-    <PackageReference Include="IsExternalInit" Version="1.0.3" PrivateAssets="all" />
     <PackageReference Include="Microsoft.Extensions.FileSystemGlobbing" Version="8.0.0" />
+    <PackageReference Include="PolySharp" Version="1.14.1">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
     <PackageReference Include="ThisAssembly.AssemblyInfo" Version="1.4.3" />
   </ItemGroup>
 
