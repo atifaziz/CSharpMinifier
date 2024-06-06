@@ -34,6 +34,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="AngryArrays" Version="1.1.0" />
     <PackageReference Include="docopt.net" Version="0.8.1" />
     <PackageReference Include="Microsoft.Extensions.FileSystemGlobbing" Version="8.0.0" />
     <PackageReference Include="PolySharp" Version="1.14.1">
