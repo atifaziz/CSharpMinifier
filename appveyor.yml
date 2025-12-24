@@ -18,14 +18,15 @@ pull_requests:
 skip_tags: true
 environment:
   DOTNET_CLI_TELEMETRY_OPTOUT: true
-  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  DOTNET_NOLOGO: true
 install:
 - cmd: curl -OsSL https://dot.net/v1/dotnet-install.ps1
 - ps: if ($isWindows) { ./dotnet-install.ps1 -JsonFile global.json }
+- ps: if ($isWindows) { ./dotnet-install.ps1 -Runtime dotnet -Version 8.0.22 -SkipNonVersionedFiles }
 - sh: curl -OsSL https://dot.net/v1/dotnet-install.sh
 - sh: chmod +x dotnet-install.sh
 - sh: ./dotnet-install.sh --jsonfile global.json
-- sh: ./dotnet-install.sh --version 6.0.25 --runtime dotnet
+- sh: ./dotnet-install.sh --version 8.0.22 --runtime dotnet --skip-non-versioned-files
 - sh: export PATH="$HOME/.dotnet:$PATH"
 before_build:
 - dotnet --info

@@ -7,3 +7,6 @@ dotnet_diagnostic.CA1062.severity = none
 
 # CA1034: Nested types should not be visible
 dotnet_diagnostic.CA1034.severity = none
+
+# CA1515: Consider making public types internal
+dotnet_diagnostic.CA1515.severity = none

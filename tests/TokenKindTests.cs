@@ -52,7 +52,7 @@ namespace CSharpMinifier.Tests
         [Test]
         public void InvalidKind()
         {
-            var kinds = (TokenKind[])Enum.GetValues(typeof(TokenKind));
+            var kinds = Enum.GetValues<TokenKind>();
 
             var min = kinds.Min();
             Assert.Throws<ArgumentOutOfRangeException>(() =>

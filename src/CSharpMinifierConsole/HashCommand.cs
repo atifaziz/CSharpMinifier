@@ -45,7 +45,7 @@ partial class Program
         var format
             = args.OptFormat is { } fs
             ? Enum.TryParse<HashOutputFormat>(fs, true, out var fv)
-              && Enum.IsDefined(typeof(HashOutputFormat), fv) ? fv
+              && Enum.IsDefined(fv) ? fv
             : throw new Exception("Invalid hash format.")
             : HashOutputFormat.Hexadecimal;
 
@@ -79,9 +79,13 @@ partial class Program
         {
             case HashOutputFormat.Hexadecimal:
             {
-                Console.WriteLine(BitConverter.ToString(hash)
-                                              .Replace("-", string.Empty, StringComparison.Ordinal)
-                                              .ToLowerInvariant());
+                Console.WriteLine(
+#if NET8_0
+                    Convert.ToHexString(hash).ToLowerInvariant()
+#else
+                    Convert.ToHexStringLower(hash)
+#endif
+                );
                 break;
             }
             case HashOutputFormat.Base32:

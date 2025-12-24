@@ -3,8 +3,8 @@
   <PropertyGroup>
     <RootNamespace></RootNamespace>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>net8.0;net6.0</TargetFrameworks>
-    <VersionPrefix>2.1.0</VersionPrefix>
+    <TargetFrameworks>net10.0;net8.0</TargetFrameworks>
+    <VersionPrefix>2.2.0</VersionPrefix>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>csmin</ToolCommandName>
     <Copyright>Copyright © 2019 Atif Aziz. All rights reserved.</Copyright>
@@ -36,12 +36,12 @@
   <ItemGroup>
     <PackageReference Include="AngryArrays" Version="1.1.0" />
     <PackageReference Include="docopt.net" Version="0.8.1" />
-    <PackageReference Include="Microsoft.Extensions.FileSystemGlobbing" Version="8.0.0" />
-    <PackageReference Include="PolySharp" Version="1.14.1">
+    <PackageReference Include="Microsoft.Extensions.FileSystemGlobbing" Version="10.0.1" />
+    <PackageReference Include="PolySharp" Version="1.15.0">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="ThisAssembly.AssemblyInfo" Version="1.4.3" />
+    <PackageReference Include="ThisAssembly.AssemblyInfo" Version="2.1.2" />
   </ItemGroup>
 
 </Project>
