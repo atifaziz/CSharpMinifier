@@ -17,6 +17,7 @@
 using System;
 using System.Globalization;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using CSharpMinifier;
 using CSharpMinifier.Internals;
 
@@ -149,12 +150,15 @@ partial class Program
 
                     var json = JsonString.Encode(s);
                     return quote
-                         + json.Substring(1, json.Length - 2)
-                               .Replace(quote, quotequote, StringComparison.Ordinal)
+                         + json[1..^1].Replace(quote, quotequote, StringComparison.Ordinal)
                          + quote;
                 }
 
                 break;
+            }
+            default:
+            {
+                throw new SwitchExpressionException(args.OptFormat);
             }
         }
     }

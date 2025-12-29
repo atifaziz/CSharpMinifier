@@ -18,6 +18,7 @@ namespace CSharpMinifier
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
 
     public static class Scanner
     {
@@ -169,7 +170,9 @@ namespace CSharpMinifier
                     }
                     case State.Text:
                     {
+#pragma warning disable IDE0010 // Add missing cases (default continue)
                         switch (ch)
+#pragma warning restore IDE0010 // Add missing cases
                         {
                             case '/':
                                 state = State.Slash;
@@ -193,7 +196,7 @@ namespace CSharpMinifier
                                 state = State.Dollar;
                                 break;
                             case '(' when Interpolated():
-                                IncParens();
+                                _ = IncParens();
                                 break;
                             case ')' when Interpolated():
                                 if (IncParens(-1) == 0)
@@ -268,7 +271,9 @@ namespace CSharpMinifier
                     }
                     case State.PreprocessorDirective:
                     {
+#pragma warning disable IDE0010 // Add missing cases (default continue)
                         switch (ch)
+#pragma warning restore IDE0010 // Add missing cases
                         {
                             case '/':
                                 state = State.PreprocessorDirectiveSlash;
@@ -372,7 +377,9 @@ namespace CSharpMinifier
                     }
                     case State.InterpolatedString:
                     {
+#pragma warning disable IDE0010 // Add missing cases (default continue)
                         switch (ch)
+#pragma warning disable IDE0010 // Add missing cases (default continue)
                         {
                             case '"':
                                 yield return Transit(source[si] == '$'
@@ -578,7 +585,7 @@ namespace CSharpMinifier
                     }
                     case State.SingleLineComment:
                     {
-                        if (ch == '\r' || ch == '\n')
+                        if (ch is '\r' or '\n')
                         {
                             yield return Transit(TokenKind.SingleLineComment, State.Text);
                             goto restart;
@@ -587,7 +594,9 @@ namespace CSharpMinifier
                     }
                     case State.MultiLineComment:
                     {
+#pragma warning disable IDE0010 // Add missing cases (default break)
                         switch (ch)
+#pragma warning restore IDE0010 // Add missing cases
                         {
                             case '*':
                                 state = State.MultiLineCommentStar;
@@ -627,10 +636,14 @@ namespace CSharpMinifier
                         }
                         break;
                     }
+                    default:
+                        throw new UnreachableException();
                 }
             }
 
+#pragma warning disable IDE0010 // Add missing cases (see default)
             switch (state)
+#pragma warning restore IDE0010 // Add missing cases
             {
                 case State.String:
                 case State.StringEscape:
@@ -666,17 +679,21 @@ namespace CSharpMinifier
                         }
                         else
                         {
-                            var token
-                                = state == State.SingleLineComment ? TokenKind.SingleLineComment
-                                : state == State.WhiteSpace || state == State.LeadingWhiteSpace ? TokenKind.WhiteSpace
-                                : state == State.Cr ? TokenKind.NewLine
-                                : state == State.PreprocessorDirective || state == State.PreprocessorDirectiveSlash ? TokenKind.PreprocessorDirective
-                                : state == State.VerbatimStringQuote ? TokenKind.VerbatimStringLiteral
-                                : state == State.PreprocessorDirectiveTrailingWhiteSpaceSlash ? TokenKind.PreprocessorDirective
-                                : state == State.InterpolatedVerbatimStringQuote
-                                  ? IsDollarOrAt(source[si]) ? TokenKind.InterpolatedVerbatimStringLiteral
-                                  : TokenKind.InterpolatedVerbatimStringLiteralEnd
-                                : TokenKind.Text;
+
+#pragma warning disable IDE0072 // Add missing cases (see default)
+                            var token = state switch
+#pragma warning restore IDE0072 // Add missing cases
+                            {
+                                State.SingleLineComment => TokenKind.SingleLineComment,
+                                State.WhiteSpace or State.LeadingWhiteSpace => TokenKind.WhiteSpace,
+                                State.Cr => TokenKind.NewLine,
+                                State.PreprocessorDirective or State.PreprocessorDirectiveSlash => TokenKind.PreprocessorDirective,
+                                State.VerbatimStringQuote => TokenKind.VerbatimStringLiteral,
+                                State.PreprocessorDirectiveTrailingWhiteSpaceSlash => TokenKind.PreprocessorDirective,
+                                State.InterpolatedVerbatimStringQuote when IsDollarOrAt(source[si]) => TokenKind.InterpolatedVerbatimStringLiteral,
+                                State.InterpolatedVerbatimStringQuote => TokenKind.InterpolatedVerbatimStringLiteralEnd,
+                                _ => TokenKind.Text
+                            };
 
                             yield return CreateToken(token);
                         }
@@ -709,28 +726,31 @@ namespace CSharpMinifier
 
                 foreach (var token in Scan(source))
                 {
+#pragma warning disable IDE0010 // Add missing cases (false negative)
                     switch (token.Kind)
+#pragma warning restore IDE0010 // Add missing cases
                     {
                         case TokenKind.WhiteSpace when level == 0:
                             lwsToken = token;
                             break;
 
                         case TokenKind.PreprocessorDirective:
-                            var (name, specifics) = SplitName(token);
-                            switch (name)
+#pragma warning disable IDE0010 // Add missing cases (default ignore)
+                            switch (SplitName(token))
+#pragma warning restore IDE0010 // Add missing cases
                             {
-                                case "region":
+                                case ("region", var specifics):
                                     if (level == 0)
                                     {
                                         startMessage = specifics;
-                                        tokens = new List<Token>();
+                                        tokens = [];
                                         if (lwsToken is {} t)
                                             tokens.Add(t);
                                     }
                                     level++;
                                     break;
 
-                                case "endregion":
+                                case ("endregion", var specifics):
                                     level--;
                                     if (level == 0)
                                     {
@@ -768,6 +788,6 @@ namespace CSharpMinifier
             }
         }
 
-        static readonly char[] SpaceOrTab = { ' ', '\t' };
+        static readonly char[] SpaceOrTab = [' ', '\t'];
     }
 }

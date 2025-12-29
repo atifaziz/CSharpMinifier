@@ -55,12 +55,10 @@ namespace CSharpMinifier.Tests
             var kinds = Enum.GetValues<TokenKind>();
 
             var min = kinds.Min();
-            Assert.Throws<ArgumentOutOfRangeException>(() =>
-                (min - 1).GetTraits());
+            _ = Assert.Throws<ArgumentOutOfRangeException>(() => (min - 1).GetTraits());
 
             var max = kinds.Max();
-            Assert.Throws<ArgumentOutOfRangeException>(() =>
-                (max + 1).GetTraits());
+            _ = Assert.Throws<ArgumentOutOfRangeException>(() => (max + 1).GetTraits());
         }
     }
 }

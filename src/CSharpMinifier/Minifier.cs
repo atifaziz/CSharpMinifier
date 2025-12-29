@@ -44,12 +44,14 @@ namespace CSharpMinifier
         public MinificationOptions OrCommentFilterOf(MinificationOptions other) =>
             other is not { CommentFilter: var otherCommentFilter }
             ? throw new ArgumentNullException(nameof(other))
+#pragma warning disable IDE0072 // Add missing cases (false negative)
             : (CommentFilter, otherCommentFilter) switch
+#pragma warning restore IDE0072 // Add missing cases
               {
                   (null, null) => this,
-                  var (left, right) when left == right => this,
                   ({}, null) => this,
                   (null, {} right) => WithCommentFilter(right),
+                  var (left, right) when left == right => this,
                   ({} left, {} right) => WithCommentFilter((t, s) => left(t, s) || right(t, s)),
               };
 
@@ -129,7 +131,9 @@ namespace CSharpMinifier
 
                 foreach (var t in Scanner.Scan(source))
                 {
+#pragma warning disable IDE0010 // Add missing cases (false negative)
                     switch (t.Kind)
+#pragma warning restore IDE0010
                     {
                         case TokenKind.NewLine:
                         case TokenKind.WhiteSpace:

@@ -75,7 +75,7 @@ namespace CSharpMinifier.Tests
         public void Inequality()
         {
             var pos = new Position(42, 4, 2);
-            Assert.That(pos.Equals(default(Position)), Is.False);
+            Assert.That(pos.Equals(default), Is.False);
             Assert.That(pos.Equals((object) default(Position)), Is.False);
         }
 

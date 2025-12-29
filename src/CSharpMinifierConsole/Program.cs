@@ -46,6 +46,11 @@ static partial class Program
             case { CmdColor  : true } or { CmdColour: true }: ColorCommand(args); break;
             case { CmdGlob   : true }: GlobCommand(args); break;
             case { CmdMin    : true }: DefaultCommand(); break;
+
+            default:
+                Console.Error.WriteLine("Unknown command.");
+                result = 1;
+                break;
         }
 
         return result;
@@ -153,7 +158,7 @@ static partial class Program
         var paths =
             from p in envPath.Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries)
             select p.Length > 0 && p[0] == '~'
-                 ? Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.Personal), p.Substring(1))
+                 ? Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.Personal), p[1..])
                  : p
             into p
             select Path.Join(p, fileName) into p
@@ -166,7 +171,7 @@ static partial class Program
     static IEnumerable<(string File, string Source)>
         ReadSources(IEnumerable<string> files, DirectoryInfo? rootDir = null)
     {
-        var stdin = Lazy.Create(() => Console.In.ReadToEnd());
+        var stdin = Lazy.Create(Console.In.ReadToEnd);
         return ReadSources(files, rootDir, () => stdin.Value, File.ReadAllText);
     }
 
@@ -188,10 +193,9 @@ static partial class Program
                     if (string.IsNullOrEmpty(e.Current))
                         continue;
 
-                    if (e.Current[0] == '!')
-                        matcher.AddExclude(e.Current.Substring(1));
-                    else
-                        matcher.AddInclude(e.Current);
+                    _ = e.Current[0] == '!'
+                      ? matcher.AddExclude(e.Current[1..])
+                      : matcher.AddInclude(e.Current);
                 }
                 while (e.MoveNext());
             }
@@ -216,12 +220,12 @@ static partial class Program
         }
     }
 
-    static string[]? _subCommandNames;
+    public static string[] SubCommandNames  =>
+        field ??= [..from arg in new ProgramArguments()
+                     select arg.Key into arg
+                     where arg[0] is not '-' and not '<'
+                     select arg];
 
-    public static string[] SubCommandNames =>
-        _subCommandNames ??= new ProgramArguments().Select(arg => arg.Key)
-                                                   .Where(arg => arg[0] is not '-' and not '<')
-                                                   .ToArray();
 
     static int Main(string[] args)
     {

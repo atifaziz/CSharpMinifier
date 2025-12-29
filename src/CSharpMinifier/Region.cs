@@ -22,22 +22,20 @@ namespace CSharpMinifier
 
     public sealed class Region
     {
-        IReadOnlyList<Token> _tokens;
-
         internal Region(string message, string endMessage, List<Token> tokens)
         {
             Message    = message    ?? throw new ArgumentNullException(nameof(message));
             EndMessage = endMessage ?? throw new ArgumentNullException(nameof(endMessage));
-            _tokens    = tokens     ?? throw new ArgumentNullException(nameof(tokens));
+            Tokens     = tokens     ?? throw new ArgumentNullException(nameof(tokens));
         }
 
         public string Message    { get; }
         public string EndMessage { get; }
 
         public IReadOnlyList<Token> Tokens
-            => _tokens is List<Token> tokens
-             ? _tokens = new ReadOnlyCollection<Token>(tokens)
-             : _tokens;
+            => field is List<Token> tokens
+             ? field = new ReadOnlyCollection<Token>(tokens)
+             : field;
 
         public override string ToString() => Message;
     }

@@ -43,7 +43,7 @@ namespace CSharpMinifier
     partial class TokenKindExtensions
     {
         static readonly TokenKindTraits[] TraitsByKind =
-        {
+        [
             // IMPORTANT! Keep the order here in sync with TokenKind. If a
             // TokenKind member is moved, added or removed then this must be
             // changed appropriately as well.
@@ -64,7 +64,7 @@ namespace CSharpMinifier
             /* InterpolatedVerbatimStringLiteralStart */ Literal | String | InterpolatedString | VerbatimString | InterpolatedStringStart,
             /* InterpolatedVerbatimStringLiteralMid   */ Literal | String | InterpolatedString | VerbatimString | InterpolatedStringMid,
             /* InterpolatedVerbatimStringLiteralEnd   */ Literal | String | InterpolatedString | VerbatimString | InterpolatedStringEnd,
-            /* PreprocessorDirective                  */ None,
-        };
+            /* PreprocessorDirective                  */ None
+        ];
     }
 }

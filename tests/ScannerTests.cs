@@ -72,7 +72,7 @@ namespace CSharpMinifier.Tests
         [TestCase("/*\r")]
         public void SyntaxError(string source)
         {
-            Assert.Throws<SyntaxErrorException>(() => Scanner.Scan(source).Consume());
+            _ = Assert.Throws<SyntaxErrorException>(() => Scanner.Scan(source).Consume());
         }
 
         [TestCase(" ",          @"WhiteSpace 1 0 1 "" """)]

@@ -167,6 +167,7 @@ namespace CSharpMinifier
         public static string GetOrCreate(string buffer, int offset, int length)
         {
             char ch;
+#pragma warning disable IDE0010 // Add missing cases (handled)
             switch (length)
             {
                 case 0: return string.Empty;
@@ -434,6 +435,7 @@ namespace CSharpMinifier
                 }
 
             }
+#pragma warning restore IDE0010 // Add missing cases
 
             return TrySegmentRun(buffer, offset, length, ' ', Spaces, out var spaces) ? spaces
                  : TrySegmentRun(buffer, offset, length, '\t', Tabs, out var tabs) ? tabs
@@ -469,8 +471,11 @@ namespace CSharpMinifier
         static bool All(this string s, char ch, int offset, int length)
         {
             for (var i = 0; i < length; i++)
+            {
                 if (s[offset + i] != ch)
                     return false;
+            }
+
             return true;
         }
     }

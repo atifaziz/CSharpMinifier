@@ -16,7 +16,9 @@
 
 #pragma warning disable CA1062 // Validate arguments of public methods (internal)
 
+#pragma warning disable IDE0130 // Namespace does not match folder structure
 namespace CSharpMinifier.Internals
+#pragma warning restore IDE0130 // Namespace does not match folder structure
 {
     using System;
     using System.Text;
@@ -52,25 +54,18 @@ namespace CSharpMinifier.Internals
             for (var i = index; i < endIndex; i++)
             {
                 var ch = s[i];
-                switch (ch)
+                _ = ch switch
                 {
-                    case '"':
-                    case '\'':
-                    case '\\': sb.Append('\\').Append(ch); break;
-                    default:
-                        if (ch < ControlChars.Length)
-                            sb.Append(ControlChars[ch]);
-                        else
-                            sb.Append(ch);
-                        break;
-                }
+                    '"' or '\'' or '\\' => sb.Append('\\').Append(ch),
+                    _ => ch < ControlChars.Length ? sb.Append(ControlChars[ch]) : sb.Append(ch),
+                };
             }
 
             return sb.Append('\"').ToString();
         }
 
         static readonly string[] ControlChars =
-        {
+        [
             @"\u0000", // NUL
             @"\u0001", // SOH
             @"\u0002", // STX
@@ -103,6 +98,6 @@ namespace CSharpMinifier.Internals
             @"\u001d", // GS
             @"\u001e", // RS
             @"\u001f", // US
-        };
+        ];
     }
 }

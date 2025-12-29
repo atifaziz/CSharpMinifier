@@ -20,12 +20,12 @@ namespace CSharpMinifier
 
     public readonly record struct Position
     {
-        readonly int _line;
-        readonly int _column;
+        readonly int line;
+        readonly int column;
 
         public int Offset { get; }
-        public int Line => _line + 1;
-        public int Column => _column + 1;
+        public int Line => this.line + 1;
+        public int Column => this.column + 1;
 
         public Position(int offset, int line, int column)
         {
@@ -34,8 +34,8 @@ namespace CSharpMinifier
             if (column < 1) throw new ArgumentOutOfRangeException(nameof(column), column, null);
 
             Offset  = offset;
-            _line   = line - 1;
-            _column = column - 1;
+            this.line   = line - 1;
+            this.column = column - 1;
         }
 
         public override string ToString() => $"{Offset}/{Line}:{Column}";

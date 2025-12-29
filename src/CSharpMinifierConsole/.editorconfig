@@ -18,3 +18,6 @@ dotnet_diagnostic.CA1825.severity = suggestion
 
 # CA1512: Use ArgumentOutOfRangeException throw helper
 dotnet_diagnostic.CA1512.severity = suggestion
+
+# IDE0058: Expression value is never used
+dotnet_diagnostic.IDE0058.severity = suggestion

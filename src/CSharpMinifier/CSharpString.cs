@@ -54,7 +54,9 @@ namespace CSharpMinifier
              : $"{Status} @ {ErrorOffset}";
 
         internal SyntaxErrorException ToSyntaxError() =>
+#pragma warning disable IDE0072 // Add missing cases (default throw)
             throw new SyntaxErrorException(Status switch
+#pragma warning restore IDE0072 // Add missing cases
             {
                 StringValueParseResultStatus.InvalidToken =>
                     "Token is not a string.",
@@ -114,7 +116,9 @@ namespace CSharpMinifier
             string? s;
             StringValueParseResult r = default;
 
+#pragma warning disable IDE0010 // Add missing cases (default error)
             switch (kind)
+#pragma warning restore IDE0010 // Add missing cases
             {
                 case TokenKind.StringLiteral:
                     r = Decode(startIndex + 1, end, out s);
@@ -179,24 +183,24 @@ namespace CSharpMinifier
                 do
                 {
                     if (si < i)
-                        sb.Append(source, si, i - si);
+                        _ = sb.Append(source, si, i - si);
 
                     if (i + 1 == ei)
                         return StringValueParseResult.Error(StringValueParseResultStatus.InvalidEscapeSequence, i);
 
                     switch (source[i + 1])
                     {
-                        case '\'': sb.Append('\''); si = i + 2; break; // Single quote
-                        case '"' : sb.Append('\"'); si = i + 2; break; // Double quote
-                        case '\\': sb.Append('\\'); si = i + 2; break; // Backslash
-                        case '0' : sb.Append('\0'); si = i + 2; break; // Null
-                        case 'a' : sb.Append('\a'); si = i + 2; break; // Alert
-                        case 'b' : sb.Append('\b'); si = i + 2; break; // Backspace
-                        case 'f' : sb.Append('\f'); si = i + 2; break; // Form feed
-                        case 'n' : sb.Append('\n'); si = i + 2; break; // New line
-                        case 'r' : sb.Append('\r'); si = i + 2; break; // Carriage return
-                        case 't' : sb.Append('\t'); si = i + 2; break; // Horizontal tab
-                        case 'v' : sb.Append('\v'); si = i + 2; break; // Vertical tab
+                        case '\'': _ = sb.Append('\''); si = i + 2; break; // Single quote
+                        case '"' : _ = sb.Append('\"'); si = i + 2; break; // Double quote
+                        case '\\': _ = sb.Append('\\'); si = i + 2; break; // Backslash
+                        case '0' : _ = sb.Append('\0'); si = i + 2; break; // Null
+                        case 'a' : _ = sb.Append('\a'); si = i + 2; break; // Alert
+                        case 'b' : _ = sb.Append('\b'); si = i + 2; break; // Backspace
+                        case 'f' : _ = sb.Append('\f'); si = i + 2; break; // Form feed
+                        case 'n' : _ = sb.Append('\n'); si = i + 2; break; // New line
+                        case 'r' : _ = sb.Append('\r'); si = i + 2; break; // Carriage return
+                        case 't' : _ = sb.Append('\t'); si = i + 2; break; // Horizontal tab
+                        case 'v' : _ = sb.Append('\v'); si = i + 2; break; // Vertical tab
                         case 'u' :
                         {
                             var v = 0;
@@ -206,9 +210,9 @@ namespace CSharpMinifier
                                 return StringValueParseResult.Error(StringValueParseResultStatus.InvalidUnicodeEscapeCharacterSequence, i);
                             int di;
                             for (di = dsi; di < dei; di++)
-                                TryFoldNextHexDigit(ref v, source[di]);
+                                _ = TryFoldNextHexDigit(ref v, source[di]);
                             si = di;
-                            sb.Append((char) v);
+                            _ = sb.Append((char)v);
                             break;
                         }
                         case 'U':
@@ -220,20 +224,20 @@ namespace CSharpMinifier
                                 return StringValueParseResult.Error(StringValueParseResultStatus.InvalidUnicodeEscapeCharacterSequence, i);
                             int di;
                             for (di = dsi; di < dei; di++)
-                                TryFoldNextHexDigit(ref v, source[di]);
+                                _ = TryFoldNextHexDigit(ref v, source[di]);
                             si = di;
                             if (v >= 0x10FFFF)
                                 return StringValueParseResult.Error(StringValueParseResultStatus.InvalidUnicodeEscapeCharacterSequence, i);
                             if (v < 0x10000)
                             {
-                                sb.Append((char) v);
+                                _ = sb.Append((char)v);
                             }
                             else
                             {
                                 var x = v - 0x10000;
                                 var h = (x >> 10) + 0xD800;
                                 var l = (x & 0x3ff) + 0xDC00;
-                                sb.Append((char) h).Append((char) l);
+                                _ = sb.Append((char)h).Append((char)l);
                             }
                             break;
                         }
@@ -255,7 +259,7 @@ namespace CSharpMinifier
                                 }
                             }
                             si = di;
-                            sb.Append((char) v);
+                            _ = sb.Append((char)v);
                             break;
                         }
                         default:
@@ -266,7 +270,7 @@ namespace CSharpMinifier
                 while (i >= 0);
 
                 if (si < ei)
-                    sb.Append(source, si, ei - si);
+                    _ = sb.Append(source, si, ei - si);
 
                 return StringValueParseResult.Success(decoded = sb.ToString());
             }
@@ -275,13 +279,13 @@ namespace CSharpMinifier
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static bool TryFoldNextHexDigit(ref int acc, char ch)
         {
-            if (ch >= '0' && ch <= '9')
+            if (ch is >= '0' and <= '9')
             {
                 acc = (acc << 4) + ch - '0';
                 return true;
             }
 
-            if (ch >= 'a' && ch <= 'f' || ch >= 'A' && ch <= 'F')
+            if (ch is >= 'a' and <= 'f' or >= 'A' and <= 'F')
             {
                 acc = (acc << 4) + 10 + ((ch & ~0x20) - 'A');
                 return true;

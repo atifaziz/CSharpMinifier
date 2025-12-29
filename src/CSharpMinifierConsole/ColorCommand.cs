@@ -70,8 +70,11 @@ partial class Program
                     if (token.Kind == TokenKind.NewLine)
                     {
                         if (showLineEndings)
+                        {
                             Console.Write(text.Replace("\r", "[CR]", StringComparison.Ordinal)
                                               .Replace("\n", "[LF]", StringComparison.Ordinal));
+                        }
+
                         Color.Console = defaultColor;
                         Console.WriteLine();
                     }

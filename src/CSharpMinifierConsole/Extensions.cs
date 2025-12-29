@@ -15,8 +15,6 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
-using System.IO;
 
 static class Extensions
 {
@@ -30,7 +28,7 @@ static class Extensions
     public static Version Trim(this Version version, int minFieldCount = 2)
     {
         ArgumentNullException.ThrowIfNull(version);
-        if (minFieldCount < 2 || minFieldCount > 4) throw new ArgumentOutOfRangeException(nameof(minFieldCount), minFieldCount, null);
+        if (minFieldCount is < 2 or > 4) throw new ArgumentOutOfRangeException(nameof(minFieldCount), minFieldCount, null);
 
         if (version.Revision < 0 || version.Build < 0)
         {

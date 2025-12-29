@@ -19,6 +19,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -102,6 +103,10 @@ partial class Program
                         + "]");
                 break;
             }
+            default:
+            {
+                throw new SwitchExpressionException(format);
+            }
         }
 
         if (comparand == null)
@@ -112,14 +117,13 @@ partial class Program
 
     static readonly Dictionary<string, HashAlgorithmName> HashAlgorithmNames =
         Enumerable.ToDictionary(
-            new[]
-            {
+            [
                 HashAlgorithmName.MD5,
                 HashAlgorithmName.SHA1,
                 HashAlgorithmName.SHA256,
                 HashAlgorithmName.SHA384,
-                HashAlgorithmName.SHA512,
-            },
+                HashAlgorithmName.SHA512
+            ],
             e => e.Name!, // assume above hash algorithm names are always defined
             StringComparer.OrdinalIgnoreCase);
 
