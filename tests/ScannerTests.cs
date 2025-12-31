@@ -358,6 +358,13 @@ namespace CSharpMinifier.Tests
             @"InterpolatedStringEnd    5 0  5 "",7}|\""""",
             @"Text                     2 0  2 "");""")]
 
+        [TestCase("$\"foo\\n{\r\n\"bar\\n\"\r\n}baz\\n\"",
+            @"InterpolatedStringStart  8 0  8 ""$\""foo\\n{""",
+            @"NewLine                  2 1 =1 ""\r\n""",
+            @"String                   7 0  7 ""\""bar\\n\""""",
+            @"NewLine                  2 1 =1 ""\r\n""",
+            @"InterpolatedStringEnd    7 0  7 ""}baz\\n\""""")]
+
         [TestCase("$@$"                    , @"Text                        3 0  3 ""$@$""")]
         [TestCase("$@\"\""                 , @"InterpolatedVerbatimString  4 0  4 ""$@\""\""""")]
         [TestCase("$@\"foobar\""           , @"InterpolatedVerbatimString 10 0 10 ""$@\""foobar\""""")]
