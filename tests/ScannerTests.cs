@@ -75,6 +75,22 @@ namespace CSharpMinifier.Tests
             _ = Assert.Throws<SyntaxErrorException>(() => Scanner.Scan(source).Consume());
         }
 
+        // Expectations format:
+        //
+        //   TokenKind OffsetChange LineChange ColumnChange "JsonEncodedText"
+        //
+        // - TokenKind      : The type of token (e.g., WhiteSpace, NewLine, Text, String, etc.)
+        // - OffsetChange   : The length of the token in characters (offset delta from previous token's end)
+        // - LineChange     : Number of lines crossed (0 = same line, 1+ = multi-line token)
+        // - ColumnChange   : Either a relative column change (e.g., 4, -1) or an absolute column
+        //                    prefixed with '=' (e.g., =1 means column resets to 1 after a newline)
+        // - JsonEncodedText: The token's text, JSON-encoded (e.g., "\r\n" for CRLF)
+        //
+        // Examples:
+        //   "WhiteSpace 4 0 4 ""    """     -> 4-char whitespace, same line, column advances to 4
+        //   "NewLine    2 1 =1 ""\r\n"""    -> CRLF newline, advances 1 line, column resets to 1
+        //   "NewLine    1 1 -1 ""\n"""      -> LF newline, advances 1 line, column decreases by 1 (relative)
+
         [TestCase(" ",          @"WhiteSpace 1 0 1 "" """)]
 
         [TestCase(";\n",        @"Text       1 0  1 "";""",
