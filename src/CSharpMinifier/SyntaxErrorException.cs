@@ -14,18 +14,17 @@
 //
 #endregion
 
-namespace CSharpMinifier
+using System;
+
+namespace CSharpMinifier;
+
+public class SyntaxErrorException : Exception
 {
-    using System;
+    public SyntaxErrorException() {}
 
-    public class SyntaxErrorException : Exception
-    {
-        public SyntaxErrorException() {}
+    public SyntaxErrorException(string message) :
+        base(message) {}
 
-        public SyntaxErrorException(string message) :
-            base(message) {}
-
-        public SyntaxErrorException(string message, Exception inner) :
-            base(message, inner) {}
-    }
+    public SyntaxErrorException(string message, Exception inner) :
+        base(message, inner) {}
 }

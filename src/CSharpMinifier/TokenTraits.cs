@@ -14,57 +14,55 @@
 //
 #endregion
 
-namespace CSharpMinifier
-{
-    using System;
+using System;
 
-    [Flags]
-    public enum TokenKindTraits
-    {
-        None,
-        Comment                 = 0x001,
-        WhiteSpace              = 0x002,
-        Literal                 = 0x004,
+namespace CSharpMinifier;
+
+#pragma warning disable IDE0065 // Misplaced using directive
+using static TokenKindTraits;
+#pragma warning restore IDE0065 // Misplaced using directive
+
+[Flags]
+public enum TokenKindTraits
+{
+    None,
+    Comment                 = 0x001,
+    WhiteSpace              = 0x002,
+    Literal                 = 0x004,
 #pragma warning disable CA1720 // Identifier contains type name (by-design)
-        String                  = 0x008,
+    String                  = 0x008,
 #pragma warning restore CA1720 // Identifier contains type name
-        VerbatimString          = 0x010,
-        InterpolatedString      = 0x020,
-        InterpolatedStringStart = 0x040,
-        InterpolatedStringMid   = 0x080,
-        InterpolatedStringEnd   = 0x100,
-    }
+    VerbatimString          = 0x010,
+    InterpolatedString      = 0x020,
+    InterpolatedStringStart = 0x040,
+    InterpolatedStringMid   = 0x080,
+    InterpolatedStringEnd   = 0x100,
 }
 
-namespace CSharpMinifier
+partial class TokenKindExtensions
 {
-    using static TokenKindTraits;
+    static readonly TokenKindTraits[] TraitsByKind =
+    [
+        // IMPORTANT! Keep the order here in sync with TokenKind. If a
+        // TokenKind member is moved, added or removed then this must be
+        // changed appropriately as well.
 
-    partial class TokenKindExtensions
-    {
-        static readonly TokenKindTraits[] TraitsByKind =
-        [
-            // IMPORTANT! Keep the order here in sync with TokenKind. If a
-            // TokenKind member is moved, added or removed then this must be
-            // changed appropriately as well.
-
-            /* Text                                   */ None,
-            /* WhiteSpace                             */ WhiteSpace,
-            /* NewLine                                */ WhiteSpace,
-            /* SingleLineComment                      */ Comment,
-            /* MultiLineComment                       */ Comment,
-            /* CharLiteral                            */ Literal,
-            /* StringLiteral                          */ Literal | String,
-            /* VerbatimStringLiteral                  */ Literal | String | VerbatimString,
-            /* InterpolatedStringLiteral              */ Literal | String | InterpolatedString,
-            /* InterpolatedStringLiteralStart         */ Literal | String | InterpolatedString | InterpolatedStringStart,
-            /* InterpolatedStringLiteralMid           */ Literal | String | InterpolatedString | InterpolatedStringMid,
-            /* InterpolatedStringLiteralEnd           */ Literal | String | InterpolatedString | InterpolatedStringEnd,
-            /* InterpolatedVerbatimStringLiteral      */ Literal | String | InterpolatedString | VerbatimString,
-            /* InterpolatedVerbatimStringLiteralStart */ Literal | String | InterpolatedString | VerbatimString | InterpolatedStringStart,
-            /* InterpolatedVerbatimStringLiteralMid   */ Literal | String | InterpolatedString | VerbatimString | InterpolatedStringMid,
-            /* InterpolatedVerbatimStringLiteralEnd   */ Literal | String | InterpolatedString | VerbatimString | InterpolatedStringEnd,
-            /* PreprocessorDirective                  */ None
-        ];
-    }
+        /* Text                                   */ None,
+        /* WhiteSpace                             */ WhiteSpace,
+        /* NewLine                                */ WhiteSpace,
+        /* SingleLineComment                      */ Comment,
+        /* MultiLineComment                       */ Comment,
+        /* CharLiteral                            */ Literal,
+        /* StringLiteral                          */ Literal | String,
+        /* VerbatimStringLiteral                  */ Literal | String | VerbatimString,
+        /* InterpolatedStringLiteral              */ Literal | String | InterpolatedString,
+        /* InterpolatedStringLiteralStart         */ Literal | String | InterpolatedString | InterpolatedStringStart,
+        /* InterpolatedStringLiteralMid           */ Literal | String | InterpolatedString | InterpolatedStringMid,
+        /* InterpolatedStringLiteralEnd           */ Literal | String | InterpolatedString | InterpolatedStringEnd,
+        /* InterpolatedVerbatimStringLiteral      */ Literal | String | InterpolatedString | VerbatimString,
+        /* InterpolatedVerbatimStringLiteralStart */ Literal | String | InterpolatedString | VerbatimString | InterpolatedStringStart,
+        /* InterpolatedVerbatimStringLiteralMid   */ Literal | String | InterpolatedString | VerbatimString | InterpolatedStringMid,
+        /* InterpolatedVerbatimStringLiteralEnd   */ Literal | String | InterpolatedString | VerbatimString | InterpolatedStringEnd,
+        /* PreprocessorDirective                  */ None
+    ];
 }

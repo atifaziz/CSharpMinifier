@@ -14,17 +14,16 @@
 //
 #endregion
 
-namespace CSharpMinifier
-{
-    using System;
+using System;
+
+namespace CSharpMinifier;
 
 #pragma warning disable CA1064 // Exceptions should be public (by-design)
-    sealed class UnreachableException(string? message, Exception? inner)
-        : Exception(message ?? DefaultMessage, inner)
+sealed class UnreachableException(string? message, Exception? inner) :
+    Exception(message ?? DefaultMessage, inner)
 #pragma warning restore CA1064 // Exceptions should be public
-    {
-        const string DefaultMessage = "The program executed an instruction that was thought to be unreachable.";
-        public UnreachableException() : this(null) { }
-        public UnreachableException(string? message) : this(message, null) { }
-    }
+{
+    const string DefaultMessage = "The program executed an instruction that was thought to be unreachable.";
+    public UnreachableException() : this(null) { }
+    public UnreachableException(string? message) : this(message, null) { }
 }

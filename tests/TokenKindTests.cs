@@ -14,51 +14,53 @@
 //
 #endregion
 
-namespace CSharpMinifier.Tests
+using System;
+using System.Linq;
+using NUnit.Framework;
+
+namespace CSharpMinifier.Tests;
+
+#pragma warning disable IDE0065 // Misplaced using directive
+using static TokenKindTraits;
+#pragma warning restore IDE0065 // Misplaced using directive
+
+[TestFixture]
+public class TokenKindTests
 {
-    using System;
-    using System.Linq;
-    using NUnit.Framework;
-    using static TokenKindTraits;
+    [TestCase(TokenKind.Text                                  , None)]
+    [TestCase(TokenKind.WhiteSpace                            , WhiteSpace)]
+    [TestCase(TokenKind.NewLine                               , WhiteSpace)]
+    [TestCase(TokenKind.SingleLineComment                     , Comment)]
+    [TestCase(TokenKind.MultiLineComment                      , Comment)]
+    [TestCase(TokenKind.CharLiteral                           , Literal)]
+    [TestCase(TokenKind.StringLiteral                         , Literal | String)]
+    [TestCase(TokenKind.VerbatimStringLiteral                 , Literal | String | VerbatimString)]
+    [TestCase(TokenKind.InterpolatedStringLiteral             , Literal | String | InterpolatedString)]
+    [TestCase(TokenKind.InterpolatedStringLiteralStart        , Literal | String | InterpolatedString | InterpolatedStringStart)]
+    [TestCase(TokenKind.InterpolatedStringLiteralMid          , Literal | String | InterpolatedString | InterpolatedStringMid)]
+    [TestCase(TokenKind.InterpolatedStringLiteralEnd          , Literal | String | InterpolatedString | InterpolatedStringEnd)]
+    [TestCase(TokenKind.InterpolatedVerbatimStringLiteral     , Literal | String | InterpolatedString | VerbatimString)]
+    [TestCase(TokenKind.InterpolatedVerbatimStringLiteralStart, Literal | String | InterpolatedString | VerbatimString | InterpolatedStringStart)]
+    [TestCase(TokenKind.InterpolatedVerbatimStringLiteralMid  , Literal | String | InterpolatedString | VerbatimString | InterpolatedStringMid)]
+    [TestCase(TokenKind.InterpolatedVerbatimStringLiteralEnd  , Literal | String | InterpolatedString | VerbatimString | InterpolatedStringEnd)]
+    [TestCase(TokenKind.PreprocessorDirective                 , None)]
 
-    [TestFixture]
-    public class TokenKindTests
+    public void Traits(TokenKind kind, TokenKindTraits traits)
     {
-        [TestCase(TokenKind.Text                                  , None)]
-        [TestCase(TokenKind.WhiteSpace                            , WhiteSpace)]
-        [TestCase(TokenKind.NewLine                               , WhiteSpace)]
-        [TestCase(TokenKind.SingleLineComment                     , Comment)]
-        [TestCase(TokenKind.MultiLineComment                      , Comment)]
-        [TestCase(TokenKind.CharLiteral                           , Literal)]
-        [TestCase(TokenKind.StringLiteral                         , Literal | TokenKindTraits.String)]
-        [TestCase(TokenKind.VerbatimStringLiteral                 , Literal | TokenKindTraits.String | VerbatimString)]
-        [TestCase(TokenKind.InterpolatedStringLiteral             , Literal | TokenKindTraits.String | InterpolatedString)]
-        [TestCase(TokenKind.InterpolatedStringLiteralStart        , Literal | TokenKindTraits.String | InterpolatedString | InterpolatedStringStart)]
-        [TestCase(TokenKind.InterpolatedStringLiteralMid          , Literal | TokenKindTraits.String | InterpolatedString | InterpolatedStringMid)]
-        [TestCase(TokenKind.InterpolatedStringLiteralEnd          , Literal | TokenKindTraits.String | InterpolatedString | InterpolatedStringEnd)]
-        [TestCase(TokenKind.InterpolatedVerbatimStringLiteral     , Literal | TokenKindTraits.String | InterpolatedString | VerbatimString)]
-        [TestCase(TokenKind.InterpolatedVerbatimStringLiteralStart, Literal | TokenKindTraits.String | InterpolatedString | VerbatimString | InterpolatedStringStart)]
-        [TestCase(TokenKind.InterpolatedVerbatimStringLiteralMid  , Literal | TokenKindTraits.String | InterpolatedString | VerbatimString | InterpolatedStringMid)]
-        [TestCase(TokenKind.InterpolatedVerbatimStringLiteralEnd  , Literal | TokenKindTraits.String | InterpolatedString | VerbatimString | InterpolatedStringEnd)]
-        [TestCase(TokenKind.PreprocessorDirective                 , None)]
+        Assert.That(kind.GetTraits()       , Is.EqualTo(traits));
+        Assert.That(kind.HasTraits(traits) , Is.True);
+        Assert.That(kind.HasTraits(~traits), Is.False);
+    }
 
-        public void Traits(TokenKind kind, TokenKindTraits traits)
-        {
-            Assert.That(kind.GetTraits()       , Is.EqualTo(traits));
-            Assert.That(kind.HasTraits(traits) , Is.True);
-            Assert.That(kind.HasTraits(~traits), Is.False);
-        }
+    [Test]
+    public void InvalidKind()
+    {
+        var kinds = Enum.GetValues<TokenKind>();
 
-        [Test]
-        public void InvalidKind()
-        {
-            var kinds = Enum.GetValues<TokenKind>();
+        var min = kinds.Min();
+        _ = Assert.Throws<ArgumentOutOfRangeException>(() => (min - 1).GetTraits());
 
-            var min = kinds.Min();
-            _ = Assert.Throws<ArgumentOutOfRangeException>(() => (min - 1).GetTraits());
-
-            var max = kinds.Max();
-            _ = Assert.Throws<ArgumentOutOfRangeException>(() => (max + 1).GetTraits());
-        }
+        var max = kinds.Max();
+        _ = Assert.Throws<ArgumentOutOfRangeException>(() => (max + 1).GetTraits());
     }
 }

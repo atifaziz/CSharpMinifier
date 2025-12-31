@@ -14,90 +14,89 @@
 //
 #endregion
 
+using System;
+using System.Text;
+
 #pragma warning disable CA1062 // Validate arguments of public methods (internal)
 
 #pragma warning disable IDE0130 // Namespace does not match folder structure
-namespace CSharpMinifier.Internals
+namespace CSharpMinifier.Internals;
 #pragma warning restore IDE0130 // Namespace does not match folder structure
+
+/// <summary>
+/// This type supports the infrastructure and is not intended to be used
+/// directly from your code.
+/// </summary>
+
+public static class JsonString
 {
-    using System;
-    using System.Text;
+    [ThreadStatic] static StringBuilder? _threadLocalStringBuilder;
 
-    /// <summary>
-    /// This type supports the infrastructure and is not intended to be used
-    /// directly from your code.
-    /// </summary>
+    public static string Encode(string s) =>
+        Encode(s, ref _threadLocalStringBuilder);
 
-    public static class JsonString
+    public static string Encode(string s, int index, int length) =>
+        Encode(s, index, length, ref _threadLocalStringBuilder);
+
+    public static string Encode(string s, ref StringBuilder? sb) =>
+        Encode(s, 0, s.Length, ref sb);
+
+    public static string Encode(string s, int index, int length, ref StringBuilder? sb)
     {
-        [ThreadStatic] static StringBuilder? _threadLocalStringBuilder;
+        if (sb == null)
+            sb = new StringBuilder();
+        else
+            sb.Length = 0;
 
-        public static string Encode(string s) =>
-            Encode(s, ref _threadLocalStringBuilder);
+        sb = sb.Append('\"');
 
-        public static string Encode(string s, int index, int length) =>
-            Encode(s, index, length, ref _threadLocalStringBuilder);
-
-        public static string Encode(string s, ref StringBuilder? sb) =>
-            Encode(s, 0, s.Length, ref sb);
-
-        public static string Encode(string s, int index, int length, ref StringBuilder? sb)
+        var endIndex = index + length;
+        for (var i = index; i < endIndex; i++)
         {
-            if (sb == null)
-                sb = new StringBuilder();
-            else
-                sb.Length = 0;
-
-            sb = sb.Append('\"');
-
-            var endIndex = index + length;
-            for (var i = index; i < endIndex; i++)
+            var ch = s[i];
+            _ = ch switch
             {
-                var ch = s[i];
-                _ = ch switch
-                {
-                    '"' or '\'' or '\\' => sb.Append('\\').Append(ch),
-                    _ => ch < ControlChars.Length ? sb.Append(ControlChars[ch]) : sb.Append(ch),
-                };
-            }
-
-            return sb.Append('\"').ToString();
+                '"' or '\'' or '\\' => sb.Append('\\').Append(ch),
+                _ => ch < ControlChars.Length ? sb.Append(ControlChars[ch]) : sb.Append(ch),
+            };
         }
 
-        static readonly string[] ControlChars =
-        [
-            @"\u0000", // NUL
-            @"\u0001", // SOH
-            @"\u0002", // STX
-            @"\u0003", // ETX
-            @"\u0004", // EOT
-            @"\u0005", // ENQ
-            @"\u0006", // ACK
-            @"\u0007", // BEL
-            @"\b"    , // BS
-            @"\t"    , // HT
-            @"\n"    , // LF
-            @"\u000b", // VT
-            @"\f"    , // FF
-            @"\r"    , // CR
-            @"\u000e", // SO
-            @"\u000f", // SI
-            @"\u0010", // DLE
-            @"\u0011", // DC1
-            @"\u0012", // DC2
-            @"\u0013", // DC3
-            @"\u0014", // DC4
-            @"\u0015", // NAK
-            @"\u0016", // SYN
-            @"\u0017", // ETB
-            @"\u0018", // CAN
-            @"\u0019", // EM
-            @"\u001a", // SUB
-            @"\u001b", // ESC
-            @"\u001c", // FS
-            @"\u001d", // GS
-            @"\u001e", // RS
-            @"\u001f", // US
-        ];
+        return sb.Append('\"').ToString();
     }
+
+    static readonly string[] ControlChars =
+    [
+        @"\u0000", // NUL
+        @"\u0001", // SOH
+        @"\u0002", // STX
+        @"\u0003", // ETX
+        @"\u0004", // EOT
+        @"\u0005", // ENQ
+        @"\u0006", // ACK
+        @"\u0007", // BEL
+        @"\b"    , // BS
+        @"\t"    , // HT
+        @"\n"    , // LF
+        @"\u000b", // VT
+        @"\f"    , // FF
+        @"\r"    , // CR
+        @"\u000e", // SO
+        @"\u000f", // SI
+        @"\u0010", // DLE
+        @"\u0011", // DC1
+        @"\u0012", // DC2
+        @"\u0013", // DC3
+        @"\u0014", // DC4
+        @"\u0015", // NAK
+        @"\u0016", // SYN
+        @"\u0017", // ETB
+        @"\u0018", // CAN
+        @"\u0019", // EM
+        @"\u001a", // SUB
+        @"\u001b", // ESC
+        @"\u001c", // FS
+        @"\u001d", // GS
+        @"\u001e", // RS
+        @"\u001f", // US
+    ];
 }

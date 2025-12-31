@@ -14,59 +14,58 @@
 //
 #endregion
 
-namespace CSharpMinifier
+using System;
+
+namespace CSharpMinifier;
+
+public enum TokenKind
 {
-    using System;
+    // IMPORTANT! Keep the order here in sync with TraitsByTokenKind
+    // member of TokenKind. If a member is moved, added or removed then
+    // TokenKind.TraitsByTokenKind must be changed appropriately as well.
 
-    public enum TokenKind
+    Text,
+    WhiteSpace,
+    NewLine,
+    SingleLineComment,
+    MultiLineComment,
+    CharLiteral,
+    StringLiteral,
+    VerbatimStringLiteral,
+    InterpolatedStringLiteral,
+    InterpolatedStringLiteralStart,
+    InterpolatedStringLiteralMid,
+    InterpolatedStringLiteralEnd,
+    InterpolatedVerbatimStringLiteral,
+    InterpolatedVerbatimStringLiteralStart,
+    InterpolatedVerbatimStringLiteralMid,
+    InterpolatedVerbatimStringLiteralEnd,
+    PreprocessorDirective,
+}
+
+public static partial class TokenKindExtensions
+{
+    public static TokenKindTraits GetTraits(this TokenKind kind) =>
+        (int)kind is var i and >= 0 && i < TraitsByKind.Length
+        ? TraitsByKind[i]
+        : throw new ArgumentOutOfRangeException(nameof(kind));
+
+    public static bool HasTraits(this TokenKind kind, TokenKindTraits traits) =>
+        (kind.GetTraits() & traits) == traits;
+}
+
+public readonly record struct Token(TokenKind Kind, Position Start, Position End)
+{
+    public int Length => End.Offset - Start.Offset;
+
+    public override string ToString() => $"{Kind} [{Start}..{End})";
+}
+
+public static class TokenExtensions
+{
+    public static string Substring(this Token token, string source)
     {
-        // IMPORTANT! Keep the order here in sync with TraitsByTokenKind
-        // member of TokenKind. If a member is moved, added or removed then
-        // TokenKind.TraitsByTokenKind must be changed appropriately as well.
-
-        Text,
-        WhiteSpace,
-        NewLine,
-        SingleLineComment,
-        MultiLineComment,
-        CharLiteral,
-        StringLiteral,
-        VerbatimStringLiteral,
-        InterpolatedStringLiteral,
-        InterpolatedStringLiteralStart,
-        InterpolatedStringLiteralMid,
-        InterpolatedStringLiteralEnd,
-        InterpolatedVerbatimStringLiteral,
-        InterpolatedVerbatimStringLiteralStart,
-        InterpolatedVerbatimStringLiteralMid,
-        InterpolatedVerbatimStringLiteralEnd,
-        PreprocessorDirective,
-    }
-
-    public static partial class TokenKindExtensions
-    {
-        public static TokenKindTraits GetTraits(this TokenKind kind) =>
-            (int)kind is var i and >= 0 && i < TraitsByKind.Length
-            ? TraitsByKind[i]
-            : throw new ArgumentOutOfRangeException(nameof(kind));
-
-        public static bool HasTraits(this TokenKind kind, TokenKindTraits traits) =>
-            (kind.GetTraits() & traits) == traits;
-    }
-
-    public readonly record struct Token(TokenKind Kind, Position Start, Position End)
-    {
-        public int Length => End.Offset - Start.Offset;
-
-        public override string ToString() => $"{Kind} [{Start}..{End})";
-    }
-
-    public static class TokenExtensions
-    {
-        public static string Substring(this Token token, string source)
-        {
-            if (source == null) throw new ArgumentNullException(nameof(source));
-            return SubstringPool.GetOrCreate(source, token.Start.Offset, token.Length);
-        }
+        if (source == null) throw new ArgumentNullException(nameof(source));
+        return SubstringPool.GetOrCreate(source, token.Start.Offset, token.Length);
     }
 }

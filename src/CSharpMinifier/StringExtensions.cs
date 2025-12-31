@@ -14,16 +14,15 @@
 //
 #endregion
 
-namespace CSharpMinifier
-{
-    using System;
+using System;
 
-    static class StringExtensions
+namespace CSharpMinifier;
+
+static class StringExtensions
+{
+    public static string Slice(this string str, int startIndex, int endIndex)
     {
-        public static string Slice(this string str, int startIndex, int endIndex)
-        {
-            if (str == null) throw new ArgumentNullException(nameof(str));
-            return str.Substring(startIndex, endIndex - startIndex);
-        }
+        if (str == null) throw new ArgumentNullException(nameof(str));
+        return str.Substring(startIndex, endIndex - startIndex);
     }
 }

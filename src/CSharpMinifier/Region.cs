@@ -14,29 +14,28 @@
 //
 #endregion
 
-namespace CSharpMinifier
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+
+namespace CSharpMinifier;
+
+public sealed class Region
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Collections.ObjectModel;
-
-    public sealed class Region
+    internal Region(string message, string endMessage, List<Token> tokens)
     {
-        internal Region(string message, string endMessage, List<Token> tokens)
-        {
-            Message    = message    ?? throw new ArgumentNullException(nameof(message));
-            EndMessage = endMessage ?? throw new ArgumentNullException(nameof(endMessage));
-            Tokens     = tokens     ?? throw new ArgumentNullException(nameof(tokens));
-        }
-
-        public string Message    { get; }
-        public string EndMessage { get; }
-
-        public IReadOnlyList<Token> Tokens
-            => field is List<Token> tokens
-             ? field = new ReadOnlyCollection<Token>(tokens)
-             : field;
-
-        public override string ToString() => Message;
+        Message    = message    ?? throw new ArgumentNullException(nameof(message));
+        EndMessage = endMessage ?? throw new ArgumentNullException(nameof(endMessage));
+        Tokens     = tokens     ?? throw new ArgumentNullException(nameof(tokens));
     }
+
+    public string Message    { get; }
+    public string EndMessage { get; }
+
+    public IReadOnlyList<Token> Tokens
+        => field is List<Token> tokens
+         ? field = new ReadOnlyCollection<Token>(tokens)
+         : field;
+
+    public override string ToString() => Message;
 }
