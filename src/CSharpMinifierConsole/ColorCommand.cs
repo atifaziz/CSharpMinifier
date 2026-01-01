@@ -26,13 +26,13 @@ partial class Program
 
         var defaultColor = Color.Console;
 
-        var magenta = new Color(ConsoleColor.Magenta, defaultColor.Background);
+        var magenta = defaultColor with { Foreground = ConsoleColor.Magenta };
         var black   = new Color(ConsoleColor.Black  , ConsoleColor.DarkGray);
-        var green   = new Color(ConsoleColor.Green  , defaultColor.Background);
-        var yellow  = new Color(ConsoleColor.Yellow , defaultColor.Background);
-        var cyan    = new Color(ConsoleColor.Cyan   , defaultColor.Background);
-        var blue    = new Color(ConsoleColor.Blue   , defaultColor.Background);
-        var gray    = new Color(ConsoleColor.Gray   , defaultColor.Background);
+        var green   = defaultColor with { Foreground = ConsoleColor.Green   };
+        var yellow  = defaultColor with { Foreground = ConsoleColor.Yellow  };
+        var cyan    = defaultColor with { Foreground = ConsoleColor.Cyan    };
+        var blue    = defaultColor with { Foreground = ConsoleColor.Blue    };
+        var gray    = defaultColor with { Foreground = ConsoleColor.Gray    };
 
         var defaultPalette = new(TokenKind TokenKind, Color)[]
         {
