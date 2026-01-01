@@ -1,5 +1,4 @@
 ﻿#nullable enable
-CSharpMinifier.Internals.JsonString
 CSharpMinifier.MinificationOptions
 CSharpMinifier.MinificationOptions.CommentFilter.get -> System.Func<CSharpMinifier.Token, string!, bool>?
 CSharpMinifier.MinificationOptions.FilterCommentMatching(string! pattern) -> CSharpMinifier.MinificationOptions!
@@ -70,10 +69,6 @@ CSharpMinifier.TokenKindTraits.WhiteSpace = 2 -> CSharpMinifier.TokenKindTraits
 override CSharpMinifier.Position.ToString() -> string!
 override CSharpMinifier.Region.ToString() -> string!
 override CSharpMinifier.Token.ToString() -> string!
-static CSharpMinifier.Internals.JsonString.Encode(string! s) -> string!
-static CSharpMinifier.Internals.JsonString.Encode(string! s, int index, int length) -> string!
-static CSharpMinifier.Internals.JsonString.Encode(string! s, int index, int length, ref System.Text.StringBuilder? sb) -> string!
-static CSharpMinifier.Internals.JsonString.Encode(string! s, ref System.Text.StringBuilder? sb) -> string!
 static CSharpMinifier.Minifier.Minify(string! source) -> System.Collections.Generic.IEnumerable<string!>!
 static CSharpMinifier.Minifier.Minify(string! source, CSharpMinifier.MinificationOptions! options) -> System.Collections.Generic.IEnumerable<string!>!
 static CSharpMinifier.Minifier.Minify(string! source, string! newLine) -> System.Collections.Generic.IEnumerable<string!>!

@@ -17,8 +17,6 @@
 using System;
 using System.Text;
 
-#pragma warning disable CA1062 // Validate arguments of public methods (internal)
-
 #pragma warning disable IDE0130 // Namespace does not match folder structure
 namespace CSharpMinifier.Internals;
 #pragma warning restore IDE0130 // Namespace does not match folder structure
@@ -28,15 +26,15 @@ namespace CSharpMinifier.Internals;
 /// directly from your code.
 /// </summary>
 
-public static class JsonString
+static class JsonString
 {
-    [ThreadStatic] static StringBuilder? _threadLocalStringBuilder;
+    [ThreadStatic] static StringBuilder? threadLocalStringBuilder;
 
     public static string Encode(string s) =>
-        Encode(s, ref _threadLocalStringBuilder);
+        Encode(s, ref threadLocalStringBuilder);
 
     public static string Encode(string s, int index, int length) =>
-        Encode(s, index, length, ref _threadLocalStringBuilder);
+        Encode(s, index, length, ref threadLocalStringBuilder);
 
     public static string Encode(string s, ref StringBuilder? sb) =>
         Encode(s, 0, s.Length, ref sb);

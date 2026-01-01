@@ -24,6 +24,9 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <OutputPath>..\..\bin\Release\</OutputPath>
   </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\JsonString.cs" Link="JsonString.cs" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\CSharpMinifier\CSharpMinifier.csproj" />
