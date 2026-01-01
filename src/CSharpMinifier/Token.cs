@@ -15,6 +15,7 @@
 #endregion
 
 using System;
+using System.Diagnostics;
 
 namespace CSharpMinifier;
 
@@ -45,13 +46,23 @@ public enum TokenKind
 
 public static partial class TokenKindExtensions
 {
-    public static TokenKindTraits GetTraits(this TokenKind kind) =>
-        (int)kind is var i and >= 0 && i < TraitsByKind.Length
-        ? TraitsByKind[i]
-        : throw new ArgumentOutOfRangeException(nameof(kind));
+#pragma warning disable CA1034 // Nested types should not be visible
+    extension(TokenKind kind)
+#pragma warning restore CA1034 // Nested types should not be visible
+    {
+        public TokenKindTraits Traits
+        {
+            get
+            {
+                var i = (int)kind;
+                Debug.Assert(i >= 0 && i < TraitsByKind.Length);
+                return TraitsByKind[i];
+            }
+        }
 
-    public static bool HasTraits(this TokenKind kind, TokenKindTraits traits) =>
-        (kind.GetTraits() & traits) == traits;
+        public bool HasTraits(TokenKindTraits traits) =>
+            (kind.Traits & traits) == traits;
+    }
 }
 
 public readonly record struct Token(TokenKind Kind, Position Start, Position End)

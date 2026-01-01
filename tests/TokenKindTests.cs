@@ -14,8 +14,6 @@
 //
 #endregion
 
-using System;
-using System.Linq;
 using NUnit.Framework;
 
 namespace CSharpMinifier.Tests;
@@ -47,20 +45,8 @@ public class TokenKindTests
 
     public void Traits(TokenKind kind, TokenKindTraits traits)
     {
-        Assert.That(kind.GetTraits()       , Is.EqualTo(traits));
+        Assert.That(kind.Traits            , Is.EqualTo(traits));
         Assert.That(kind.HasTraits(traits) , Is.True);
         Assert.That(kind.HasTraits(~traits), Is.False);
-    }
-
-    [Test]
-    public void InvalidKind()
-    {
-        var kinds = Enum.GetValues<TokenKind>();
-
-        var min = kinds.Min();
-        _ = Assert.Throws<ArgumentOutOfRangeException>(() => (min - 1).GetTraits());
-
-        var max = kinds.Max();
-        _ = Assert.Throws<ArgumentOutOfRangeException>(() => (max + 1).GetTraits());
     }
 }

@@ -55,6 +55,9 @@ CSharpMinifier.TokenKind.Text = 0 -> CSharpMinifier.TokenKind
 CSharpMinifier.TokenKind.VerbatimStringLiteral = 7 -> CSharpMinifier.TokenKind
 CSharpMinifier.TokenKind.WhiteSpace = 1 -> CSharpMinifier.TokenKind
 CSharpMinifier.TokenKindExtensions
+CSharpMinifier.TokenKindExtensions.extension(CSharpMinifier.TokenKind)
+CSharpMinifier.TokenKindExtensions.extension(CSharpMinifier.TokenKind).HasTraits(CSharpMinifier.TokenKindTraits traits) -> bool
+CSharpMinifier.TokenKindExtensions.extension(CSharpMinifier.TokenKind).Traits.get -> CSharpMinifier.TokenKindTraits
 CSharpMinifier.TokenKindTraits
 CSharpMinifier.TokenKindTraits.Comment = 1 -> CSharpMinifier.TokenKindTraits
 CSharpMinifier.TokenKindTraits.InterpolatedString = 32 -> CSharpMinifier.TokenKindTraits
@@ -80,6 +83,4 @@ static CSharpMinifier.Scanner.ParseStrings<T>(string! source, System.Func<CSharp
 static CSharpMinifier.Scanner.Scan(string! source) -> System.Collections.Generic.IEnumerable<CSharpMinifier.Token>!
 static CSharpMinifier.Scanner.ScanRegions(string! source) -> System.Collections.Generic.IEnumerable<CSharpMinifier.Region!>!
 static CSharpMinifier.TokenExtensions.Substring(this CSharpMinifier.Token token, string! source) -> string!
-static CSharpMinifier.TokenKindExtensions.GetTraits(this CSharpMinifier.TokenKind kind) -> CSharpMinifier.TokenKindTraits
-static CSharpMinifier.TokenKindExtensions.HasTraits(this CSharpMinifier.TokenKind kind, CSharpMinifier.TokenKindTraits traits) -> bool
 static readonly CSharpMinifier.MinificationOptions.Default -> CSharpMinifier.MinificationOptions!
