@@ -85,6 +85,19 @@ jobs:
         }
         dotnet pack --no-build --configuration ${{ env.CONFIGURATION }} @packArgs "-p:PackageReleaseNotesFile=$releaseNotesFile"
 
+        Get-ChildItem -File -Filter CSharpMinifier.*.nupkg dist |
+          Select-Object -ExpandProperty FullName |
+          ForEach-Object { dotnet sourcelink test $_ }
+
+        Get-ChildItem -File -Filter CSharpMinifierConsole.*.nupkg dist |
+          Select-Object -First 1 -ExpandProperty FullName |
+          ForEach-Object {
+            Expand-Archive $_ tmp
+            Get-ChildItem -Recurse -File -Filter CSharpMinifier*.dll tmp
+          } |
+          Select-Object -ExpandProperty FullName |
+          ForEach-Object { dotnet sourcelink test $_ }
+
     - name: Upload NuGet packages
       if: runner.os == 'Windows'
       uses: actions/upload-artifact@v4
