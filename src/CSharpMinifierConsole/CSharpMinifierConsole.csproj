@@ -39,6 +39,10 @@
   <ItemGroup>
     <PackageReference Include="AngryArrays" Version="1.1.0" />
     <PackageReference Include="docopt.net" Version="0.8.3" />
+    <PackageReference Include="DotNet.ReproducibleBuilds" Version="1.2.39">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
     <PackageReference Include="Microsoft.Extensions.FileSystemGlobbing" Version="10.0.1" />
     <PackageReference Include="PolySharp" Version="1.15.0">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

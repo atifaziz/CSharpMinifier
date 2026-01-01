@@ -85,6 +85,10 @@ jobs:
         }
         dotnet pack --no-build --configuration ${{ env.CONFIGURATION }} @packArgs "-p:PackageReleaseNotesFile=$releaseNotesFile"
 
+        Get-ChildItem -File -Filter *.nupkg dist |
+          Select-Object -ExpandProperty FullName |
+          ForEach-Object { dotnet sourcelink test $_ }
+
     - name: Upload NuGet packages
       if: runner.os == 'Windows'
       uses: actions/upload-artifact@v4
