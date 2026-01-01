@@ -305,6 +305,27 @@ public class ScannerTests
     [TestCase("$\"foo\\\\bar\""   , @"InterpolatedString 11 0 11 ""$\""foo\\\\bar\""""")]
     [TestCase("$\"foo{{bar}}baz\"", @"InterpolatedString 16 0 16 ""$\""foo{{bar}}baz\""""")]
 
+    // C# 11 breaking change: format specifiers can't contain curly braces.
+    // The first `}` in a format specifier ends the interpolation.
+    // See: https://github.com/atifaziz/CSharpMinifier/issues/33
+
+    [TestCase("$\"{{{12:X}}}\"",
+        @"InterpolatedStringStart 5 0 5 ""$\""{{{""",
+        @"Text                    2 0 2 ""12""",
+        @"InterpolatedStringEnd   6 0 6 "":X}}}\""""")]
+
+    [TestCase("$@\"{{{12:X}}}\"",
+        @"InterpolatedVerbatimStringStart 6 0 6 ""$@\""{{{""",
+        @"Text                            2 0 2 ""12""",
+        @"InterpolatedVerbatimStringEnd   6 0 6 "":X}}}\""""")]
+
+    [TestCase("$\"{x:N2}}\"",
+        @"InterpolatedStringStart 3 0 3 ""$\""{""",
+        @"Text                    1 0 1 ""x""",
+        @"InterpolatedStringEnd   6 0 6 "":N2}}\""""")]
+
+    [TestCase("$\"{{x:N2}}\"", @"InterpolatedString 11 0 11 ""$\""{{x:N2}}\""""")]
+
     [TestCase("$\"x = {x}, y = {y}\"",
         @"InterpolatedStringStart 7 0 7 ""$\""x = {""",
         @"Text                    1 0 1 ""x""",
