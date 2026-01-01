@@ -85,6 +85,12 @@ jobs:
         }
         dotnet pack --no-build --configuration ${{ env.CONFIGURATION }} @packArgs "-p:PackageReleaseNotesFile=$releaseNotesFile"
 
+    - name: Verify SourceLink (Windows only)
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        $PSNativeCommandUseErrorActionPreference = $true
+
         Get-ChildItem -File -Filter CSharpMinifier.*.nupkg dist |
           Select-Object -ExpandProperty FullName |
           ForEach-Object { dotnet sourcelink test $_ }
