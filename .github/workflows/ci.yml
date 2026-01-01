@@ -104,6 +104,19 @@ jobs:
           Select-Object -ExpandProperty FullName |
           ForEach-Object { dotnet sourcelink test $_ }
 
+    - name: Validate Package (Windows only)
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        $PSNativeCommandUseErrorActionPreference = $true
+
+        Get-ChildItem -File -Filter *.nupkg dist |
+          Select-Object -ExpandProperty FullName |
+          ForEach-Object {
+            Write-Host "Validating package: $_"
+            dotnet meziantou.validate-nuget-package --excluded-rules 'IconMustBeSet,XmlDocumentationMustBePresent,Symbols' $_
+          }
+
     - name: Upload NuGet packages
       if: runner.os == 'Windows'
       uses: actions/upload-artifact@v4
