@@ -10,7 +10,6 @@
     <PackageProjectUrl>https://github.com/atifaziz/CSharpMinifier</PackageProjectUrl>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <PackageTags>csharp;minification;minifier</PackageTags>
-    <PackageLicenseFile>COPYING.txt</PackageLicenseFile>
     <PackageOutputPath>..\..\dist</PackageOutputPath>
   </PropertyGroup>
 
@@ -37,7 +36,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="..\..\COPYING.txt" Pack="true" PackagePath="$(PackageLicenseFile)" />
+    <None Include="..\..\COPYING.txt" Pack="true" PackagePath="" />
   </ItemGroup>
 
   <PropertyGroup>
