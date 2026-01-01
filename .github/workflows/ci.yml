@@ -2,7 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ master ]
+    branches-ignore:
+      - 'wip/**'
+      - 'tmp/**'
     tags: [ 'v*' ]
     paths-ignore:
       - '*.md'
