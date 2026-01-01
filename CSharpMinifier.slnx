@@ -1,0 +1,26 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+    <File Path=".github/workflows/ci.yml" />
+    <File Path="build.cmd" />
+    <File Path="build.sh" />
+    <File Path="COPYING.txt" />
+    <File Path="csmin.cmd" />
+    <File Path="csmin.sh" />
+    <File Path="Directory.Build.props" />
+    <File Path="global.json" />
+    <File Path="pack.cmd" />
+    <File Path="pack.sh" />
+    <File Path="README.md" />
+    <File Path="test.cmd" />
+    <File Path="test.sh" />
+  </Folder>
+  <Project Path="src/CSharpMinifier/CSharpMinifier.csproj" />
+  <Project Path="src/CSharpMinifierConsole/CSharpMinifierConsole.csproj" />
+  <Project Path="tests/CSharpMinifier.Tests.csproj" />
+</Solution>
