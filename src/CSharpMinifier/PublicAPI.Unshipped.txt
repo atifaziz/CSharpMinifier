@@ -1,4 +1,4 @@
-﻿#nullable enable
+#nullable enable
 CSharpMinifier.MinificationOptions
 CSharpMinifier.MinificationOptions.CommentFilter.get -> System.Func<CSharpMinifier.Token, string!, bool>?
 CSharpMinifier.MinificationOptions.FilterCommentMatching(string! pattern) -> CSharpMinifier.MinificationOptions!
