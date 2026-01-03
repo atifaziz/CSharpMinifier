@@ -131,7 +131,7 @@ static partial class Program
 
     static class Minifier
     {
-        public static IEnumerable<string> Minify(string source,
+        public static IEnumerable<string?> Minify(string source,
             string? commentFilterPattern = null,
             bool keepLeadComment = false,
             bool keepImportantComment = false)
@@ -145,7 +145,7 @@ static partial class Program
             if (keepImportantComment)
                 options = options.OrCommentFilterOf(MinificationOptions.Default.FilterImportantComments());
 
-            return CSharpMinifier.Minifier.Minify(source, newLine: string.Empty, options);
+            return CSharpMinifier.Minifier.Minify(source, space: " ", newLine: null, options, t => t.Substring(source));
         }
     }
 
