@@ -447,6 +447,31 @@ public class MinifierTests
         Assert.That(minified, Is.EqualTo(expected));
     }
 
+    [Test]
+    public void MinifyFileBasedAppSource()
+    {
+        const string source = """
+            #!/usr/bin/env dotnet
+            #:package Spectre.Console@0.54.0
+
+            using Spectre.Console;
+
+            AnsiConsole.MarkupLine("[green]Hello, World![/]");
+
+            """;
+
+        var minified = Minifier.Minify(NormalizeLineEndings(source), "\n")
+                               .ToDelimitedString(string.Empty);
+
+        const string expected =
+            "#!/usr/bin/env dotnet\n" +
+            "#:package Spectre.Console@0.54.0\n" +
+            "using Spectre.Console;" +
+            "AnsiConsole.MarkupLine(\"[green]Hello, World![/]\");";
+
+        Assert.That(minified, Is.EqualTo(expected));
+    }
+
     static string NormalizeLineEndings(string s) =>
         Regex.Replace(s, @"\r?\n", "\n").Replace('\r', '\n');
 }
