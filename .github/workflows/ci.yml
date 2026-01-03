@@ -116,7 +116,7 @@ jobs:
           Select-Object -ExpandProperty FullName |
           ForEach-Object {
             Write-Host "Validating package: $_"
-            dotnet meziantou.validate-nuget-package --excluded-rules 'IconMustBeSet,XmlDocumentationMustBePresent,Symbols' $_
+            dotnet meziantou.validate-nuget-package --excluded-rules 'IconMustBeSet,XmlDocumentationMustBePresent' $_
           }
 
     - name: Upload NuGet packages
