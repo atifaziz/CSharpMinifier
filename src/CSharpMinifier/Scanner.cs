@@ -72,15 +72,22 @@ public static class Scanner
         var ppdtwssi = -1;
         var ppdtwscol = 0;
         int i;
-        var interpolated = new Stack<(bool Verbatim, int Parens)>();
+        var interpolated = new Stack<(bool Verbatim, int Parens, int Braces)>();
 
         bool Interpolated() => interpolated.Count > 0;
         int Parens() => interpolated.Peek().Parens;
+        int Braces() => interpolated.Peek().Braces;
         int IncParens(int step = 1)
         {
-            var (verbatim, parens) = interpolated.Pop();
-            interpolated.Push((verbatim, parens + step));
+            var (verbatim, parens, braces) = interpolated.Pop();
+            interpolated.Push((verbatim, parens + step, braces));
             return parens;
+        }
+        int IncBraces(int step = 1)
+        {
+            var (verbatim, parens, braces) = interpolated.Pop();
+            interpolated.Push((verbatim, parens, braces + step));
+            return braces;
         }
 
         T TransitReturn<T>(State newState, int offset, T token)
@@ -201,15 +208,23 @@ public static class Scanner
                             if (IncParens(-1) == 0)
                                 throw SyntaxError("Parentheses mismatch in interpolated string expression.");
                             break;
-                        case ',' when Interpolated() && Parens() == 0:
-                        case ':' when Interpolated() && Parens() == 0:
+                        case '{' when Interpolated():
+                            _ = IncBraces();
+                            break;
+                        case '}' when Interpolated() && Braces() > 0:
+                            _ = IncBraces(-1);
+                            break;
+                        case ',' when Interpolated() && Parens() == 0 && Braces() == 0:
+                        case ':' when Interpolated() && Parens() == 0 && Braces() == 0:
                         case '}' when Interpolated():
                         {
-                            var (verbatim, parens) = interpolated.Pop();
+                            var (verbatim, parens, braces) = interpolated.Pop();
                             if (TextTransit(verbatim ? State.InterpolatedVerbatimString : State.InterpolatedString) is {} text)
                                 yield return text;
                             if (parens != 0)
                                 throw SyntaxError("Parentheses mismatch in interpolated string expression.");
+                            if (braces != 0)
+                                throw SyntaxError("Braces mismatch in interpolated string expression.");
                             break;
                         }
                         case ' ':
@@ -415,7 +430,7 @@ public static class Scanner
                                              ? TokenKind.InterpolatedStringLiteralStart
                                              : TokenKind.InterpolatedStringLiteralMid,
                                              State.Text);
-                        interpolated.Push((false, 0));
+                        interpolated.Push((false, 0, 0));
                         goto restart;
                     }
                     break;
@@ -481,7 +496,7 @@ public static class Scanner
                                              ? TokenKind.InterpolatedVerbatimStringLiteralStart
                                              : TokenKind.InterpolatedVerbatimStringLiteralMid,
                                              State.Text);
-                        interpolated.Push((true, 0));
+                        interpolated.Push((true, 0, 0));
                         goto restart;
                     }
                     break;
