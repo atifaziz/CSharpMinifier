@@ -63,6 +63,19 @@ public static class Scanner
         PreprocessorDirectiveTrailingWhiteSpaceSlash,
     }
 
+    enum InterpolatedStringKind { None, Regular, Verbatim }
+
+    struct InterpolationState(InterpolatedStringKind kind)
+    {
+        public InterpolatedStringKind InterpolatedStringKind { get; } = kind;
+
+        public readonly bool IsSome => InterpolatedStringKind is not InterpolatedStringKind.None;
+
+        public int Parentheses { get; set; }
+        public int Braces      { get; set; }
+        public int Brackets    { get; set; }
+    }
+
     static IEnumerable<Token> ScanImpl(string source)
     {
         var state = State.NewLine;
@@ -72,11 +85,8 @@ public static class Scanner
         var ppdtwssi = -1;
         var ppdtwscol = 0;
         int i;
-        var interpolation = Interpolation.None;
-        var parens = 0;
-        var braces = 0;
-        var brackets = 0;
-        var nested = new Stack<(Interpolation Interpolation, int Parens, int Braces, int Brackets)>();
+        var interpolationState = new InterpolationState();
+        var interpolationStateStack = new Stack<InterpolationState>();
 
         T TransitReturn<T>(State newState, int offset, T token)
         {
@@ -165,82 +175,88 @@ public static class Scanner
                 case State.Text:
                 {
 #pragma warning disable IDE0010 // Add missing cases (default continue)
-                    switch (ch)
+                    switch (ch, interpolationState)
 #pragma warning restore IDE0010 // Add missing cases
                     {
-                        case '/':
+                        case ('/', _):
                             state = State.Slash;
                             break;
-                        case '"':
+                        case ('"', _):
                         {
                             if (TextTransit(State.String) is {} text)
                                 yield return text;
                             break;
                         }
-                        case '\'':
+                        case ('\'', _):
                         {
                             if (TextTransit(State.Char) is {} text)
                                 yield return text;
                             break;
                         }
-                        case '@':
+                        case ('@', _):
                             state = State.At;
                             break;
-                        case '$':
+                        case ('$', _):
                             state = State.Dollar;
                             break;
-                        case '(' when interpolation != Interpolation.None:
-                            parens++;
+                        case ('(', { IsSome: true }):
+                            interpolationState.Parentheses++;
                             break;
-                        case ')' when interpolation != Interpolation.None:
-                            if (parens-- == 0)
+                        case (')', { IsSome: true }):
+                            if (interpolationState.Parentheses-- == 0)
                                 throw SyntaxError("Parentheses mismatch in interpolated string expression.");
                             break;
-                        case '{' when interpolation != Interpolation.None:
-                            braces++;
+                        case ('{', { IsSome: true }):
+                            interpolationState.Braces++;
                             break;
-                        case '}' when interpolation != Interpolation.None && braces > 0:
-                            braces--;
+                        case ('}', { IsSome: true, Braces: > 0 }):
+                            interpolationState.Braces--;
                             break;
-                        case '[' when interpolation != Interpolation.None:
-                            brackets++;
+                        case ('[', { IsSome: true }):
+                            interpolationState.Brackets++;
                             break;
-                        case ']' when interpolation != Interpolation.None:
-                            if (brackets-- == 0)
+                        case (']', { IsSome: true }):
+                            if (interpolationState.Brackets-- == 0)
                                 throw SyntaxError("Brackets mismatch in interpolated string expression.");
                             break;
-                        case ',' when interpolation != Interpolation.None && parens == 0 && braces == 0 && brackets == 0:
-                        case ':' when interpolation != Interpolation.None && parens == 0 && braces == 0 && brackets == 0:
-                        case '}' when interpolation != Interpolation.None:
+                        case (',' or ':', { IsSome: true, Parentheses: 0, Braces: 0, Brackets: 0 }):
+                        case ('}', { IsSome: true }) :
                         {
-                            if (TextTransit(interpolation == Interpolation.Verbatim ? State.InterpolatedVerbatimString : State.InterpolatedString) is {} text)
+                            var newState = interpolationState.InterpolatedStringKind == InterpolatedStringKind.Verbatim
+                                         ? State.InterpolatedVerbatimString
+                                         : State.InterpolatedString;
+
+                            if (TextTransit(newState) is {} text)
                                 yield return text;
-                            if (parens != 0)
-                                throw SyntaxError("Parentheses mismatch in interpolated string expression.");
-                            if (braces != 0)
-                                throw SyntaxError("Braces mismatch in interpolated string expression.");
-                            if (brackets != 0)
-                                throw SyntaxError("Brackets mismatch in interpolated string expression.");
-                            if (nested.Count > 0)
-                                (interpolation, parens, braces, brackets) = nested.Pop();
-                            else
-                                interpolation = Interpolation.None;
+
+                            if (interpolationState switch
+                                {
+                                    { Parentheses: > 0 } => "Parentheses mismatch in interpolated string expression.",
+                                    { Braces     : > 0 } => "Braces mismatch in interpolated string expression.",
+                                    { Brackets   : > 0 } => "Brackets mismatch in interpolated string expression.",
+                                    _ => null
+                                } is {} message)
+                            {
+                                throw SyntaxError(message);
+                            }
+
+                            interpolationState = interpolationStateStack.Count > 0 ? interpolationStateStack.Pop() : new();
                             break;
                         }
-                        case ' ':
-                        case '\t':
+                        case (' ', _):
+                        case ('\t', _):
                         {
                             if (TextTransit(State.WhiteSpace) is {} text)
                                 yield return text;
                             break;
                         }
-                        case '\r':
+                        case ('\r', _):
                         {
                             if (TextTransit(State.Cr) is {} text)
                                 yield return text;
                             break;
                         }
-                        case '\n':
+                        case ('\n', _):
                         {
                             if (TextTransit(State.Text) is {} text)
                                 yield return text;
@@ -430,10 +446,9 @@ public static class Scanner
                                              ? TokenKind.InterpolatedStringLiteralStart
                                              : TokenKind.InterpolatedStringLiteralMid,
                                              State.Text);
-                        if (interpolation != Interpolation.None)
-                            nested.Push((interpolation, parens, braces, brackets));
-                        interpolation = Interpolation.Regular;
-                        parens = braces = brackets = 0;
+                        if (interpolationState.IsSome)
+                            interpolationStateStack.Push(interpolationState);
+                        interpolationState = new(InterpolatedStringKind.Regular);
                         goto restart;
                     }
                     break;
@@ -499,10 +514,9 @@ public static class Scanner
                                              ? TokenKind.InterpolatedVerbatimStringLiteralStart
                                              : TokenKind.InterpolatedVerbatimStringLiteralMid,
                                              State.Text);
-                        if (interpolation != Interpolation.None)
-                            nested.Push((interpolation, parens, braces, brackets));
-                        interpolation = Interpolation.Verbatim;
-                        parens = braces = brackets = 0;
+                        if (interpolationState.IsSome)
+                            interpolationStateStack.Push(interpolationState);
+                        interpolationState = new(InterpolatedStringKind.Verbatim);
                         goto restart;
                     }
                     break;
@@ -809,6 +823,4 @@ public static class Scanner
     }
 
     static readonly char[] SpaceOrTab = [' ', '\t'];
-
-    enum Interpolation { None, Regular, Verbatim }
 }
