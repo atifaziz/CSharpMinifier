@@ -72,14 +72,13 @@ public static class Scanner
         var ppdtwssi = -1;
         var ppdtwscol = 0;
         int i;
-        var inInterpolation = false;
-        var isVerbatim = false;
+        var interpolation = Interpolation.None;
         var parens = 0;
         var braces = 0;
         var brackets = 0;
-        var nested = new Stack<(bool Verbatim, int Parens, int Braces, int Brackets)>();
+        var nested = new Stack<(Interpolation Interpolation, int Parens, int Braces, int Brackets)>();
 
-        bool Interpolated() => inInterpolation;
+        bool Interpolated() => interpolation != Interpolation.None;
 
         T TransitReturn<T>(State newState, int offset, T token)
         {
@@ -216,7 +215,7 @@ public static class Scanner
                         case ':' when Interpolated() && parens == 0 && braces == 0 && brackets == 0:
                         case '}' when Interpolated():
                         {
-                            if (TextTransit(isVerbatim ? State.InterpolatedVerbatimString : State.InterpolatedString) is {} text)
+                            if (TextTransit(interpolation == Interpolation.Verbatim ? State.InterpolatedVerbatimString : State.InterpolatedString) is {} text)
                                 yield return text;
                             if (parens != 0)
                                 throw SyntaxError("Parentheses mismatch in interpolated string expression.");
@@ -225,9 +224,9 @@ public static class Scanner
                             if (brackets != 0)
                                 throw SyntaxError("Brackets mismatch in interpolated string expression.");
                             if (nested.Count > 0)
-                                (isVerbatim, parens, braces, brackets) = nested.Pop();
+                                (interpolation, parens, braces, brackets) = nested.Pop();
                             else
-                                inInterpolation = false;
+                                interpolation = Interpolation.None;
                             break;
                         }
                         case ' ':
@@ -433,11 +432,10 @@ public static class Scanner
                                              ? TokenKind.InterpolatedStringLiteralStart
                                              : TokenKind.InterpolatedStringLiteralMid,
                                              State.Text);
-                        if (inInterpolation)
-                            nested.Push((isVerbatim, parens, braces, brackets));
-                        isVerbatim = false;
+                        if (Interpolated())
+                            nested.Push((interpolation, parens, braces, brackets));
+                        interpolation = Interpolation.Regular;
                         parens = braces = brackets = 0;
-                        inInterpolation = true;
                         goto restart;
                     }
                     break;
@@ -503,11 +501,10 @@ public static class Scanner
                                              ? TokenKind.InterpolatedVerbatimStringLiteralStart
                                              : TokenKind.InterpolatedVerbatimStringLiteralMid,
                                              State.Text);
-                        if (inInterpolation)
-                            nested.Push((isVerbatim, parens, braces, brackets));
-                        isVerbatim = true;
+                        if (Interpolated())
+                            nested.Push((interpolation, parens, braces, brackets));
+                        interpolation = Interpolation.Verbatim;
                         parens = braces = brackets = 0;
-                        inInterpolation = true;
                         goto restart;
                     }
                     break;
@@ -814,4 +811,6 @@ public static class Scanner
     }
 
     static readonly char[] SpaceOrTab = [' ', '\t'];
+
+    enum Interpolation { None, Regular, Verbatim }
 }
