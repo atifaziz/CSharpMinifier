@@ -61,12 +61,17 @@ public class ScannerTests
     [TestCase("$\"foo\n")]
     [TestCase("$\"foo = {(}\"")]
     [TestCase("$\"foo = {)}\"")]
+    [TestCase("$\"foo = {new {}\"")]
+    [TestCase("$\"foo = {[}\"")]
+    [TestCase("$\"foo = {]}\"")]
     [TestCase("@$\"")]
     [TestCase("@$\"foo")]
     [TestCase("@$\"foo\r")]
     [TestCase("@$\"foo\n")]
     [TestCase("@$\"foo = {(}\"")]
     [TestCase("@$\"foo = {)}\"")]
+    [TestCase("@$\"foo = {[}\"")]
+    [TestCase("@$\"foo = {]}\"")]
     [TestCase("/*")]
     [TestCase("/* foo")]
     [TestCase("/*\r")]
@@ -386,6 +391,59 @@ public class ScannerTests
         @"NewLine                  2 1 =1 ""\r\n""",
         @"InterpolatedStringEnd    7 0  7 ""}baz\\n\""""")]
 
+    // Brackets in interpolated strings (multi-dimensional array indexing, collection expressions)
+    [TestCase("$\"{xs[1,2]}\"",
+        @"InterpolatedStringStart  3 0  3 ""$\""{""",
+        @"Text                     7 0  7 ""xs[1,2]""",
+        @"InterpolatedStringEnd    2 0  2 ""}\""""")]
+
+    [TestCase("$\"{arr[matrix[0,1],2]}\"",
+        @"InterpolatedStringStart  3 0  3 ""$\""{""",
+        @"Text                    18 0 18 ""arr[matrix[0,1],2]""",
+        @"InterpolatedStringEnd    2 0  2 ""}\""""")]
+
+    [TestCase("$\"{(int[])[1,2,3]}\"",
+        @"InterpolatedStringStart  3 0  3 ""$\""{""",
+        @"Text                    14 0 14 ""(int[])[1,2,3]""",
+        @"InterpolatedStringEnd    2 0  2 ""}\""""")]
+
+    // Braces in interpolated strings (switch expressions)
+    [TestCase("$\"{x switch { 1 => \"a\", _ => \"b\" }}\"",
+        @"InterpolatedStringStart  3 0  3 ""$\""{""",
+        @"Text                     1 0  1 ""x""",
+        @"WhiteSpace               1 0  1 "" """,
+        @"Text                     6 0  6 ""switch""",
+        @"WhiteSpace               1 0  1 "" """,
+        @"Text                     1 0  1 ""{""",
+        @"WhiteSpace               1 0  1 "" """,
+        @"Text                     1 0  1 ""1""",
+        @"WhiteSpace               1 0  1 "" """,
+        @"Text                     2 0  2 ""=>""",
+        @"WhiteSpace               1 0  1 "" """,
+        @"String                   3 0  3 ""\""a\""""",
+        @"Text                     1 0  1 "",""",
+        @"WhiteSpace               1 0  1 "" """,
+        @"Text                     1 0  1 ""_""",
+        @"WhiteSpace               1 0  1 "" """,
+        @"Text                     2 0  2 ""=>""",
+        @"WhiteSpace               1 0  1 "" """,
+        @"String                   3 0  3 ""\""b\""""",
+        @"WhiteSpace               1 0  1 "" """,
+        @"Text                     1 0  1 ""}""",
+        @"InterpolatedStringEnd    2 0  2 ""}\""""")]
+
+    // Combined: brackets inside braces in interpolated strings
+    [TestCase("$\"{new[] { xs[0,1],xs[1,0] }}\"",
+        @"InterpolatedStringStart  3 0  3 ""$\""{""",
+        @"Text                     5 0  5 ""new[]""",
+        @"WhiteSpace               1 0  1 "" """,
+        @"Text                     1 0  1 ""{""",
+        @"WhiteSpace               1 0  1 "" """,
+        @"Text                    15 0 15 ""xs[0,1],xs[1,0]""",
+        @"WhiteSpace               1 0  1 "" """,
+        @"Text                     1 0  1 ""}""",
+        @"InterpolatedStringEnd    2 0  2 ""}\""""")]
+
     [TestCase("$@$"                    , @"Text                        3 0  3 ""$@$""")]
     [TestCase("$@\"\""                 , @"InterpolatedVerbatimString  4 0  4 ""$@\""\""""")]
     [TestCase("$@\"foobar\""           , @"InterpolatedVerbatimString 10 0 10 ""$@\""foobar\""""")]
@@ -556,6 +614,54 @@ public class ScannerTests
         @"Text                            10 0 10 ""bar(56,78)""",
         @"InterpolatedVerbatimStringEnd    5 0  5 "",7}|\""""",
         @"Text                             2 0  2 "");""")]
+
+    // Brackets in verbatim interpolated strings
+    [TestCase("$@\"{xs[1,2]}\"",
+        @"InterpolatedVerbatimStringStart  4 0  4 ""$@\""{""",
+        @"Text                             7 0  7 ""xs[1,2]""",
+        @"InterpolatedVerbatimStringEnd    2 0  2 ""}\""""")]
+
+    [TestCase("@$\"{arr[matrix[0,1],2]}\"",
+        @"InterpolatedVerbatimStringStart  4 0  4 ""@$\""{""",
+        @"Text                            18 0 18 ""arr[matrix[0,1],2]""",
+        @"InterpolatedVerbatimStringEnd    2 0  2 ""}\""""")]
+
+    // Braces in verbatim interpolated strings (switch expressions)
+    [TestCase("$@\"{x switch { 1 => \"a\", _ => \"b\" }}\"",
+        @"InterpolatedVerbatimStringStart  4 0  4 ""$@\""{""",
+        @"Text                             1 0  1 ""x""",
+        @"WhiteSpace                       1 0  1 "" """,
+        @"Text                             6 0  6 ""switch""",
+        @"WhiteSpace                       1 0  1 "" """,
+        @"Text                             1 0  1 ""{""",
+        @"WhiteSpace                       1 0  1 "" """,
+        @"Text                             1 0  1 ""1""",
+        @"WhiteSpace                       1 0  1 "" """,
+        @"Text                             2 0  2 ""=>""",
+        @"WhiteSpace                       1 0  1 "" """,
+        @"String                           3 0  3 ""\""a\""""",
+        @"Text                             1 0  1 "",""",
+        @"WhiteSpace                       1 0  1 "" """,
+        @"Text                             1 0  1 ""_""",
+        @"WhiteSpace                       1 0  1 "" """,
+        @"Text                             2 0  2 ""=>""",
+        @"WhiteSpace                       1 0  1 "" """,
+        @"String                           3 0  3 ""\""b\""""",
+        @"WhiteSpace                       1 0  1 "" """,
+        @"Text                             1 0  1 ""}""",
+        @"InterpolatedVerbatimStringEnd    2 0  2 ""}\""""")]
+
+    // Combined: brackets inside braces in verbatim interpolated strings
+    [TestCase("@$\"{new[] { xs[0,1],xs[1,0] }}\"",
+        @"InterpolatedVerbatimStringStart  4 0  4 ""@$\""{""",
+        @"Text                             5 0  5 ""new[]""",
+        @"WhiteSpace                       1 0  1 "" """,
+        @"Text                             1 0  1 ""{""",
+        @"WhiteSpace                       1 0  1 "" """,
+        @"Text                            15 0 15 ""xs[0,1],xs[1,0]""",
+        @"WhiteSpace                       1 0  1 "" """,
+        @"Text                             1 0  1 ""}""",
+        @"InterpolatedVerbatimStringEnd    2 0  2 ""}\""""")]
 
     //
     [TestCase("// This is a comment\r\n" +
