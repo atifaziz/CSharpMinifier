@@ -78,8 +78,6 @@ public static class Scanner
         var brackets = 0;
         var nested = new Stack<(Interpolation Interpolation, int Parens, int Braces, int Brackets)>();
 
-        bool Interpolated() => interpolation != Interpolation.None;
-
         T TransitReturn<T>(State newState, int offset, T token)
         {
             si = i + offset; spos = (pos.Line, pos.Col + offset);
@@ -191,29 +189,29 @@ public static class Scanner
                         case '$':
                             state = State.Dollar;
                             break;
-                        case '(' when Interpolated():
+                        case '(' when interpolation != Interpolation.None:
                             parens++;
                             break;
-                        case ')' when Interpolated():
+                        case ')' when interpolation != Interpolation.None:
                             if (parens-- == 0)
                                 throw SyntaxError("Parentheses mismatch in interpolated string expression.");
                             break;
-                        case '{' when Interpolated():
+                        case '{' when interpolation != Interpolation.None:
                             braces++;
                             break;
-                        case '}' when Interpolated() && braces > 0:
+                        case '}' when interpolation != Interpolation.None && braces > 0:
                             braces--;
                             break;
-                        case '[' when Interpolated():
+                        case '[' when interpolation != Interpolation.None:
                             brackets++;
                             break;
-                        case ']' when Interpolated():
+                        case ']' when interpolation != Interpolation.None:
                             if (brackets-- == 0)
                                 throw SyntaxError("Brackets mismatch in interpolated string expression.");
                             break;
-                        case ',' when Interpolated() && parens == 0 && braces == 0 && brackets == 0:
-                        case ':' when Interpolated() && parens == 0 && braces == 0 && brackets == 0:
-                        case '}' when Interpolated():
+                        case ',' when interpolation != Interpolation.None && parens == 0 && braces == 0 && brackets == 0:
+                        case ':' when interpolation != Interpolation.None && parens == 0 && braces == 0 && brackets == 0:
+                        case '}' when interpolation != Interpolation.None:
                         {
                             if (TextTransit(interpolation == Interpolation.Verbatim ? State.InterpolatedVerbatimString : State.InterpolatedString) is {} text)
                                 yield return text;
@@ -432,7 +430,7 @@ public static class Scanner
                                              ? TokenKind.InterpolatedStringLiteralStart
                                              : TokenKind.InterpolatedStringLiteralMid,
                                              State.Text);
-                        if (Interpolated())
+                        if (interpolation != Interpolation.None)
                             nested.Push((interpolation, parens, braces, brackets));
                         interpolation = Interpolation.Regular;
                         parens = braces = brackets = 0;
@@ -501,7 +499,7 @@ public static class Scanner
                                              ? TokenKind.InterpolatedVerbatimStringLiteralStart
                                              : TokenKind.InterpolatedVerbatimStringLiteralMid,
                                              State.Text);
-                        if (Interpolated())
+                        if (interpolation != Interpolation.None)
                             nested.Push((interpolation, parens, braces, brackets));
                         interpolation = Interpolation.Verbatim;
                         parens = braces = brackets = 0;
