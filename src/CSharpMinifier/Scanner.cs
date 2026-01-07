@@ -75,26 +75,18 @@ public static class Scanner
         var interpolated = new Stack<InterpolationState>();
 
         bool Interpolated() => interpolated.Count > 0;
-        int Parens() => interpolated.Peek().Parens;
-        int Braces() => interpolated.Peek().Braces;
-        int Brackets() => interpolated.Peek().Brackets;
-        int IncParens(int step = 1)
+        int Get(Counter c) => interpolated.Peek()[c];
+        int Inc(Counter c)
         {
             var s = interpolated.Pop();
-            interpolated.Push(s.AddParens(step));
-            return s.Parens;
+            interpolated.Push(s.Inc(c));
+            return s[c];
         }
-        int IncBraces(int step = 1)
+        int Dec(Counter c)
         {
             var s = interpolated.Pop();
-            interpolated.Push(s.AddBraces(step));
-            return s.Braces;
-        }
-        int IncBrackets(int step = 1)
-        {
-            var s = interpolated.Pop();
-            interpolated.Push(s.AddBrackets(step));
-            return s.Brackets;
+            interpolated.Push(s.Dec(c));
+            return s[c];
         }
 
         T TransitReturn<T>(State newState, int offset, T token)
@@ -209,27 +201,27 @@ public static class Scanner
                             state = State.Dollar;
                             break;
                         case '(' when Interpolated():
-                            _ = IncParens();
+                            _ = Inc(Counter.Parens);
                             break;
                         case ')' when Interpolated():
-                            if (IncParens(-1) == 0)
+                            if (Dec(Counter.Parens) == 0)
                                 throw SyntaxError("Parentheses mismatch in interpolated string expression.");
                             break;
                         case '{' when Interpolated():
-                            _ = IncBraces();
+                            _ = Inc(Counter.Braces);
                             break;
-                        case '}' when Interpolated() && Braces() > 0:
-                            _ = IncBraces(-1);
+                        case '}' when Interpolated() && Get(Counter.Braces) > 0:
+                            _ = Dec(Counter.Braces);
                             break;
                         case '[' when Interpolated():
-                            _ = IncBrackets();
+                            _ = Inc(Counter.Brackets);
                             break;
                         case ']' when Interpolated():
-                            if (IncBrackets(-1) == 0)
+                            if (Dec(Counter.Brackets) == 0)
                                 throw SyntaxError("Brackets mismatch in interpolated string expression.");
                             break;
-                        case ',' when Interpolated() && Parens() == 0 && Braces() == 0 && Brackets() == 0:
-                        case ':' when Interpolated() && Parens() == 0 && Braces() == 0 && Brackets() == 0:
+                        case ',' when Interpolated() && Get(Counter.Parens) == 0 && Get(Counter.Braces) == 0 && Get(Counter.Brackets) == 0:
+                        case ':' when Interpolated() && Get(Counter.Parens) == 0 && Get(Counter.Braces) == 0 && Get(Counter.Brackets) == 0:
                         case '}' when Interpolated():
                         {
                             var s = interpolated.Pop();
@@ -820,13 +812,12 @@ public static class Scanner
 
     static readonly char[] SpaceOrTab = [' ', '\t'];
 
+    enum Counter { Parens = 0, Braces = 10, Brackets = 20 }
+
     readonly struct InterpolationState
     {
         const int CountBits = 10;
         const int CountMask = (1 << CountBits) - 1;
-        const int ParensShift = 0;
-        const int BracesShift = CountBits;
-        const int BracketsShift = CountBits * 2;
         const int VerbatimBit = 1 << 30;
 
         readonly int value;
@@ -837,17 +828,14 @@ public static class Scanner
             new(verbatim ? VerbatimBit : 0);
 
         public bool Verbatim => (this.value & VerbatimBit) != 0;
-        public int Parens => (this.value >> ParensShift) & CountMask;
-        public int Braces => (this.value >> BracesShift) & CountMask;
-        public int Brackets => (this.value >> BracketsShift) & CountMask;
 
-        public InterpolationState AddParens(int step) =>
-            new((this.value & ~(CountMask << ParensShift)) | ((Parens + step) << ParensShift));
+        public int this[Counter c] => (this.value >> (int)c) & CountMask;
 
-        public InterpolationState AddBraces(int step) =>
-            new((this.value & ~(CountMask << BracesShift)) | ((Braces + step) << BracesShift));
+        public int Parens => this[Counter.Parens];
+        public int Braces => this[Counter.Braces];
+        public int Brackets => this[Counter.Brackets];
 
-        public InterpolationState AddBrackets(int step) =>
-            new((this.value & ~(CountMask << BracketsShift)) | ((Brackets + step) << BracketsShift));
+        public InterpolationState Inc(Counter c) => new(this.value + (1 << (int)c));
+        public InterpolationState Dec(Counter c) => new(this.value - (1 << (int)c));
     }
 }
