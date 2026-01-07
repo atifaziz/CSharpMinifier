@@ -7,6 +7,7 @@
   <Folder Name="/Solution Items/">
     <File Path=".editorconfig" />
     <File Path=".github/workflows/ci.yml" />
+    <File Path="bench.ps1" />
     <File Path="build.cmd" />
     <File Path="build.sh" />
     <File Path="COPYING.txt" />
@@ -20,6 +21,7 @@
     <File Path="test.cmd" />
     <File Path="test.sh" />
   </Folder>
+  <Project Path="bench/Benchmarks.csproj" />
   <Project Path="src/CSharpMinifier/CSharpMinifier.csproj" />
   <Project Path="src/CSharpMinifierConsole/CSharpMinifierConsole.csproj" />
   <Project Path="tests/CSharpMinifier.Tests.csproj" />
