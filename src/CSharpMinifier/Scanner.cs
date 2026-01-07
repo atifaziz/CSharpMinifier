@@ -72,7 +72,7 @@ public static class Scanner
         var ppdtwssi = -1;
         var ppdtwscol = 0;
         int i;
-        var interpolated = new Stack<(bool Verbatim, int Parens, int Braces, int Brackets)>();
+        var interpolated = new Stack<InterpolationState>();
 
         bool Interpolated() => interpolated.Count > 0;
         int Parens() => interpolated.Peek().Parens;
@@ -80,21 +80,21 @@ public static class Scanner
         int Brackets() => interpolated.Peek().Brackets;
         int IncParens(int step = 1)
         {
-            var (verbatim, parens, braces, brackets) = interpolated.Pop();
-            interpolated.Push((verbatim, parens + step, braces, brackets));
-            return parens;
+            var s = interpolated.Pop();
+            interpolated.Push(s.AddParens(step));
+            return s.Parens;
         }
         int IncBraces(int step = 1)
         {
-            var (verbatim, parens, braces, brackets) = interpolated.Pop();
-            interpolated.Push((verbatim, parens, braces + step, brackets));
-            return braces;
+            var s = interpolated.Pop();
+            interpolated.Push(s.AddBraces(step));
+            return s.Braces;
         }
         int IncBrackets(int step = 1)
         {
-            var (verbatim, parens, braces, brackets) = interpolated.Pop();
-            interpolated.Push((verbatim, parens, braces, brackets + step));
-            return brackets;
+            var s = interpolated.Pop();
+            interpolated.Push(s.AddBrackets(step));
+            return s.Brackets;
         }
 
         T TransitReturn<T>(State newState, int offset, T token)
@@ -232,14 +232,14 @@ public static class Scanner
                         case ':' when Interpolated() && Parens() == 0 && Braces() == 0 && Brackets() == 0:
                         case '}' when Interpolated():
                         {
-                            var (verbatim, parens, braces, brackets) = interpolated.Pop();
-                            if (TextTransit(verbatim ? State.InterpolatedVerbatimString : State.InterpolatedString) is {} text)
+                            var s = interpolated.Pop();
+                            if (TextTransit(s.Verbatim ? State.InterpolatedVerbatimString : State.InterpolatedString) is {} text)
                                 yield return text;
-                            if (parens != 0)
+                            if (s.Parens != 0)
                                 throw SyntaxError("Parentheses mismatch in interpolated string expression.");
-                            if (braces != 0)
+                            if (s.Braces != 0)
                                 throw SyntaxError("Braces mismatch in interpolated string expression.");
-                            if (brackets != 0)
+                            if (s.Brackets != 0)
                                 throw SyntaxError("Brackets mismatch in interpolated string expression.");
                             break;
                         }
@@ -446,7 +446,7 @@ public static class Scanner
                                              ? TokenKind.InterpolatedStringLiteralStart
                                              : TokenKind.InterpolatedStringLiteralMid,
                                              State.Text);
-                        interpolated.Push((false, 0, 0, 0));
+                        interpolated.Push(InterpolationState.Create(false));
                         goto restart;
                     }
                     break;
@@ -512,7 +512,7 @@ public static class Scanner
                                              ? TokenKind.InterpolatedVerbatimStringLiteralStart
                                              : TokenKind.InterpolatedVerbatimStringLiteralMid,
                                              State.Text);
-                        interpolated.Push((true, 0, 0, 0));
+                        interpolated.Push(InterpolationState.Create(true));
                         goto restart;
                     }
                     break;
@@ -819,4 +819,35 @@ public static class Scanner
     }
 
     static readonly char[] SpaceOrTab = [' ', '\t'];
+
+    readonly struct InterpolationState
+    {
+        const int CountBits = 10;
+        const int CountMask = (1 << CountBits) - 1;
+        const int ParensShift = 0;
+        const int BracesShift = CountBits;
+        const int BracketsShift = CountBits * 2;
+        const int VerbatimBit = 1 << 30;
+
+        readonly int value;
+
+        InterpolationState(int value) => this.value = value;
+
+        public static InterpolationState Create(bool verbatim) =>
+            new(verbatim ? VerbatimBit : 0);
+
+        public bool Verbatim => (this.value & VerbatimBit) != 0;
+        public int Parens => (this.value >> ParensShift) & CountMask;
+        public int Braces => (this.value >> BracesShift) & CountMask;
+        public int Brackets => (this.value >> BracketsShift) & CountMask;
+
+        public InterpolationState AddParens(int step) =>
+            new((this.value & ~(CountMask << ParensShift)) | ((Parens + step) << ParensShift));
+
+        public InterpolationState AddBraces(int step) =>
+            new((this.value & ~(CountMask << BracesShift)) | ((Braces + step) << BracesShift));
+
+        public InterpolationState AddBrackets(int step) =>
+            new((this.value & ~(CountMask << BracketsShift)) | ((Brackets + step) << BracketsShift));
+    }
 }
