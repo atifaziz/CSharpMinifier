@@ -740,6 +740,40 @@ public class ScannerTests
               "InterpolatedRawStringStart 13 1 =8 \"$\\\"\\\"\\\"\\r\\nhello {\"",
               "Text 1 0 1 \"x\"",
               "InterpolatedRawStringEnd 6 1 =4 \"}\\r\\n\\\"\\\"\\\"\"")]
+    
+    // Nested string combination tests (Phase 7)
+    [TestCase("$\"\"\"hello {\"\"\"world\"\"\"}\"\"\"",
+              "InterpolatedRawStringStart 11 0 =12 \"$\\\"\\\"\\\"hello {\"",
+              "RawString 11 0 =23 \"\\\"\\\"\\\"world\\\"\\\"\\\"\"",
+              "InterpolatedRawStringEnd 4 0 =27 \"}\\\"\\\"\\\"\"")]
+    [TestCase("$\"hello {\"\"\"world\"\"\"}\"",
+              "InterpolatedStringStart 9 0 =10 \"$\\\"hello {\"",
+              "RawString 11 0 =21 \"\\\"\\\"\\\"world\\\"\\\"\\\"\"",
+              "InterpolatedStringEnd 2 0 =23 \"}\\\"\"")]
+    [TestCase("$\"\"\"hello {\"world\"}\"\"\"",
+              "InterpolatedRawStringStart 11 0 =12 \"$\\\"\\\"\\\"hello {\"",
+              "String 7 0 =19 \"\\\"world\\\"\"",
+              "InterpolatedRawStringEnd 4 0 =23 \"}\\\"\\\"\\\"\"")]
+    [TestCase("$\"\"\"{xs[1,2]}\"\"\"",
+              "InterpolatedRawStringStart 5 0 =6 \"$\\\"\\\"\\\"{\"",
+              "Text 7 0 =13 \"xs[1,2]\"",
+              "InterpolatedRawStringEnd 4 0 =17 \"}\\\"\\\"\\\"\"")]
+    [TestCase("$\"\"\"{x switch { 1 => \"a\" }}\"\"\"",
+              "InterpolatedRawStringStart 5 0 =6 \"$\\\"\\\"\\\"{\"",
+              "Text 1 0 =7 \"x\"",
+              "WhiteSpace 1 0 =8 \" \"",
+              "Text 6 0 =14 \"switch\"",
+              "WhiteSpace 1 0 =15 \" \"",
+              "Text 1 0 =16 \"{\"",
+              "WhiteSpace 1 0 =17 \" \"",
+              "Text 1 0 =18 \"1\"",
+              "WhiteSpace 1 0 =19 \" \"",
+              "Text 2 0 =21 \"=>\"",
+              "WhiteSpace 1 0 =22 \" \"",
+              "String 3 0 =25 \"\\\"a\\\"\"",
+              "WhiteSpace 1 0 =26 \" \"",
+              "Text 1 0 =27 \"}\"",
+              "InterpolatedRawStringEnd 4 0 =31 \"}\\\"\\\"\\\"\"")]
 
     public void Scan(string source, params string[] expectations)
     {

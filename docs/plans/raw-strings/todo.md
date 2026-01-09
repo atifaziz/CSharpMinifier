@@ -49,11 +49,11 @@ Track implementation progress for C# 11 raw string literal support in the scanne
   - [x] Combine multi-line handling with interpolation hole tracking
   - [x] Add unit tests for multi-line interpolated raw strings
 
-- [ ] **Phase 7: Nested String Combination Tests**
-  - [ ] Test `$"""hello {"""world"""}"""` (raw in raw hole)
-  - [ ] Test `$"hello {"""world"""}"` (raw in regular interpolated hole)
-  - [ ] Test `$"""hello {"world"}"""` (regular in raw hole)
-  - [ ] Test other mixing scenarios
+- [x] **Phase 7: Nested String Combination Tests**
+  - [x] Test `$"""hello {"""world"""}"""` (raw in raw hole)
+  - [x] Test `$"hello {"""world"""}"` (raw in regular interpolated hole)
+  - [x] Test `$"""hello {"world"}"""` (regular in raw hole)
+  - [x] Test other mixing scenarios
 
 ## Design Decisions
 
