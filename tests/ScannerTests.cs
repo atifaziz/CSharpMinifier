@@ -718,6 +718,13 @@ public class ScannerTests
     [TestCase("\"\"\"\ntext\n\"\"\"", "RawString 12 2 =4 \"\\\"\\\"\\\"\\ntext\\n\\\"\\\"\\\"\"")]
     [TestCase("\"\"\"\r\ntext\r\n\"\"\"", "RawString 14 2 =4 \"\\\"\\\"\\\"\\r\\ntext\\r\\n\\\"\\\"\\\"\"")]
     [TestCase("\"\"\"\nline1\nline2\n\"\"\"", "RawString 19 3 =4 \"\\\"\\\"\\\"\\nline1\\nline2\\n\\\"\\\"\\\"\"")]
+    
+    // Single-line interpolated raw strings (Phase 5)
+    [TestCase("$\"\"\"test\"\"\"", "InterpolatedRawStringLiteral 11 0 11 \"$\\\"\\\"\\\"test\\\"\\\"\\\"\"")]
+    [TestCase("$\"\"\"hello {x}\"\"\"", 
+              "InterpolatedRawStringStart 11 0 11 \"$\\\"\\\"\\\"hello {\"",
+              "Text 1 0 1 \"x\"",
+              "InterpolatedRawStringEnd 4 0 4 \"}\\\"\\\"\\\"\"")]
 
     public void Scan(string source, params string[] expectations)
     {

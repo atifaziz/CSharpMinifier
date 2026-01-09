@@ -39,11 +39,11 @@ Track implementation progress for C# 11 raw string literal support in the scanne
   - [x] Add unit tests for multi-line raw strings
 
 
-- [ ] **Phase 5: Single-Line Interpolated Raw Strings**
-  - [ ] Track `$` count before `"""`
-  - [ ] Use `$` count to determine brace depth for hole detection
-  - [ ] Emit Start/Mid/End tokens for holes
-  - [ ] Add unit tests for single-line interpolated raw strings
+- [x] **Phase 5: Single-Line Interpolated Raw Strings**
+  - [x] Track `$` count before `"""`
+  - [x] Use `$` count to determine brace depth for hole detection
+  - [x] Emit Start/Mid/End tokens for holes
+  - [x] Add unit tests for single-line interpolated raw strings
 
 - [ ] **Phase 6: Multi-Line Interpolated Raw Strings**
   - [ ] Combine multi-line handling with interpolation hole tracking
