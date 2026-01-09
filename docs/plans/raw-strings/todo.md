@@ -45,9 +45,9 @@ Track implementation progress for C# 11 raw string literal support in the scanne
   - [x] Emit Start/Mid/End tokens for holes
   - [x] Add unit tests for single-line interpolated raw strings
 
-- [ ] **Phase 6: Multi-Line Interpolated Raw Strings**
-  - [ ] Combine multi-line handling with interpolation hole tracking
-  - [ ] Add unit tests for multi-line interpolated raw strings
+- [x] **Phase 6: Multi-Line Interpolated Raw Strings**
+  - [x] Combine multi-line handling with interpolation hole tracking
+  - [x] Add unit tests for multi-line interpolated raw strings
 
 - [ ] **Phase 7: Nested String Combination Tests**
   - [ ] Test `$"""hello {"""world"""}"""` (raw in raw hole)

@@ -725,6 +725,21 @@ public class ScannerTests
               "InterpolatedRawStringStart 11 0 11 \"$\\\"\\\"\\\"hello {\"",
               "Text 1 0 1 \"x\"",
               "InterpolatedRawStringEnd 4 0 4 \"}\\\"\\\"\\\"\"")]
+    
+    // Multi-line interpolated raw strings (Phase 6)
+    [TestCase("$\"\"\"\ntext\n\"\"\"", "InterpolatedRawStringLiteral 13 2 =4 \"$\\\"\\\"\\\"\\ntext\\n\\\"\\\"\\\"\"")]
+    [TestCase("$\"\"\"\nhello {x}\n\"\"\"", 
+              "InterpolatedRawStringStart 12 1 =8 \"$\\\"\\\"\\\"\\nhello {\"",
+              "Text 1 0 1 \"x\"",
+              "InterpolatedRawStringEnd 5 1 =4 \"}\\n\\\"\\\"\\\"\"")]
+    [TestCase("$$\"\"\"\nhello {{x}}\n\"\"\"",
+              "InterpolatedRawStringStart 14 1 =9 \"$$\\\"\\\"\\\"\\nhello {{\"",
+              "Text 1 0 1 \"x\"",
+              "InterpolatedRawStringEnd 6 1 =4 \"}}\\n\\\"\\\"\\\"\"")]
+    [TestCase("$\"\"\"\r\nhello {x}\r\n\"\"\"", 
+              "InterpolatedRawStringStart 13 1 =8 \"$\\\"\\\"\\\"\\r\\nhello {\"",
+              "Text 1 0 1 \"x\"",
+              "InterpolatedRawStringEnd 6 1 =4 \"}\\r\\n\\\"\\\"\\\"\"")]
 
     public void Scan(string source, params string[] expectations)
     {

@@ -911,11 +911,11 @@ public static class Scanner
                         // Check if we have enough braces to open a hole
                         if (interpolationState.CurrentQuoteCount == interpolationState.DollarCount)
                         {
-                            // This is a hole! Emit Start or Mid token
+                            // This is a hole! Emit Start or Mid token (including all braces)
                             var tokenKind = source[si] == '$'
                                           ? TokenKind.InterpolatedRawStringLiteralStart
                                           : TokenKind.InterpolatedRawStringLiteralMid;
-                            yield return Transit(tokenKind, State.Text);
+                            yield return Transit(tokenKind, State.Text, 1);
                             if (interpolationState.IsSome)
                                 interpolationStateStack.Push(interpolationState);
                             interpolationState = new(InterpolatedStringKind.Raw)
@@ -924,7 +924,7 @@ public static class Scanner
                                 QuoteCount = interpolationState.QuoteCount,
                                 CurrentQuoteCount = 0
                             };
-                            goto restart;
+                            // Don't restart - Transit already advanced past the braces
                         }
                         break;
                     }
