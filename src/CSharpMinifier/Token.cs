@@ -41,6 +41,11 @@ public enum TokenKind
     InterpolatedVerbatimStringLiteralStart,
     InterpolatedVerbatimStringLiteralMid,
     InterpolatedVerbatimStringLiteralEnd,
+    RawStringLiteral,
+    InterpolatedRawStringLiteral,
+    InterpolatedRawStringLiteralStart,
+    InterpolatedRawStringLiteralMid,
+    InterpolatedRawStringLiteralEnd,
     PreprocessorDirective,
 }
 
