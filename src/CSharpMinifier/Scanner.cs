@@ -920,26 +920,36 @@ public static class Scanner
                     }
                     else
                     {
-                        // Non-brace character - determine if braces are escaped or a hole
+                        // Non-brace character - determine if braces open a hole or are literal
                         var dollars = interpolationState.Dollars;
+                        var braceCount = rawQuoteOrBraceCount;
                         
-                        // Brace escaping logic:
-                        // - If braceCount is a multiple of (dollars * 2), it's escaped braces (literal)
-                        // - Otherwise, if braceCount >= dollars, it's a hole start
+                        // Brace processing for interpolated raw strings with n dollar signs:
+                        // - Braces are processed in groups of n
+                        // - If we have exactly n braces, they open a hole
+                        // - If we have 2n braces, they represent n literal braces (escaped)
+                        // - If we have remainder + k*n braces where remainder > 0:
+                        //   * First 'remainder' braces are literal
+                        //   * Then process k groups of n braces
+                        // - For k groups: if k is even, all are escaped; if k is odd, last group is hole
                         
-                        var isEscaped = (rawQuoteOrBraceCount % (dollars * 2)) == 0;
+                        var fullGroups = braceCount / dollars;
+                        _ = braceCount % dollars;  // remainder - kept for documentation/future use
                         
-                        if (isEscaped || rawQuoteOrBraceCount < dollars)
+                        // Check if we have an odd number of full groups (meaning last group is a hole)
+                        var hasHole = (fullGroups > 0) && (fullGroups % 2 == 1);
+                        
+                        if (!hasHole)
                         {
-                            // All braces are literal text, continue in raw string content
+                            // No hole - all braces are literal (remainder + escaped groups)
                             rawQuoteOrBraceCount = 0;
                             state = State.InterpolatedRawString;
                             goto restart;
                         }
                         else
                         {
-                            // We have enough braces to open a hole (and they're not all escaped)
-                            // Emit Start or Mid token including all braces except the last 'dollars' braces
+                            // Has a hole - emit token including literal braces and previous escaped pairs
+                            // The token should include everything except the last 'dollars' braces (the hole opener)
                             var tokenKind = source[si] == '$'
                                           ? TokenKind.InterpolatedRawStringLiteralStart
                                           : TokenKind.InterpolatedRawStringLiteralMid;
