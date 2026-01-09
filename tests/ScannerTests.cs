@@ -740,7 +740,7 @@ public class ScannerTests
               "InterpolatedRawStringStart 13 1 =8 \"$\\\"\\\"\\\"\\r\\nhello {\"",
               "Text 1 0 1 \"x\"",
               "InterpolatedRawStringEnd 6 1 =4 \"}\\r\\n\\\"\\\"\\\"\"")]
-    
+
     // Nested string combination tests (Phase 7)
     [TestCase("$\"\"\"hello {\"\"\"world\"\"\"}\"\"\"",
               "InterpolatedRawStringStart 11 0 =12 \"$\\\"\\\"\\\"hello {\"",
@@ -758,6 +758,10 @@ public class ScannerTests
               "InterpolatedRawStringStart 5 0 =6 \"$\\\"\\\"\\\"{\"",
               "Text 7 0 =13 \"xs[1,2]\"",
               "InterpolatedRawStringEnd 4 0 =17 \"}\\\"\\\"\\\"\"")]
+    [TestCase("$$\"\"\"{single} {{hole}} {single}\"\"\"",
+              "InterpolatedRawStringStart 16 0 =17 \"$$\\\"\\\"\\\"{single} {{\"",
+              "Text 4 0 =21 \"hole\"",
+              "InterpolatedRawStringEnd 14 0 =35 \"}} {single}\\\"\\\"\\\"\"")]
     [TestCase("$\"\"\"{x switch { 1 => \"a\" }}\"\"\"",
               "InterpolatedRawStringStart 5 0 =6 \"$\\\"\\\"\\\"{\"",
               "Text 1 0 =7 \"x\"",

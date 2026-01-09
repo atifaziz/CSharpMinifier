@@ -83,9 +83,9 @@ public static class Scanner
         public int Parentheses { get; set; }
         public int Braces      { get; set; }
         public int Brackets    { get; set; }
-        public int DollarCount { get; set; }
-        public int QuoteCount  { get; set; }  // For raw strings: opening quote count
-        public int CurrentQuoteCount { get; set; }  // For raw strings: current closing quote count being accumulated
+        public int Dollars { get; set; }
+        public int Quotes  { get; set; }  // For raw strings: opening quote count
+        public int CurrentQuotes { get; set; }  // For raw strings: current closing quote count being accumulated
     }
 
     static IEnumerable<Token> ScanImpl(string source)
@@ -416,17 +416,17 @@ public static class Scanner
                             break;
                         case '"':
                             // Could be regular interpolated string or interpolated raw string
-                            // Don't set DollarCount yet - wait to see if next char is also "
+                            // Don't set Dollars yet - wait to see if next char is also "
                             state = State.DollarQuote;
                             break;
                         case '$':
                             // Multiple dollar signs (e.g., $$, $$$)
                             // Track count for potential raw string interpolation
-                            interpolationState.DollarCount = (interpolationState.DollarCount == 0 ? 1 : interpolationState.DollarCount) + 1;
+                            interpolationState.Dollars = interpolationState.Dollars == 0 ? 2 : interpolationState.Dollars + 1;
                             break;
                         default:
                             // Not a string - reset and go to text
-                            interpolationState.DollarCount = 0;
+                            interpolationState.Dollars = 0;
                             state = State.Text;
                             goto restart;
                     }
@@ -438,17 +438,17 @@ public static class Scanner
                     if (ch == '"')
                     {
                         // This is an interpolated raw string! ($""")
-                        // Set DollarCount based on how many $ we saw
-                        interpolationState.DollarCount = interpolationState.DollarCount == 0 ? 1 : interpolationState.DollarCount;
+                        // Set Dollars based on how many $ we saw
+                        interpolationState.Dollars = interpolationState.Dollars == 0 ? 1 : interpolationState.Dollars;
                         // Start counting quotes (we've seen 2 so far)
-                        interpolationState.QuoteCount = 2;
+                        interpolationState.Quotes = 2;
                         state = State.RawStringOpenQuote;
                     }
                     else
                     {
                         // Regular interpolated string ($"...)
-                        // Reset DollarCount as it's not used for regular interpolated strings
-                        interpolationState.DollarCount = 0;
+                        // Reset Dollars as it's not used for regular interpolated strings
+                        interpolationState.Dollars = 0;
                         // Transition to InterpolatedString state without emitting a token
                         // Keep si at the $, and restart to process current character in new state
                         state = State.InterpolatedString;
@@ -581,7 +581,7 @@ public static class Scanner
                             if (i == si + 1)
                             {
                                 // We've seen "", now check for third quote to confirm raw string
-                                interpolationState.QuoteCount = 2;  // Start counting from 2
+                                interpolationState.Quotes = 2;  // Start counting from 2
                                 state = State.RawStringOpenQuote;
                                 break;
                             }
@@ -735,17 +735,17 @@ public static class Scanner
                     if (ch == '"')
                     {
                         // Another quote in the opening delimiter
-                        interpolationState.QuoteCount++;
+                        interpolationState.Quotes++;
                         break;
                     }
                     else
                     {
                         // Non-quote character - we've finished counting opening quotes
                         // Need at least 3 quotes for raw string
-                        if (interpolationState.QuoteCount < 3)
+                        if (interpolationState.Quotes < 3)
                         {
                             // Not enough quotes
-                            if (interpolationState.DollarCount > 0)
+                            if (interpolationState.Dollars > 0)
                             {
                                 // This was $"", which is invalid
                                 throw SyntaxError("Invalid interpolated string.");
@@ -755,15 +755,15 @@ public static class Scanner
                             goto restart;
                         }
                         // This is a raw string - check if it's interpolated
-                        if (interpolationState.DollarCount > 0)
+                        if (interpolationState.Dollars > 0)
                         {
                             // Interpolated raw string
                             state = State.InterpolatedRawString;
                             interpolationState = new(InterpolatedStringKind.Raw)
                             {
-                                DollarCount = interpolationState.DollarCount,
-                                QuoteCount = interpolationState.QuoteCount,
-                                CurrentQuoteCount = 0
+                                Dollars = interpolationState.Dollars,
+                                Quotes = interpolationState.Quotes,
+                                CurrentQuotes = 0
                             };
                         }
                         else
@@ -777,19 +777,22 @@ public static class Scanner
                 case State.RawString:
                 {
                     // In a raw string, look for closing quotes
-                    if (ch == '"')
+                    switch (ch)
                     {
-                        // Start counting potential closing quotes
-                        interpolationState.CurrentQuoteCount = 1;
-                        state = State.RawStringQuote;
-                    }
-                    else if (ch == '\r')
-                    {
-                        state = State.RawStringCr;
-                    }
-                    else if (ch == '\n')
-                    {
-                        pos = (pos.Line + 1, 0);
+                        case '"':
+                            // Start counting potential closing quotes
+                            interpolationState.CurrentQuotes = 1;
+                            state = State.RawStringQuote;
+                            break;
+                        case '\r':
+                            state = State.RawStringCr;
+                            break;
+                        case '\n':
+                            pos = (pos.Line + 1, 0);
+                            break;
+                        default:
+                            // Continue consuming raw string content
+                            break;
                     }
                     break;
                 }
@@ -799,13 +802,13 @@ public static class Scanner
                     if (ch == '"')
                     {
                         // Another quote in the potential closing delimiter
-                        interpolationState.CurrentQuoteCount++;
+                        interpolationState.CurrentQuotes++;
                         break;
                     }
                     else
                     {
                         // Non-quote character - check if we have enough closing quotes
-                        if (interpolationState.CurrentQuoteCount == interpolationState.QuoteCount)
+                        if (interpolationState.CurrentQuotes == interpolationState.Quotes)
                         {
                             // Matched! Emit the raw string token
                             yield return Transit(TokenKind.RawStringLiteral, State.Text);
@@ -814,7 +817,7 @@ public static class Scanner
                         else
                         {
                             // Not enough quotes, continue in raw string content
-                            interpolationState.CurrentQuoteCount = 0;
+                            interpolationState.CurrentQuotes = 0;
                             state = State.RawString;
                             goto restart;
                         }
@@ -833,15 +836,15 @@ public static class Scanner
                     if (ch == '"')
                     {
                         // Start counting potential closing quotes
-                        interpolationState.CurrentQuoteCount = 1;
+                        interpolationState.CurrentQuotes = 1;
                         state = State.InterpolatedRawStringQuote;
                     }
                     else if (ch == '{')
                     {
                         // Potential hole opening - need to count braces
-                        interpolationState.CurrentQuoteCount = 1;  // Reuse for brace count
+                        interpolationState.CurrentQuotes = 1;  // Reuse for brace count
                         // Check immediately if we have enough braces
-                        if (interpolationState.CurrentQuoteCount == interpolationState.DollarCount)
+                        if (interpolationState.CurrentQuotes == interpolationState.Dollars)
                         {
                             // Single brace is enough! Emit Start or Mid token (including the {)
                             var tokenKind = source[si] == '$'
@@ -877,13 +880,13 @@ public static class Scanner
                     if (ch == '"')
                     {
                         // Another quote in the potential closing delimiter
-                        interpolationState.CurrentQuoteCount++;
+                        interpolationState.CurrentQuotes++;
                         break;
                     }
                     else
                     {
                         // Non-quote character - check if we have enough closing quotes
-                        if (interpolationState.CurrentQuoteCount == interpolationState.QuoteCount)
+                        if (interpolationState.CurrentQuotes == interpolationState.Quotes)
                         {
                             // Matched! Emit the interpolated raw string token
                             var tokenKind = source[si] == '$'
@@ -895,7 +898,7 @@ public static class Scanner
                         else
                         {
                             // Not enough quotes, continue in raw string content
-                            interpolationState.CurrentQuoteCount = 0;
+                            interpolationState.CurrentQuotes = 0;
                             state = State.InterpolatedRawString;
                             goto restart;
                         }
@@ -907,9 +910,9 @@ public static class Scanner
                     if (ch == '{')
                     {
                         // Another brace
-                        interpolationState.CurrentQuoteCount++;
+                        interpolationState.CurrentQuotes++;
                         // Check if we have enough braces to open a hole
-                        if (interpolationState.CurrentQuoteCount == interpolationState.DollarCount)
+                        if (interpolationState.CurrentQuotes == interpolationState.Dollars)
                         {
                             // This is a hole! Emit Start or Mid token (including all braces)
                             var tokenKind = source[si] == '$'
@@ -920,9 +923,9 @@ public static class Scanner
                                 interpolationStateStack.Push(interpolationState);
                             interpolationState = new(InterpolatedStringKind.Raw)
                             {
-                                DollarCount = interpolationState.DollarCount,
-                                QuoteCount = interpolationState.QuoteCount,
-                                CurrentQuoteCount = 0
+                                Dollars = interpolationState.Dollars,
+                                Quotes = interpolationState.Quotes,
+                                CurrentQuotes = 0
                             };
                             // Don't restart - Transit already advanced past the braces
                         }
@@ -931,7 +934,7 @@ public static class Scanner
                     else
                     {
                         // Not a brace - these were just literal braces in the content
-                        interpolationState.CurrentQuoteCount = 0;
+                        interpolationState.CurrentQuotes = 0;
                         state = State.InterpolatedRawString;
                         goto restart;
                     }
@@ -974,7 +977,7 @@ public static class Scanner
             {
                 // Hit EOF while counting closing quotes in interpolated raw string
                 // Check if we have accumulated enough closing quotes
-                if (interpolationState.CurrentQuoteCount == interpolationState.QuoteCount)
+                if (interpolationState.CurrentQuotes == interpolationState.Quotes)
                 {
                     // Valid closing delimiter at EOF
                     var tokenKind = source[si] == '$'
@@ -991,15 +994,15 @@ public static class Scanner
             {
                 // Hit EOF while counting opening quotes
                 // Check if we have enough quotes for a raw string
-                if (interpolationState.QuoteCount >= 3)
+                if (interpolationState.Quotes >= 3)
                 {
                     // Check if this could be an empty raw string (even number of quotes)
-                    if (interpolationState.QuoteCount % 2 == 0)
+                    if (interpolationState.Quotes % 2 == 0)
                     {
                         // Even number of quotes >= 6 could be half opening, half closing (e.g., """""")
                         // Split in half
-                        interpolationState.QuoteCount /= 2;
-                        interpolationState.CurrentQuoteCount = interpolationState.QuoteCount;
+                        interpolationState.Quotes /= 2;
+                        interpolationState.CurrentQuotes = interpolationState.Quotes;
                         // Valid closing delimiter at EOF
                         yield return new Token(TokenKind.RawStringLiteral,
                                               new Position(si, spos.Line, spos.Col),
@@ -1012,12 +1015,12 @@ public static class Scanner
                 else
                 {
                     // Less than 3 quotes - check if this was an interpolated string
-                    var tokenKind = interpolationState.DollarCount > 0
+                    var tokenKind = interpolationState.Dollars > 0
                                   ? TokenKind.InterpolatedStringLiteral
                                   : TokenKind.StringLiteral;
                     yield return new Token(tokenKind,
-                                          new Position(si, spos.Line, spos.Col),
-                                          new Position(i, pos.Line, pos.Col + 1));
+                                       new Position(si, spos.Line, spos.Col),
+                                       new Position(i, pos.Line, pos.Col + 1));
                     break;
                 }
             }
@@ -1025,13 +1028,13 @@ public static class Scanner
             {
                 // Hit EOF while counting closing quotes
                 // Check if we have accumulated enough closing quotes
-                if (interpolationState.CurrentQuoteCount == interpolationState.QuoteCount)
+                if (interpolationState.CurrentQuotes == interpolationState.Quotes)
                 {
                     // Valid closing delimiter at EOF
                     // Note: We need to increment pos.Col by 1 to account for the position after the last character
                     yield return new Token(TokenKind.RawStringLiteral,
-                                          new Position(si, spos.Line, spos.Col),
-                                          new Position(i, pos.Line, pos.Col + 1));
+                                       new Position(si, spos.Line, spos.Col),
+                                       new Position(i, pos.Line, pos.Col + 1));
                     break;
                 }
                 throw SyntaxError("Unterminated string starting.");
