@@ -757,10 +757,10 @@ public class ScannerTests
               "InterpolatedRawStringStart 5 0 =6 \"$\\\"\\\"\\\"{\"",
               "Text 7 0 =13 \"xs[1,2]\"",
               "InterpolatedRawStringEnd 4 0 =17 \"}\\\"\\\"\\\"\"")]
-    [TestCase("$$\"\"\"{single} {{hole}} {single}\"\"\"",
-              "InterpolatedRawStringStart 16 0 =17 \"$$\\\"\\\"\\\"{single} {{\"",
-              "Text 4 0 =21 \"hole\"",
-              "InterpolatedRawStringEnd 14 0 =35 \"}} {single}\\\"\\\"\\\"\"")]
+    [TestCase("$$\"\"\"{single} {{{hole}}} {single}\"\"\"",
+              "InterpolatedRawStringStart 17 0 =18 \"$$\\\"\\\"\\\"{single} {{{\"",
+              "Text 4 0 =22 \"hole\"",
+              "InterpolatedRawStringEnd 15 0 =37 \"}}} {single}\\\"\\\"\\\"\"")]
     [TestCase("$\"\"\"{x switch { 1 => \"a\" }}\"\"\"",
               "InterpolatedRawStringStart 5 0 =6 \"$\\\"\\\"\\\"{\"",
               "Text 1 0 =7 \"x\"",

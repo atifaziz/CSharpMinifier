@@ -911,14 +911,27 @@ public static class Scanner
                     {
                         // Another brace
                         interpolationState.CurrentQuotes++;
-                        // Check if we have enough braces to open a hole
-                        if (interpolationState.CurrentQuotes == interpolationState.Dollars)
+                        break;
+                    }
+                    else
+                    {
+                        // Non-brace character - check how many braces we counted
+                        if (interpolationState.CurrentQuotes < interpolationState.Dollars)
                         {
-                            // This is a hole! Emit Start or Mid token (including all braces)
+                            // Not enough braces to open a hole - they're all literal
+                            interpolationState.CurrentQuotes = 0;
+                            state = State.InterpolatedRawString;
+                            goto restart;
+                        }
+                        else
+                        {
+                            // We have enough (or more than enough) braces to open a hole
+                            // If we have extras, they're literal text included in the token
+                            // The last Dollars braces open the hole
                             var tokenKind = source[si] == '$'
                                           ? TokenKind.InterpolatedRawStringLiteralStart
                                           : TokenKind.InterpolatedRawStringLiteralMid;
-                            yield return Transit(tokenKind, State.Text, 1);
+                            yield return Transit(tokenKind, State.Text);
                             if (interpolationState.IsSome)
                                 interpolationStateStack.Push(interpolationState);
                             interpolationState = new(InterpolatedStringKind.Raw)
@@ -927,16 +940,8 @@ public static class Scanner
                                 Quotes = interpolationState.Quotes,
                                 CurrentQuotes = 0
                             };
-                            // Don't restart - Transit already advanced past the braces
+                            goto restart;
                         }
-                        break;
-                    }
-                    else
-                    {
-                        // Not a brace - these were just literal braces in the content
-                        interpolationState.CurrentQuotes = 0;
-                        state = State.InterpolatedRawString;
-                        goto restart;
                     }
                 }
                 case State.InterpolatedRawStringCr:
