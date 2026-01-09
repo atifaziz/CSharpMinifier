@@ -948,8 +948,8 @@ public static class Scanner
                         }
                         else
                         {
-                            // Has a hole - emit token including literal braces and previous escaped pairs
-                            // The token should include everything except the last 'dollars' braces (the hole opener)
+                            // Has a hole - emit token including literal braces and hole-opening braces
+                            // The token includes ALL the braces (literal + escaped + hole-opener)
                             var tokenKind = source[si] == '$'
                                           ? TokenKind.InterpolatedRawStringLiteralStart
                                           : TokenKind.InterpolatedRawStringLiteralMid;

@@ -763,15 +763,15 @@ public class ScannerTests
               "InterpolatedRawStringEnd 15 0 =37 \"}}} {single}\\\"\\\"\\\"\"")]
     // Brace escaping tests (currently failing)
     [TestCase("$$\"\"\"{{{{content}}}}\"\"\"",
-              "InterpolatedRawStringLiteral 20 0 =20 \"$$\\\"\\\"\\\"{{{{content}}}}\\\"\\\"\\\"\"")]
+              "InterpolatedRawStringLiteral 23 0 =24 \"$$\\\"\\\"\\\"{{{{content}}}}\\\"\\\"\\\"\"")]
     [TestCase("$$\"\"\"{{x}} {{{{escaped}}}}\"\"\"",
-              "InterpolatedRawStringStart 9 0 =10 \"$$\\\"\\\"\\\"{{\"",
-              "Text 1 0 =11 \"x\"",
-              "InterpolatedRawStringEnd 19 0 =30 \"}} {{{{escaped}}}}\\\"\\\"\\\"\"")]
+              "InterpolatedRawStringStart 7 0 =8 \"$$\\\"\\\"\\\"{{\"",
+              "Text 1 0 =9 \"x\"",
+              "InterpolatedRawStringEnd 21 0 =30 \"}} {{{{escaped}}}}\\\"\\\"\\\"\"")]
     [TestCase("$$\"\"\"{{{x}}}\"\"\"",
-              "InterpolatedRawStringStart 10 0 =11 \"$$\\\"\\\"\\\"{{{\"",
-              "Text 1 0 =12 \"x\"",
-              "InterpolatedRawStringEnd 5 0 =17 \"}}}\\\"\\\"\\\"\"")]
+              "InterpolatedRawStringStart 8 0 =9 \"$$\\\"\\\"\\\"{{{\"",
+              "Text 1 0 =10 \"x\"",
+              "InterpolatedRawStringEnd 6 0 =16 \"}}}\\\"\\\"\\\"\"")]
     [TestCase("$\"\"\"{x switch { 1 => \"a\" }}\"\"\"",
               "InterpolatedRawStringStart 5 0 =6 \"$\\\"\\\"\\\"{\"",
               "Text 1 0 =7 \"x\"",
