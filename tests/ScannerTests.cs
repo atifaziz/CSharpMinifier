@@ -740,7 +740,6 @@ public class ScannerTests
               "InterpolatedRawStringStart 13 1 =8 \"$\\\"\\\"\\\"\\r\\nhello {\"",
               "Text 1 0 1 \"x\"",
               "InterpolatedRawStringEnd 6 1 =4 \"}\\r\\n\\\"\\\"\\\"\"")]
-
     // Nested string combination tests (Phase 7)
     [TestCase("$\"\"\"hello {\"\"\"world\"\"\"}\"\"\"",
               "InterpolatedRawStringStart 11 0 =12 \"$\\\"\\\"\\\"hello {\"",
