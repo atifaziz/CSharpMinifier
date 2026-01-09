@@ -83,6 +83,7 @@ public static class Scanner
         public int Brackets    { get; set; }
         public int DollarCount { get; set; }
         public int QuoteCount  { get; set; }
+        public int ContentStart { get; set; }  // For raw strings, where content begins
     }
 
     static IEnumerable<Token> ScanImpl(string source)
@@ -535,6 +536,37 @@ public static class Scanner
                     switch (ch)
                     {
                         case '"':
+                            // Check if this is the start of a raw string (""")
+                            if (i == si + 1 && i + 1 < source.Length && source[i + 1] == '"')
+                            {
+                                // This is a raw string! Count opening quotes until non-quote or newline
+                                var quoteCount = 3;
+                                var j = i + 2;
+                                while (j < source.Length && source[j] == '"')
+                                {
+                                    quoteCount++;
+                                    j++;
+                                }
+                                // Check if we hit EOF without finding content start
+                                if (j >= source.Length)
+                                {
+                                    // All quotes, no content or closing delimiter - but this might be valid
+                                    // if half are opening and half are closing (e.g., """""")
+                                    // Use half as the quote count if even number
+                                    if (quoteCount % 2 == 0)
+                                    {
+                                        quoteCount /= 2;
+                                        j = si + quoteCount;
+                                    }
+                                }
+                                // Move to the last opening quote and transition to raw string state
+                                i = j - 1;
+                                pos.Col = pos.Col - 1 + quoteCount - 1;
+                                interpolationState.QuoteCount = quoteCount;
+                                interpolationState.ContentStart = j;  // Content starts after opening quotes
+                                state = State.RawString;
+                                break;
+                            }
                             yield return Transit(TokenKind.StringLiteral, State.Text, 1);
                             break;
                         case '\\':
@@ -680,8 +712,61 @@ public static class Scanner
                     break;
                 }
                 case State.RawString:
+                {
+                    // In a raw string, look for closing quotes
+                    if (ch == '"')
+                    {
+                        state = State.RawStringQuote;
+                    }
+                    else if (ch == '\r')
+                    {
+                        state = State.RawStringCr;
+                    }
+                    else if (ch == '\n')
+                    {
+                        pos = (pos.Line + 1, 0);
+                    }
+                    break;
+                }
                 case State.RawStringQuote:
+                {
+                    // We've seen at least one quote, count how many more
+                    if (ch == '"')
+                    {
+                        // Still counting quotes
+                        break;
+                    }
+                    else
+                    {
+                        // End of quote sequence, check if we have enough
+                        // Count backwards from i-1 to find how many quotes we saw
+                        var closingQuoteCount = 0;
+                        for (var j = i - 1; j >= interpolationState.ContentStart && source[j] == '"'; j--)
+                        {
+                            closingQuoteCount++;
+                        }
+                        
+                        if (closingQuoteCount == interpolationState.QuoteCount)
+                        {
+                            // Matched! Emit the raw string token
+                            yield return Transit(TokenKind.RawStringLiteral, State.Text);
+                            goto restart;
+                        }
+                        else
+                        {
+                            // Not enough quotes, continue in raw string
+                            state = State.RawString;
+                            goto restart;
+                        }
+                    }
+                }
                 case State.RawStringCr:
+                {
+                    if (ch != '\n')
+                        pos = (pos.Line + 1, ch == '\r' ? 0 : 1);
+                    state = State.RawString;
+                    goto restart;
+                }
                 case State.InterpolatedRawString:
                 case State.InterpolatedRawStringQuote:
                 case State.InterpolatedRawStringBrace:
@@ -708,13 +793,36 @@ public static class Scanner
             case State.InterpolatedVerbatimStringBrace:
             case State.InterpolatedVerbatimStringCr:
             case State.RawString:
-            case State.RawStringQuote:
             case State.RawStringCr:
             case State.InterpolatedRawString:
             case State.InterpolatedRawStringQuote:
             case State.InterpolatedRawStringBrace:
             case State.InterpolatedRawStringCr:
                 throw SyntaxError("Unterminated string starting.");
+            case State.RawStringQuote:
+            {
+                // Check if we have enough closing quotes at EOF
+                // We need to count the current quote sequence that led us to EOF
+                // Start from where we are now and count backwards to where content started
+                var quoteStart = i - 1;  // i is past EOF, i-1 is last char (but might not be a quote!)
+                // Only count if the last char is actually a quote
+                if (quoteStart >= 0 && source[quoteStart] == '"')
+                {
+                    while (quoteStart > interpolationState.ContentStart && source[quoteStart - 1] == '"')
+                    {
+                        quoteStart--;
+                    }
+                    var closingQuoteCount = i - quoteStart;
+                    
+                    if (closingQuoteCount == interpolationState.QuoteCount)
+                    {
+                        // Valid closing delimiter at EOF
+                        yield return CreateToken(TokenKind.RawStringLiteral);
+                        break;
+                    }
+                }
+                throw SyntaxError("Unterminated string starting.");
+            }
             case State.Char:
                 throw SyntaxError("Unterminated character literal.");
             case State.MultiLineComment:

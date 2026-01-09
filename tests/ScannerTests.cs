@@ -709,6 +709,11 @@ public class ScannerTests
         @"NewLine             2 1  =1 ""\r\n""")
     ]
 
+    // Raw string literals (C# 11)
+    [TestCase("\"\"\"\"\"\"", @"RawString 6 0 6 """"""""""""""")]
+    [TestCase("\"\"\"text\"\"\"", @"RawString 10 0 10 """"""""""text""""""""""""")]
+    [TestCase("\"\"\"hello world\"\"\"", @"RawString 17 0 17 """"""""""hello world""""""""""""")]
+
     public void Scan(string source, params string[] expectations)
     {
         var tokens =
