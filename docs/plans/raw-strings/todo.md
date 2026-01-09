@@ -10,33 +10,34 @@ Track implementation progress for C# 11 raw string literal support in the scanne
 
 ## Implementation Phases
 
-- [ ] **Phase 1: TokenKind and Traits**
-  - [ ] Add `RawStringLiteral` to `TokenKind` enum
-  - [ ] Add `InterpolatedRawStringLiteral` to `TokenKind` enum
-  - [ ] Add `InterpolatedRawStringLiteralStart` to `TokenKind` enum
-  - [ ] Add `InterpolatedRawStringLiteralMid` to `TokenKind` enum
-  - [ ] Add `InterpolatedRawStringLiteralEnd` to `TokenKind` enum
-  - [ ] Add `RawString = 0x200` trait flag
-  - [ ] Update `TraitsByKind` array for new token kinds
+- [x] **Phase 1: TokenKind and Traits**
+  - [x] Add `RawStringLiteral` to `TokenKind` enum
+  - [x] Add `InterpolatedRawStringLiteral` to `TokenKind` enum
+  - [x] Add `InterpolatedRawStringLiteralStart` to `TokenKind` enum
+  - [x] Add `InterpolatedRawStringLiteralMid` to `TokenKind` enum
+  - [x] Add `InterpolatedRawStringLiteralEnd` to `TokenKind` enum
+  - [x] Add `RawString = 0x200` trait flag
+  - [x] Update `TraitsByKind` array for new token kinds
 
-- [ ] **Phase 2: Scanner Infrastructure**
-  - [ ] Extend `InterpolatedStringKind` with `Raw`
-  - [ ] Extend `InterpolationState` with `DollarCount` and `QuoteCount`
-  - [ ] Ensure raw-string hole boundaries require `Parentheses == 0`, `Braces == 0`, and `Brackets == 0`
-  - [ ] Add new scanner states: `RawString`, `RawStringQuote`, `RawStringCr`
-  - [ ] Add new scanner states: `InterpolatedRawString`, `InterpolatedRawStringQuote`, `InterpolatedRawStringBrace`, `InterpolatedRawStringCr`
+- [x] **Phase 2: Scanner Infrastructure**
+  - [x] Extend `InterpolatedStringKind` with `Raw`
+  - [x] Extend `InterpolationState` with `DollarCount` and `QuoteCount`
+  - [x] Ensure raw-string hole boundaries require `Parentheses == 0`, `Braces == 0`, and `Brackets == 0`
+  - [x] Add new scanner states: `RawString`, `RawStringQuote`, `RawStringCr`
+  - [x] Add new scanner states: `InterpolatedRawString`, `InterpolatedRawStringQuote`, `InterpolatedRawStringBrace`, `InterpolatedRawStringCr`
 
-- [ ] **Phase 3: Single-Line Non-Interpolated Raw Strings**
-  - [ ] Detect `"""` opening delimiter (third quote after `""`)
-  - [ ] Count total opening quotes
-  - [ ] Scan content until matching closing quote sequence
-  - [ ] Emit `RawStringLiteral` token
-  - [ ] Add unit tests for single-line raw strings
+- [x] **Phase 3: Single-Line Non-Interpolated Raw Strings**
+  - [x] Detect `"""` opening delimiter (third quote after `""`)
+  - [x] Count total opening quotes
+  - [x] Scan content until matching closing quote sequence
+  - [x] Emit `RawStringLiteral` token
+  - [x] Add unit tests for single-line raw strings
 
-- [ ] **Phase 4: Multi-Line Non-Interpolated Raw Strings**
-  - [ ] Handle newline after opening delimiter as multi-line indicator
-  - [ ] Implement `RawStringCr` state for `\r\n` line tracking
-  - [ ] Add unit tests for multi-line raw strings
+- [x] **Phase 4: Multi-Line Non-Interpolated Raw Strings**
+  - [x] Handle newline after opening delimiter as multi-line indicator
+  - [x] Implement `RawStringCr` state for `\r\n` line tracking
+  - [x] Add unit tests for multi-line raw strings
+
 
 - [ ] **Phase 5: Single-Line Interpolated Raw Strings**
   - [ ] Track `$` count before `"""`

@@ -713,6 +713,11 @@ public class ScannerTests
     [TestCase("\"\"\"\"\"\"", "RawString 6 0 6 \"\\\"\\\"\\\"\\\"\\\"\\\"\"")]
     [TestCase("\"\"\"text\"\"\"", "RawString 10 0 10 \"\\\"\\\"\\\"text\\\"\\\"\\\"\"")]
     [TestCase("\"\"\"hello world\"\"\"", "RawString 17 0 17 \"\\\"\\\"\\\"hello world\\\"\\\"\\\"\"")]
+    
+    // Multi-line raw strings
+    [TestCase("\"\"\"\ntext\n\"\"\"", "RawString 12 2 =4 \"\\\"\\\"\\\"\\ntext\\n\\\"\\\"\\\"\"")]
+    [TestCase("\"\"\"\r\ntext\r\n\"\"\"", "RawString 14 2 =4 \"\\\"\\\"\\\"\\r\\ntext\\r\\n\\\"\\\"\\\"\"")]
+    [TestCase("\"\"\"\nline1\nline2\n\"\"\"", "RawString 19 3 =4 \"\\\"\\\"\\\"\\nline1\\nline2\\n\\\"\\\"\\\"\"")]
 
     public void Scan(string source, params string[] expectations)
     {
