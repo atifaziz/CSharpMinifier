@@ -817,7 +817,10 @@ public static class Scanner
                     if (closingQuoteCount == interpolationState.QuoteCount)
                     {
                         // Valid closing delimiter at EOF
-                        yield return CreateToken(TokenKind.RawStringLiteral);
+                        // Note: We need to increment pos.Col by 1 to account for the position after the last character
+                        yield return new Token(TokenKind.RawStringLiteral,
+                                              new Position(si, spos.Line, spos.Col),
+                                              new Position(i, pos.Line, pos.Col + 1));
                         break;
                     }
                 }
