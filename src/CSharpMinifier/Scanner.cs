@@ -1018,33 +1018,14 @@ public static class Scanner
                     {
                         // Another closing brace
                         rawQuoteOrBraceCount++;
-                        
-                        // Per C# spec for raw interpolated strings with N dollar signs:
-                        // For closing braces: B < N means all are code (literal in hole)
-                        //                     N <= B means first (B-N) are code, then N close the hole
-                        var dollars = interpolationState.Dollars;
-                        
-                        if (rawQuoteOrBraceCount >= dollars)
-                        {
-                            // We have enough braces to close the hole
-                            // Pop the interpolation state to return to the outer raw string context
-                            interpolationState = interpolationStateStack.Count > 0 
-                                                ? interpolationStateStack.Pop() 
-                                                : new(InterpolatedStringKind.None);
-                            
-                            // Transition back to InterpolatedRawString state
-                            // It will handle emitting the Mid/End token when it sees the closing quotes
-                            state = State.InterpolatedRawString;
-                            rawQuoteOrBraceCount = 0;
-                            // The closing braces are part of the content, so restart to process the next char
-                            goto restart;
-                        }
-                        // Continue counting braces
-                        break;
+                        break; // Continue counting
                     }
                     else
                     {
-                        // Non-brace character - determine what to do with accumulated braces
+                        // Non-brace character - we've counted all consecutive braces
+                        // Per C# spec for raw interpolated strings with N dollar signs:
+                        // For closing braces: B < N means all are code (stay in hole)
+                        //                     B >= N means first (B-N) are code, then N close the hole
                         var dollars = interpolationState.Dollars;
                         var braceCount = rawQuoteOrBraceCount;
                         
@@ -1057,16 +1038,41 @@ public static class Scanner
                         }
                         else
                         {
-                            // braceCount >= dollars: Close the hole
-                            // Pop the interpolation state
+                            // braceCount >= dollars: We have a hole-closing sequence
+                            // The first (braceCount - dollars) braces are code
+                            // The next dollars braces close the hole
+                            var codeBraces = braceCount - dollars;
+                            var closingBraces = dollars;
+                            
+                            // If there are code braces, emit them as a Text token
+                            if (codeBraces > 0)
+                            {
+                                // The code braces are at positions (si) to (si + codeBraces)
+                                // where si was set when we entered HoleCloseBrace state
+                                // Actually, we need to emit from where the braces start to where code braces end
+                                // The braces start at (i - braceCount + 1) in the source
+                                // Code braces go from there for codeBraces characters
+                                var codeStartIdx = i - braceCount + 1;
+                                var codeEndIdx = codeStartIdx + codeBraces;
+                                yield return new Token(TokenKind.Text,
+                                                     new Position(codeStartIdx, pos.Line, pos.Col - braceCount + codeBraces),
+                                                     new Position(codeEndIdx, pos.Line, pos.Col - closingBraces));
+                            }
+                            
+                            // Pop the interpolation state - we're exiting the hole
                             interpolationState = interpolationStateStack.Count > 0 
                                                 ? interpolationStateStack.Pop() 
                                                 : new(InterpolatedStringKind.None);
                             
-                            // Transition back to InterpolatedRawString state
+                            // Rewind position by closingBraces so they can be reprocessed as string content
+                            i -= closingBraces;
+                            pos = (pos.Line, pos.Col - closingBraces);
+                            
+                            // Transition to InterpolatedRawString state which will include those braces in Mid/End token
                             state = State.InterpolatedRawString;
                             rawQuoteOrBraceCount = 0;
-                            goto restart;
+                            // Don't use goto restart - we've already adjusted i and pos
+                            break;
                         }
                     }
                 }
