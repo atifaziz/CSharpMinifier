@@ -63,6 +63,7 @@ public static class Scanner
         InterpolatedRawString,
         InterpolatedRawStringQuote,
         InterpolatedRawStringBrace,
+        InterpolatedRawStringHoleCloseBrace,
         InterpolatedRawStringCr,
         Char,
         CharEscape,
@@ -237,6 +238,21 @@ public static class Scanner
                         case (',' or ':', { IsSome: true, Parentheses: 0, Braces: 0, Brackets: 0 }):
                         case ('}', { IsSome: true }) :
                         {
+                            // For raw interpolated strings, we need to count consecutive closing braces
+                            // to determine if this closes the hole or is part of the string content
+                            if (ch == '}' && 
+                                interpolationState.Parentheses == 0 && 
+                                interpolationState.Braces == 0 && 
+                                interpolationState.Brackets == 0 &&
+                                interpolationState.InterpolatedStringKind == InterpolatedStringKind.Raw)
+                            {
+                                // Start counting closing braces for raw interpolated strings
+                                if (TextTransit(State.InterpolatedRawStringHoleCloseBrace) is {} rawText)
+                                    yield return rawText;
+                                rawQuoteOrBraceCount = 1; // This is the first }
+                                break;
+                            }
+                            
                             var newState = interpolationState.InterpolatedStringKind switch
                             {
                                 InterpolatedStringKind.Verbatim => State.InterpolatedVerbatimString,
@@ -897,8 +913,13 @@ public static class Scanner
                         if (rawQuoteOrBraceCount == interpolationState.Quotes)
                         {
                             // Matched! Emit the interpolated raw string token
-                            var tokenKind = source[si] == '$'
+                            // Check if there was no hole (source[si] == '$') or if we're closing after a hole
+                            // If stack is empty, emit Literal (no holes) or End (closing after hole)
+                            // If stack has items, emit Mid (still nested)
+                            var tokenKind = source[si] == '$' && interpolationStateStack.Count == 0
                                           ? TokenKind.InterpolatedRawStringLiteral
+                                          : interpolationStateStack.Count > 0
+                                          ? TokenKind.InterpolatedRawStringLiteralMid
                                           : TokenKind.InterpolatedRawStringLiteralEnd;
                             yield return Transit(tokenKind, State.Text);
                             rawQuoteOrBraceCount = 0;
@@ -989,6 +1010,66 @@ public static class Scanner
                         }
                     }
                 }
+                case State.InterpolatedRawStringHoleCloseBrace:
+                {
+                    // Counting closing braces in a raw interpolated string hole
+                    // to determine if they close the hole or are code/literal content
+                    if (ch == '}')
+                    {
+                        // Another closing brace
+                        rawQuoteOrBraceCount++;
+                        
+                        // Per C# spec for raw interpolated strings with N dollar signs:
+                        // For closing braces: B < N means all are code (literal in hole)
+                        //                     N <= B means first (B-N) are code, then N close the hole
+                        var dollars = interpolationState.Dollars;
+                        
+                        if (rawQuoteOrBraceCount >= dollars)
+                        {
+                            // We have enough braces to close the hole
+                            // Pop the interpolation state to return to the outer raw string context
+                            interpolationState = interpolationStateStack.Count > 0 
+                                                ? interpolationStateStack.Pop() 
+                                                : new(InterpolatedStringKind.None);
+                            
+                            // Transition back to InterpolatedRawString state
+                            // It will handle emitting the Mid/End token when it sees the closing quotes
+                            state = State.InterpolatedRawString;
+                            rawQuoteOrBraceCount = 0;
+                            // The closing braces are part of the content, so restart to process the next char
+                            goto restart;
+                        }
+                        // Continue counting braces
+                        break;
+                    }
+                    else
+                    {
+                        // Non-brace character - determine what to do with accumulated braces
+                        var dollars = interpolationState.Dollars;
+                        var braceCount = rawQuoteOrBraceCount;
+                        
+                        if (braceCount < dollars)
+                        {
+                            // All braces are code (literal in the hole) - continue in Text state
+                            rawQuoteOrBraceCount = 0;
+                            state = State.Text;
+                            goto restart;
+                        }
+                        else
+                        {
+                            // braceCount >= dollars: Close the hole
+                            // Pop the interpolation state
+                            interpolationState = interpolationStateStack.Count > 0 
+                                                ? interpolationStateStack.Pop() 
+                                                : new(InterpolatedStringKind.None);
+                            
+                            // Transition back to InterpolatedRawString state
+                            state = State.InterpolatedRawString;
+                            rawQuoteOrBraceCount = 0;
+                            goto restart;
+                        }
+                    }
+                }
                 case State.InterpolatedRawStringCr:
                 {
                     if (ch != '\n')
@@ -1019,6 +1100,7 @@ public static class Scanner
             case State.RawStringCr:
             case State.InterpolatedRawString:
             case State.InterpolatedRawStringBrace:
+            case State.InterpolatedRawStringHoleCloseBrace:
             case State.InterpolatedRawStringCr:
             case State.DollarQuote:
                 throw SyntaxError("Unterminated string starting.");
