@@ -241,8 +241,6 @@ public static class Scanner
                             {
                                 InterpolatedStringKind.Verbatim => State.InterpolatedVerbatimString,
                                 InterpolatedStringKind.Raw => State.InterpolatedRawString,
-                                InterpolatedStringKind.Regular => State.InterpolatedString,
-                                InterpolatedStringKind.None => State.InterpolatedString,
                                 _ => State.InterpolatedString
                             };
 

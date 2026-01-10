@@ -761,7 +761,7 @@ public class ScannerTests
               "InterpolatedRawStringStart 17 0 =18 \"$$\\\"\\\"\\\"{single} {{{\"",
               "Text 4 0 =22 \"hole\"",
               "InterpolatedRawStringEnd 15 0 =37 \"}}} {single}\\\"\\\"\\\"\"")]
-    // Brace escaping tests (currently failing)
+    // Brace escaping tests with $$ interpolation
     [TestCase("$$\"\"\"{{{{content}}}}\"\"\"",
               "InterpolatedRawStringLiteral 23 0 =24 \"$$\\\"\\\"\\\"{{{{content}}}}\\\"\\\"\\\"\"")]
     [TestCase("$$\"\"\"{{x}} {{{{escaped}}}}\"\"\"",
