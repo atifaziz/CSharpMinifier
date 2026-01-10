@@ -241,6 +241,8 @@ public static class Scanner
                             {
                                 InterpolatedStringKind.Verbatim => State.InterpolatedVerbatimString,
                                 InterpolatedStringKind.Raw => State.InterpolatedRawString,
+                                InterpolatedStringKind.Regular or
+                                InterpolatedStringKind.None or
                                 _ => State.InterpolatedString
                             };
 
@@ -844,7 +846,7 @@ public static class Scanner
                     {
                         // Potential hole opening - need to count braces
                         rawQuoteOrBraceCount = 1;
-                        // Check immediately if we have enough braces (and not escaped)
+                        // Check immediately if we have enough braces
                         if (rawQuoteOrBraceCount == interpolationState.Dollars)
                         {
                             // Single brace is enough! Emit Start or Mid token (including the {)
@@ -855,8 +857,12 @@ public static class Scanner
                             if (interpolationState.IsSome)
                                 interpolationStateStack.Push(interpolationState);
                             // Create new interpolation state for the nested context (hole)
-                            // Use Raw so that closing } returns to InterpolatedRawString
-                            interpolationState = new(InterpolatedStringKind.Raw);
+                            // Preserve Dollars and Quotes so we know how to close the hole
+                            interpolationState = new(InterpolatedStringKind.Raw)
+                            {
+                                Dollars = interpolationState.Dollars,
+                                Quotes = interpolationState.Quotes
+                            };
                             rawQuoteOrBraceCount = 0;
                             // Don't restart - we already included the { and moved past it
                         }
@@ -909,49 +915,68 @@ public static class Scanner
                 }
                 case State.InterpolatedRawStringBrace:
                 {
-                    // Counting opening braces for hole detection with escaping support
+                    // Counting opening braces for hole detection
                     if (ch == '{')
                     {
                         // Another brace
                         rawQuoteOrBraceCount++;
+                        
+                        // Per C# spec for interpolated raw strings with N dollar signs:
+                        // We need exactly N braces to open a hole. Additional braces before
+                        // the hole opener are literal content. If we reach 2N-1 braces,
+                        // we emit the token and transition to Text (the Nth brace group opens the hole,
+                        // and any remaining braces become code inside the hole).
+                        var dollars = interpolationState.Dollars;
+                        
+                        if (rawQuoteOrBraceCount == 2 * dollars - 1)
+                        {
+                            // We've accumulated enough braces to determine this is a hole
+                            // Emit token with (N-1) literal braces + N opening braces = 2N-1 total
+                            var tokenKind = source[si] == '$'
+                                          ? TokenKind.InterpolatedRawStringLiteralStart
+                                          : TokenKind.InterpolatedRawStringLiteralMid;
+                            
+                            // Token ends at current position + 1 (including this brace)
+                            yield return Transit(tokenKind, State.Text, 1);
+                            
+                            if (interpolationState.IsSome)
+                                interpolationStateStack.Push(interpolationState);
+                            interpolationState = new(InterpolatedStringKind.Raw)
+                            {
+                                Dollars = interpolationState.Dollars,
+                                Quotes = interpolationState.Quotes
+                            };
+                            rawQuoteOrBraceCount = 0;
+                            goto restart;
+                        }
+                        // Otherwise, continue counting
                         break;
                     }
                     else
                     {
                         // Non-brace character - determine if braces open a hole or are literal
+                        // Per C# spec: B < N means all braces are literal
+                        //              B >= N means we have a hole (first B-N literal, then N opening)
                         var dollars = interpolationState.Dollars;
                         var braceCount = rawQuoteOrBraceCount;
                         
-                        // Brace processing for interpolated raw strings with n dollar signs:
-                        // - Braces are processed in groups of n
-                        // - If we have exactly n braces, they open a hole
-                        // - If we have 2n braces, they represent n literal braces (escaped)
-                        // - If we have remainder + k*n braces where remainder > 0:
-                        //   * First 'remainder' braces are literal
-                        //   * Then process k groups of n braces
-                        // - For k groups: if k is even, all are escaped; if k is odd, last group is hole
-                        
-                        var fullGroups = braceCount / dollars;
-                        _ = braceCount % dollars;  // remainder - kept for documentation/future use
-                        
-                        // Check if we have an odd number of full groups (meaning last group is a hole)
-                        var hasHole = (fullGroups > 0) && (fullGroups % 2 == 1);
-                        
-                        if (!hasHole)
+                        if (braceCount < dollars)
                         {
-                            // No hole - all braces are literal (remainder + escaped groups)
+                            // All braces are literal content - no hole
                             rawQuoteOrBraceCount = 0;
                             state = State.InterpolatedRawString;
                             goto restart;
                         }
                         else
                         {
-                            // Has a hole - emit token including literal braces and hole-opening braces
-                            // The token includes ALL the braces (literal + escaped + hole-opener)
+                            // braceCount >= dollars: We have a hole
+                            // For N <= B < 2N-1: we include all B braces in the token
                             var tokenKind = source[si] == '$'
                                           ? TokenKind.InterpolatedRawStringLiteralStart
                                           : TokenKind.InterpolatedRawStringLiteralMid;
+                            
                             yield return Transit(tokenKind, State.Text);
+                            
                             if (interpolationState.IsSome)
                                 interpolationStateStack.Push(interpolationState);
                             interpolationState = new(InterpolatedStringKind.Raw)
