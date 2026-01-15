@@ -65,6 +65,7 @@ public static class Scanner
         QuoteQuote,
         RawStringOpeningDelimiter,
         RawString,
+        RawStringCr,
         RawStringQuote,
         RawStringQuoteQuote,
     }
@@ -725,14 +726,31 @@ public static class Scanner
                 }
                 case State.RawString:
                 {
-                    if (ch == '"')
+#pragma warning disable IDE0010 // Populate switch
+                    switch (ch)
+#pragma warning restore IDE0010
                     {
-                        // Start of potential closing delimiter
-                        rawStringClosingQuoteCount = 1;
-                        state = State.RawStringQuote;
+                        case '"':
+                            // Start of potential closing delimiter
+                            rawStringClosingQuoteCount = 1;
+                            state = State.RawStringQuote;
+                            break;
+                        case '\n':
+                            pos = (pos.Line + 1, 0);
+                            break;
+                        case '\r':
+                            state = State.RawStringCr;
+                            break;
+                        // All other characters are content, stay in RawString
                     }
-                    // Non-quote characters are content, stay in RawString
                     break;
+                }
+                case State.RawStringCr:
+                {
+                    if (ch != '\n')
+                        pos = (pos.Line + 1, ch == '\r' ? 0 : 1);
+                    state = State.RawString;
+                    goto restart;
                 }
                 case State.RawStringQuote:
                 {
@@ -798,6 +816,7 @@ public static class Scanner
             case State.Quote:
             case State.RawStringOpeningDelimiter:
             case State.RawString:
+            case State.RawStringCr:
             case State.RawStringQuote:
                 throw SyntaxError("Unterminated string starting.");
             case State.RawStringQuoteQuote:

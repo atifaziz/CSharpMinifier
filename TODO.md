@@ -3,15 +3,15 @@
 ## Raw String Literals Support
 
 ### Phase 1 — Raw string literal (single-line)
-- [ ] Add TokenKind.RawStringLiteral and traits
-- [ ] Extend scanner state machine to recognize """...""" and """"...""""
-- [ ] Add unit tests for single-line raw strings
-- [ ] Mark phase complete
+- [x] Add TokenKind.RawStringLiteral and traits
+- [x] Extend scanner state machine to recognize """...""" and """"...""""
+- [x] Add unit tests for single-line raw strings
+- [x] Mark phase complete
 
 ### Phase 2 — Raw string literal (multi-line)
-- [ ] Extend scanner to allow newlines in raw strings and track line/col correctly
-- [ ] Add unit tests for multi-line raw strings (\n, \r, \r\n)
-- [ ] Mark phase complete
+- [x] Extend scanner to allow newlines in raw strings and track line/col correctly
+- [x] Add unit tests for multi-line raw strings (\n, \r, \r\n)
+- [x] Mark phase complete
 
 ### Phase 3 — Interpolated raw string (single-line)
 - [ ] Add interpolated-raw TokenKinds (InterpolatedRawStringLiteral, Start/Mid/End) and traits
