@@ -701,7 +701,7 @@ public static class Scanner
                     else
                     {
                         // It was just an empty string ""
-                        yield return Transit(TokenKind.StringLiteral, State.Text, -1);
+                        yield return Transit(TokenKind.StringLiteral, State.Text);
                         goto restart;
                     }
                     break;
