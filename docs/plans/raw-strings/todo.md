@@ -26,12 +26,13 @@ Track implementation progress for C# 11 raw string literal support in the scanne
   - [x] Add new scanner states: `RawString`, `RawStringQuote`, `RawStringCr`
   - [x] Add new scanner states: `InterpolatedRawString`, `InterpolatedRawStringQuote`, `InterpolatedRawStringBrace`, `InterpolatedRawStringCr`
 
-- [ ] **Phase 3: Single-Line Non-Interpolated Raw Strings**
-  - [ ] Detect `"""` opening delimiter (third quote after `""`)
-  - [ ] Count total opening quotes
-  - [ ] Scan content until matching closing quote sequence
-  - [ ] Emit `RawStringLiteral` token
+- [x] **Phase 3: Single-Line Non-Interpolated Raw Strings**
+  - [x] Detect `"""` opening delimiter (third quote after `""`)
+  - [x] Count total opening quotes
+  - [x] Scan content until matching closing quote sequence
+  - [x] Emit `RawStringLiteral` token
   - [ ] Add unit tests for single-line raw strings
+  - [ ] Debug and fix implementation issues
 
 - [ ] **Phase 4: Multi-Line Non-Interpolated Raw Strings**
   - [ ] Handle newline after opening delimiter as multi-line indicator

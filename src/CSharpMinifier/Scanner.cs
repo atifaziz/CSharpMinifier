@@ -192,8 +192,32 @@ public static class Scanner
                             break;
                         case ('"', _):
                         {
-                            if (TextTransit(State.String) is {} text)
-                                yield return text;
+                            // Check if this is a raw string literal (at least """)
+                            if (i + 2 < source.Length && source[i + 1] == '"' && source[i + 2] == '"')
+                            {
+                                // Count all consecutive opening quotes
+                                var quoteCount = 1;
+                                while (i + quoteCount < source.Length && source[i + quoteCount] == '"')
+                                    quoteCount++;
+                                
+                                if (TextTransit(State.RawString) is {} text)
+                                    yield return text;
+                                
+                                // Store quote count for later matching
+                                interpolationState.QuoteCount = quoteCount;
+                                
+                                // Skip past all opening quotes except the last one (loop will increment)
+                                for (var j = 1; j < quoteCount; j++)
+                                {
+                                    i++;
+                                    pos.Col++;
+                                }
+                            }
+                            else
+                            {
+                                if (TextTransit(State.String) is {} text)
+                                    yield return text;
+                            }
                             break;
                         }
                         case ('\'', _):
@@ -680,14 +704,63 @@ public static class Scanner
                     break;
                 }
                 case State.RawString:
+                {
+                    switch (ch)
+                    {
+                        case '"':
+                            state = State.RawStringQuote;
+                            break;
+                        case '\n':
+                            pos = (pos.Line + 1, 0);
+                            break;
+                        case '\r':
+                            state = State.RawStringCr;
+                            break;
+                        default:
+                            // Just continue scanning raw string content
+                            break;
+                    }
+                    break;
+                }
                 case State.RawStringQuote:
+                {
+                    // Count consecutive closing quotes (we're currently AT the first quote)
+                    var closingQuoteCount = 1;
+                    while (i + closingQuoteCount < source.Length && source[i + closingQuoteCount] == '"')
+                        closingQuoteCount++;
+                    
+                    if (closingQuoteCount >= interpolationState.QuoteCount)
+                    {
+                        // Found matching closing delimiter
+                        // Advance past all the closing quotes (minus 1 because loop will increment)
+                        for (var j = 1; j < interpolationState.QuoteCount; j++)
+                        {
+                            i++;
+                            pos.Col++;
+                        }
+                        yield return Transit(TokenKind.RawStringLiteral, State.Text, 1);
+                        interpolationState.QuoteCount = 0;
+                    }
+                    else
+                    {
+                        // Not enough quotes, just continue scanning the string
+                        state = State.RawString;
+                    }
+                    break;
+                }
                 case State.RawStringCr:
+                {
+                    if (ch != '\n')
+                        pos = (pos.Line + 1, ch == '\r' ? 0 : 1);
+                    state = State.RawString;
+                    goto restart;
+                }
                 case State.InterpolatedRawString:
                 case State.InterpolatedRawStringQuote:
                 case State.InterpolatedRawStringBrace:
                 case State.InterpolatedRawStringCr:
                 {
-                    // TODO: Implement in Phase 3-6
+                    // TODO: Implement in Phase 5-6
                     throw new NotImplementedException($"Raw string state {state} not yet implemented.");
                 }
                 default:
