@@ -94,6 +94,7 @@ public static class Scanner
         var interpolationStateStack = new Stack<InterpolationState>();
         var rawStringQuoteCount = 0;
         var rawStringClosingQuoteCount = 0;
+        var rawStringContentStarted = false;
 
         T TransitReturn<T>(State newState, int offset, T token)
         {
@@ -696,6 +697,7 @@ public static class Scanner
                     {
                         rawStringQuoteCount = 3;
                         rawStringClosingQuoteCount = 0;
+                        rawStringContentStarted = false;
                         state = State.RawString;
                     }
                     else
@@ -710,14 +712,26 @@ public static class Scanner
                 {
                     if (ch == '"')
                     {
-                        // A quote in raw string could be:
-                        // 1. Part of content
-                        // 2. Start of closing delimiter
-                        // We'll treat it as potential closing delimiter
-                        rawStringClosingQuoteCount = 1;
-                        state = State.RawStringQuote;
+                        // A quote could be:
+                        // 1. Part of opening delimiter (if content hasn't started)
+                        // 2. Start of closing delimiter (if content has started)
+                        if (!rawStringContentStarted)
+                        {
+                            // Still accumulating opening delimiter
+                            rawStringQuoteCount++;
+                        }
+                        else
+                        {
+                            // Content has started, this is potential closing delimiter
+                            rawStringClosingQuoteCount = 1;
+                            state = State.RawStringQuote;
+                        }
                     }
-                    // Non-quote characters are content, stay in RawString
+                    else
+                    {
+                        // Non-quote character means content has started
+                        rawStringContentStarted = true;
+                    }
                     break;
                 }
                 case State.RawStringQuote:
@@ -730,6 +744,7 @@ public static class Scanner
                     else
                     {
                         // Not a closing delimiter, back to RawString
+                        rawStringContentStarted = true;
                         state = State.RawString;
                         goto restart;
                     }
@@ -751,11 +766,13 @@ public static class Scanner
                             yield return Transit(TokenKind.RawStringLiteral, State.Text);
                             rawStringQuoteCount = 0;
                             rawStringClosingQuoteCount = 0;
+                            rawStringContentStarted = false;
                             goto restart;
                         }
                         else
                         {
                             // Not a match, back to scanning raw string content
+                            rawStringContentStarted = true;
                             state = State.RawString;
                             goto restart;
                         }
