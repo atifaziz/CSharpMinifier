@@ -38,17 +38,21 @@ CSharpMinifier.Token.Token(CSharpMinifier.TokenKind Kind, CSharpMinifier.Positio
 CSharpMinifier.TokenExtensions
 CSharpMinifier.TokenKind
 CSharpMinifier.TokenKind.CharLiteral = 5 -> CSharpMinifier.TokenKind
-CSharpMinifier.TokenKind.InterpolatedStringLiteral = 9 -> CSharpMinifier.TokenKind
-CSharpMinifier.TokenKind.InterpolatedStringLiteralEnd = 12 -> CSharpMinifier.TokenKind
-CSharpMinifier.TokenKind.InterpolatedStringLiteralMid = 11 -> CSharpMinifier.TokenKind
-CSharpMinifier.TokenKind.InterpolatedStringLiteralStart = 10 -> CSharpMinifier.TokenKind
-CSharpMinifier.TokenKind.InterpolatedVerbatimStringLiteral = 13 -> CSharpMinifier.TokenKind
-CSharpMinifier.TokenKind.InterpolatedVerbatimStringLiteralEnd = 16 -> CSharpMinifier.TokenKind
-CSharpMinifier.TokenKind.InterpolatedVerbatimStringLiteralMid = 15 -> CSharpMinifier.TokenKind
-CSharpMinifier.TokenKind.InterpolatedVerbatimStringLiteralStart = 14 -> CSharpMinifier.TokenKind
+CSharpMinifier.TokenKind.InterpolatedRawStringLiteral = 9 -> CSharpMinifier.TokenKind
+CSharpMinifier.TokenKind.InterpolatedRawStringLiteralEnd = 12 -> CSharpMinifier.TokenKind
+CSharpMinifier.TokenKind.InterpolatedRawStringLiteralMid = 11 -> CSharpMinifier.TokenKind
+CSharpMinifier.TokenKind.InterpolatedRawStringLiteralStart = 10 -> CSharpMinifier.TokenKind
+CSharpMinifier.TokenKind.InterpolatedStringLiteral = 13 -> CSharpMinifier.TokenKind
+CSharpMinifier.TokenKind.InterpolatedStringLiteralEnd = 16 -> CSharpMinifier.TokenKind
+CSharpMinifier.TokenKind.InterpolatedStringLiteralMid = 15 -> CSharpMinifier.TokenKind
+CSharpMinifier.TokenKind.InterpolatedStringLiteralStart = 14 -> CSharpMinifier.TokenKind
+CSharpMinifier.TokenKind.InterpolatedVerbatimStringLiteral = 17 -> CSharpMinifier.TokenKind
+CSharpMinifier.TokenKind.InterpolatedVerbatimStringLiteralEnd = 20 -> CSharpMinifier.TokenKind
+CSharpMinifier.TokenKind.InterpolatedVerbatimStringLiteralMid = 19 -> CSharpMinifier.TokenKind
+CSharpMinifier.TokenKind.InterpolatedVerbatimStringLiteralStart = 18 -> CSharpMinifier.TokenKind
 CSharpMinifier.TokenKind.MultiLineComment = 4 -> CSharpMinifier.TokenKind
 CSharpMinifier.TokenKind.NewLine = 2 -> CSharpMinifier.TokenKind
-CSharpMinifier.TokenKind.PreprocessorDirective = 17 -> CSharpMinifier.TokenKind
+CSharpMinifier.TokenKind.PreprocessorDirective = 21 -> CSharpMinifier.TokenKind
 CSharpMinifier.TokenKind.RawStringLiteral = 8 -> CSharpMinifier.TokenKind
 CSharpMinifier.TokenKind.SingleLineComment = 3 -> CSharpMinifier.TokenKind
 CSharpMinifier.TokenKind.StringLiteral = 6 -> CSharpMinifier.TokenKind
