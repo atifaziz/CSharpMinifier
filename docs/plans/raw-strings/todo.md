@@ -19,12 +19,12 @@ Track implementation progress for C# 11 raw string literal support in the scanne
   - [x] Add `RawString = 0x200` trait flag
   - [x] Update `TraitsByKind` array for new token kinds
 
-- [ ] **Phase 2: Scanner Infrastructure**
-  - [ ] Extend `InterpolatedStringKind` with `Raw`
-  - [ ] Extend `InterpolationState` with `DollarCount` and `QuoteCount`
-  - [ ] Ensure raw-string hole boundaries require `Parentheses == 0`, `Braces == 0`, and `Brackets == 0`
-  - [ ] Add new scanner states: `RawString`, `RawStringQuote`, `RawStringCr`
-  - [ ] Add new scanner states: `InterpolatedRawString`, `InterpolatedRawStringQuote`, `InterpolatedRawStringBrace`, `InterpolatedRawStringCr`
+- [x] **Phase 2: Scanner Infrastructure**
+  - [x] Extend `InterpolatedStringKind` with `Raw`
+  - [x] Extend `InterpolationState` with `DollarCount` and `QuoteCount`
+  - [x] Ensure raw-string hole boundaries require `Parentheses == 0`, `Braces == 0`, and `Brackets == 0`
+  - [x] Add new scanner states: `RawString`, `RawStringQuote`, `RawStringCr`
+  - [x] Add new scanner states: `InterpolatedRawString`, `InterpolatedRawStringQuote`, `InterpolatedRawStringBrace`, `InterpolatedRawStringCr`
 
 - [ ] **Phase 3: Single-Line Non-Interpolated Raw Strings**
   - [ ] Detect `"""` opening delimiter (third quote after `""`)

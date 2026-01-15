@@ -55,6 +55,13 @@ public static class Scanner
         InterpolatedVerbatimStringQuote,
         InterpolatedVerbatimStringBrace,
         InterpolatedVerbatimStringCr,
+        RawString,
+        RawStringQuote,
+        RawStringCr,
+        InterpolatedRawString,
+        InterpolatedRawStringQuote,
+        InterpolatedRawStringBrace,
+        InterpolatedRawStringCr,
         Char,
         CharEscape,
         PreprocessorDirective,
@@ -63,7 +70,7 @@ public static class Scanner
         PreprocessorDirectiveTrailingWhiteSpaceSlash,
     }
 
-    enum InterpolatedStringKind { None, Regular, Verbatim }
+    enum InterpolatedStringKind { None, Regular, Verbatim, Raw }
 
     struct InterpolationState(InterpolatedStringKind kind)
     {
@@ -74,6 +81,8 @@ public static class Scanner
         public int Parentheses { get; set; }
         public int Braces      { get; set; }
         public int Brackets    { get; set; }
+        public int DollarCount { get; set; }
+        public int QuoteCount  { get; set; }
     }
 
     static IEnumerable<Token> ScanImpl(string source)
@@ -670,6 +679,17 @@ public static class Scanner
                     }
                     break;
                 }
+                case State.RawString:
+                case State.RawStringQuote:
+                case State.RawStringCr:
+                case State.InterpolatedRawString:
+                case State.InterpolatedRawStringQuote:
+                case State.InterpolatedRawStringBrace:
+                case State.InterpolatedRawStringCr:
+                {
+                    // TODO: Implement in Phase 3-6
+                    throw new NotImplementedException($"Raw string state {state} not yet implemented.");
+                }
                 default:
                     throw new UnreachableException();
             }
@@ -689,6 +709,13 @@ public static class Scanner
             case State.InterpolatedVerbatimString:
             case State.InterpolatedVerbatimStringBrace:
             case State.InterpolatedVerbatimStringCr:
+            case State.RawString:
+            case State.RawStringQuote:
+            case State.RawStringCr:
+            case State.InterpolatedRawString:
+            case State.InterpolatedRawStringQuote:
+            case State.InterpolatedRawStringBrace:
+            case State.InterpolatedRawStringCr:
                 throw SyntaxError("Unterminated string starting.");
             case State.Char:
                 throw SyntaxError("Unterminated character literal.");
