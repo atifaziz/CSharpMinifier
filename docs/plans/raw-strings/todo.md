@@ -10,14 +10,14 @@ Track implementation progress for C# 11 raw string literal support in the scanne
 
 ## Implementation Phases
 
-- [ ] **Phase 1: TokenKind and Traits**
-  - [ ] Add `RawStringLiteral` to `TokenKind` enum
-  - [ ] Add `InterpolatedRawStringLiteral` to `TokenKind` enum
-  - [ ] Add `InterpolatedRawStringLiteralStart` to `TokenKind` enum
-  - [ ] Add `InterpolatedRawStringLiteralMid` to `TokenKind` enum
-  - [ ] Add `InterpolatedRawStringLiteralEnd` to `TokenKind` enum
-  - [ ] Add `RawString = 0x200` trait flag
-  - [ ] Update `TraitsByKind` array for new token kinds
+- [x] **Phase 1: TokenKind and Traits**
+  - [x] Add `RawStringLiteral` to `TokenKind` enum
+  - [x] Add `InterpolatedRawStringLiteral` to `TokenKind` enum
+  - [x] Add `InterpolatedRawStringLiteralStart` to `TokenKind` enum
+  - [x] Add `InterpolatedRawStringLiteralMid` to `TokenKind` enum
+  - [x] Add `InterpolatedRawStringLiteralEnd` to `TokenKind` enum
+  - [x] Add `RawString = 0x200` trait flag
+  - [x] Update `TraitsByKind` array for new token kinds
 
 - [ ] **Phase 2: Scanner Infrastructure**
   - [ ] Extend `InterpolatedStringKind` with `Raw`
