@@ -310,11 +310,11 @@ public class ScannerTests
         @"Text   1 0 1 "";""")]
 
     // Raw string literals (C# 11) - single-line only (Phase 1)
-    [TestCase("\"\"\"hello\"\"\"", @"RawStringLiteral 11 0 11 ""\""\""\""\""hello\""\""\""\""""")]
-    [TestCase("\"\"\"he said \"hi\" \"\"\"", @"RawStringLiteral 21 0 21 ""\""\""\""\""he said \""hi\"" \""\""\""\""""")]
-    [TestCase("\"\"\"\"has \"\"\" inside\"\"\"\"", @"RawStringLiteral 23 0 23 ""\""\""\""\""\""\""has \""\""\""\""\"" inside\""\""\""\""\""\""""")]
-    [TestCase("\"\"\"{x}\"\"\"", @"RawStringLiteral 9 0 9 ""\""\""\""\""{{x}}\""\""\""\""""")]
-    [TestCase("\"\"\"\\n\\t\"\"\"", @"RawStringLiteral 11 0 11 ""\""\""\""\""\\n\\t\""\""\""\""""")]
+    [TestCase("\"\"\"hello\"\"\"", "RawStringLiteral 11 0 11 \"\\\"\\\"\\\"hello\\\"\\\"\\\"\"")]
+    [TestCase("\"\"\"he said \"hi\" \"\"\"", "RawStringLiteral 21 0 21 \"\\\"\\\"\\\"he said \\\"hi\\\" \\\"\\\"\\\"\"")]
+    [TestCase("\"\"\"\"has \"\"\" inside\"\"\"\"", "RawStringLiteral 23 0 23 \"\\\"\\\"\\\"\\\"has \\\"\\\"\\\" inside\\\"\\\"\\\"\\\"\"")]
+    [TestCase("\"\"\"{x}\"\"\"", "RawStringLiteral 9 0 9 \"\\\"\\\"\\\"{{x}}\\\"\\\"\\\"\"")]
+    [TestCase("\"\"\"\\n\\t\"\"\"", "RawStringLiteral 11 0 11 \"\\\"\\\"\\\"\\\\n\\\\t\\\"\\\"\\\"\"")]
 
     [TestCase("$$"                , @"Text                2 0  2 ""$$""")]
     [TestCase("$\"\""             , @"InterpolatedString  3 0  3 ""$\""\""""")]
