@@ -323,6 +323,9 @@ public class ScannerTests
     [TestCase("\"\"\"hello\n\nworld\"\"\"", "RawStringLiteral 18 2 =9 \"\\\"\\\"\\\"hello\\n\\nworld\\\"\\\"\\\"\"")]
     [TestCase("\"\"\"text\n\"\"\"", "RawStringLiteral 11 1 =4 \"\\\"\\\"\\\"text\\n\\\"\\\"\\\"\"")]
 
+    // Interpolated raw string literals (C# 11) - Phase 3
+    [TestCase("$\"\"\"hello\"\"\"", "InterpolatedRawString 13 0 13 \"$\\\"\\\"\\\"hello\\\"\\\"\\\"\"")]
+
     [TestCase("$$"                , @"Text                2 0  2 ""$$""")]
     [TestCase("$\"\""             , @"InterpolatedString  3 0  3 ""$\""\""""")]
     [TestCase("$\"foobar\""       , @"InterpolatedString  9 0  9 ""$\""foobar\""""")]
