@@ -75,6 +75,10 @@ public class ScannerTests
     [TestCase("/*")]
     [TestCase("/* foo")]
     [TestCase("/*\r")]
+    [TestCase("\"\"\"")]
+    [TestCase("\"\"\"foo")]
+    [TestCase("\"\"\"\"")]
+    [TestCase("\"\"\"\"\"")]
     public void SyntaxError(string source)
     {
         _ = Assert.Throws<SyntaxErrorException>(() => Scanner.Scan(source).Consume());
@@ -303,6 +307,14 @@ public class ScannerTests
         @"Text   4 0 4 ""foo=""",
         @"String 5 0 5 ""\""bar\""""",
         @"Text   1 0 1 "";""")]
+
+    // Raw string literals (C# 11)
+    [TestCase("\"\"\"\"\"\"", @"RawStringLiteral 6 0 6 ""\""\""\""\""\""\""""")]
+    [TestCase("\"\"\"hello\"\"\"", @"RawStringLiteral 11 0 11 ""\""\""\""\""hello\""\""\""\""""")]
+    [TestCase("\"\"\"he said \"hi\" \"\"\"", @"RawStringLiteral 21 0 21 ""\""\""\""\""he said \""hi\"" \""\""\""\""""")]
+    [TestCase("\"\"\"\"has \"\"\" inside\"\"\"\"", @"RawStringLiteral 23 0 23 ""\""\""\""\""\""\""has \""\""\""\""\"" inside\""\""\""\""\""\""""")]
+    [TestCase("\"\"\"{x}\"\"\"", @"RawStringLiteral 9 0 9 ""\""\""\""\""{{x}}\""\""\""\""""")]
+    [TestCase("\"\"\"\\n\\t\"\"\"", @"RawStringLiteral 11 0 11 ""\""\""\""\""\\n\\t\""\""\""\""""")]
 
     [TestCase("$$"                , @"Text                2 0  2 ""$$""")]
     [TestCase("$\"\""             , @"InterpolatedString  3 0  3 ""$\""\""""")]

@@ -33,6 +33,7 @@ public enum TokenKind
     CharLiteral,
     StringLiteral,
     VerbatimStringLiteral,
+    RawStringLiteral,
     InterpolatedStringLiteral,
     InterpolatedStringLiteralStart,
     InterpolatedStringLiteralMid,

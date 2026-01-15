@@ -61,6 +61,11 @@ public static class Scanner
         PreprocessorDirectiveSlash,
         PreprocessorDirectiveTrailingWhiteSpace,
         PreprocessorDirectiveTrailingWhiteSpaceSlash,
+        Quote,
+        QuoteQuote,
+        RawString,
+        RawStringQuote,
+        RawStringQuoteQuote,
     }
 
     enum InterpolatedStringKind { None, Regular, Verbatim }
@@ -87,6 +92,8 @@ public static class Scanner
         int i;
         var interpolationState = new InterpolationState();
         var interpolationStateStack = new Stack<InterpolationState>();
+        var rawStringQuoteCount = 0;
+        var rawStringClosingQuoteCount = 0;
 
         T TransitReturn<T>(State newState, int offset, T token)
         {
@@ -183,7 +190,7 @@ public static class Scanner
                             break;
                         case ('"', _):
                         {
-                            if (TextTransit(State.String) is {} text)
+                            if (TextTransit(State.Quote) is {} text)
                                 yield return text;
                             break;
                         }
@@ -670,6 +677,91 @@ public static class Scanner
                     }
                     break;
                 }
+                case State.Quote:
+                {
+                    if (ch == '"')
+                    {
+                        state = State.QuoteQuote;
+                    }
+                    else
+                    {
+                        state = State.String;
+                        goto restart;
+                    }
+                    break;
+                }
+                case State.QuoteQuote:
+                {
+                    if (ch == '"')
+                    {
+                        rawStringQuoteCount = 3;
+                        rawStringClosingQuoteCount = 0;
+                        state = State.RawString;
+                    }
+                    else
+                    {
+                        // It was just an empty string ""
+                        yield return Transit(TokenKind.StringLiteral, State.Text, -1);
+                        goto restart;
+                    }
+                    break;
+                }
+                case State.RawString:
+                {
+                    if (ch == '"')
+                    {
+                        // A quote in raw string could be:
+                        // 1. Part of content
+                        // 2. Start of closing delimiter
+                        // We'll treat it as potential closing delimiter
+                        rawStringClosingQuoteCount = 1;
+                        state = State.RawStringQuote;
+                    }
+                    // Non-quote characters are content, stay in RawString
+                    break;
+                }
+                case State.RawStringQuote:
+                {
+                    if (ch == '"')
+                    {
+                        rawStringClosingQuoteCount = 2;
+                        state = State.RawStringQuoteQuote;
+                    }
+                    else
+                    {
+                        // Not a closing delimiter, back to RawString
+                        state = State.RawString;
+                        goto restart;
+                    }
+                    break;
+                }
+                case State.RawStringQuoteQuote:
+                {
+                    if (ch == '"')
+                    {
+                        // Continue counting quotes
+                        rawStringClosingQuoteCount++;
+                    }
+                    else
+                    {
+                        // End of quote sequence, check if we have enough
+                        if (rawStringClosingQuoteCount == rawStringQuoteCount)
+                        {
+                            // Exact match - close the raw string
+                            yield return Transit(TokenKind.RawStringLiteral, State.Text);
+                            rawStringQuoteCount = 0;
+                            rawStringClosingQuoteCount = 0;
+                            goto restart;
+                        }
+                        else
+                        {
+                            // Not a match, back to scanning raw string content
+                            state = State.RawString;
+                            goto restart;
+                        }
+                    }
+                    break;
+                }
                 default:
                     throw new UnreachableException();
             }
@@ -689,7 +781,16 @@ public static class Scanner
             case State.InterpolatedVerbatimString:
             case State.InterpolatedVerbatimStringBrace:
             case State.InterpolatedVerbatimStringCr:
+            case State.Quote:
+            case State.RawString:
+            case State.RawStringQuote:
                 throw SyntaxError("Unterminated string starting.");
+            case State.RawStringQuoteQuote:
+                // Special case: if we have the right number of closing quotes, this is valid
+                if (rawStringClosingQuoteCount != rawStringQuoteCount)
+                    throw SyntaxError("Unterminated string starting.");
+                // Fall through to emit the token
+                goto default;
             case State.Char:
                 throw SyntaxError("Unterminated character literal.");
             case State.MultiLineComment:
@@ -726,6 +827,8 @@ public static class Scanner
                             State.PreprocessorDirectiveTrailingWhiteSpaceSlash => TokenKind.PreprocessorDirective,
                             State.InterpolatedVerbatimStringQuote when IsDollarOrAt(source[si]) => TokenKind.InterpolatedVerbatimStringLiteral,
                             State.InterpolatedVerbatimStringQuote => TokenKind.InterpolatedVerbatimStringLiteralEnd,
+                            State.QuoteQuote => TokenKind.StringLiteral,
+                            State.RawStringQuoteQuote when rawStringClosingQuoteCount == rawStringQuoteCount => TokenKind.RawStringLiteral,
                             _ => TokenKind.Text
                         };
 
