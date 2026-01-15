@@ -63,6 +63,7 @@ public static class Scanner
         PreprocessorDirectiveTrailingWhiteSpaceSlash,
         Quote,
         QuoteQuote,
+        RawStringOpeningDelimiter,
         RawString,
         RawStringQuote,
         RawStringQuoteQuote,
@@ -94,7 +95,6 @@ public static class Scanner
         var interpolationStateStack = new Stack<InterpolationState>();
         var rawStringQuoteCount = 0;
         var rawStringClosingQuoteCount = 0;
-        var rawStringContentStarted = false;
 
         T TransitReturn<T>(State newState, int offset, T token)
         {
@@ -697,8 +697,7 @@ public static class Scanner
                     {
                         rawStringQuoteCount = 3;
                         rawStringClosingQuoteCount = 0;
-                        rawStringContentStarted = false;
-                        state = State.RawString;
+                        state = State.RawStringOpeningDelimiter;
                     }
                     else
                     {
@@ -708,30 +707,31 @@ public static class Scanner
                     }
                     break;
                 }
+                case State.RawStringOpeningDelimiter:
+                {
+                    if (ch == '"')
+                    {
+                        // Continue counting opening quotes
+                        rawStringQuoteCount++;
+                    }
+                    else
+                    {
+                        // Non-quote character, opening delimiter is complete
+                        // Now we're in the content/body of the raw string
+                        state = State.RawString;
+                        goto restart;
+                    }
+                    break;
+                }
                 case State.RawString:
                 {
                     if (ch == '"')
                     {
-                        // A quote could be:
-                        // 1. Part of opening delimiter (if content hasn't started)
-                        // 2. Start of closing delimiter (if content has started)
-                        if (!rawStringContentStarted)
-                        {
-                            // Still accumulating opening delimiter
-                            rawStringQuoteCount++;
-                        }
-                        else
-                        {
-                            // Content has started, this is potential closing delimiter
-                            rawStringClosingQuoteCount = 1;
-                            state = State.RawStringQuote;
-                        }
+                        // Start of potential closing delimiter
+                        rawStringClosingQuoteCount = 1;
+                        state = State.RawStringQuote;
                     }
-                    else
-                    {
-                        // Non-quote character means content has started
-                        rawStringContentStarted = true;
-                    }
+                    // Non-quote characters are content, stay in RawString
                     break;
                 }
                 case State.RawStringQuote:
@@ -744,7 +744,6 @@ public static class Scanner
                     else
                     {
                         // Not a closing delimiter, back to RawString
-                        rawStringContentStarted = true;
                         state = State.RawString;
                         goto restart;
                     }
@@ -766,13 +765,11 @@ public static class Scanner
                             yield return Transit(TokenKind.RawStringLiteral, State.Text);
                             rawStringQuoteCount = 0;
                             rawStringClosingQuoteCount = 0;
-                            rawStringContentStarted = false;
                             goto restart;
                         }
                         else
                         {
                             // Not a match, back to scanning raw string content
-                            rawStringContentStarted = true;
                             state = State.RawString;
                             goto restart;
                         }
@@ -799,6 +796,7 @@ public static class Scanner
             case State.InterpolatedVerbatimStringBrace:
             case State.InterpolatedVerbatimStringCr:
             case State.Quote:
+            case State.RawStringOpeningDelimiter:
             case State.RawString:
             case State.RawStringQuote:
                 throw SyntaxError("Unterminated string starting.");
