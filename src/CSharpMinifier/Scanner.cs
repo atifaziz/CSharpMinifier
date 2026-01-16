@@ -447,22 +447,13 @@ public static class Scanner
                 {
                     if (ch == '"')
                     {
-                        // DEBUG
                         // It's $""" (interpolated raw string)
                         // Emit any pending text before the $
-                        if (i - 3 - si > 0)
-                        {
-                            yield return new Token(TokenKind.Text,
-                                                 new Position(si, spos.Line, spos.Col),
-                                                 new Position(i - 3, pos.Line, pos.Col - 3));
-                        }
-                        // Set si to point to the $
-                        si = i - 3;
-                        spos = (pos.Line, pos.Col - 3);
+                        if (TextTransit(State.InterpolatedRawStringOpeningDelimiter, -3) is {} text)
+                            yield return text;
                         interpolatedRawStringDollarCount = 1;
                         rawStringQuoteCount = 3;
                         rawStringClosingQuoteCount = 0;
-                        state = State.InterpolatedRawStringOpeningDelimiter;
                     }
                     else
                     {
@@ -1037,6 +1028,7 @@ public static class Scanner
                 throw SyntaxError("Unterminated string starting.");
             case State.DollarQuoteQuote:
                 // Special case: $"" is an empty interpolated string
+                pos.Col++;
                 yield return Transit(TokenKind.InterpolatedStringLiteral, State.Text);
                 yield break;
             case State.RawStringQuoteQuote:
