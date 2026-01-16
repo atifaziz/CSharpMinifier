@@ -14,15 +14,15 @@
 - [x] Mark phase complete
 
 ### Phase 3 — Interpolated raw string (single-line)
-- [ ] Add interpolated-raw TokenKinds (InterpolatedRawStringLiteral, Start/Mid/End) and traits
-- [ ] Extend scanner: dollar-count + opening-brace counting rules (D/B rules)
-- [ ] Add unit tests for interpolated raw strings (including multiple $)
-- [ ] Mark phase complete
+- [x] Add interpolated-raw TokenKinds (InterpolatedRawStringLiteral, Start/Mid/End) and traits
+- [x] Extend scanner: dollar-count + opening-brace counting rules (D/B rules)
+- [x] Add unit tests for interpolated raw strings (including multiple $)
+- [x] Mark phase complete
 
 ### Phase 4 — Interpolated raw string (multi-line)
-- [ ] Extend interpolated-raw scanner states for newlines and CR handling
-- [ ] Add unit tests for multi-line interpolated raw strings
-- [ ] Mark phase complete
+- [x] Extend interpolated-raw scanner states for newlines and CR handling
+- [x] Add unit tests for multi-line interpolated raw strings
+- [x] Mark phase complete
 
 ## Notes / tricky cases
 

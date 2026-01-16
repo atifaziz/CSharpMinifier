@@ -326,6 +326,13 @@ public class ScannerTests
     // Interpolated raw string literals (C# 11) - Phase 3
     [TestCase("$\"\"\"hello\"\"\"", "InterpolatedRawStringLiteral 12 0 12 \"$\\\"\\\"\\\"hello\\\"\\\"\\\"\"")]
 
+    // Interpolated raw string literals (multi-line) - Phase 4
+    [TestCase("$\"\"\"hello\nworld\"\"\"", "InterpolatedRawStringLiteral 18 1 =9 \"$\\\"\\\"\\\"hello\\nworld\\\"\\\"\\\"\"")]
+    [TestCase("$\"\"\"line1\r\nline2\"\"\"", "InterpolatedRawStringLiteral 19 1 =9 \"$\\\"\\\"\\\"line1\\r\\nline2\\\"\\\"\\\"\"")]
+    [TestCase("$\"\"\"line1\rline2\"\"\"", "InterpolatedRawStringLiteral 18 1 =9 \"$\\\"\\\"\\\"line1\\rline2\\\"\\\"\\\"\"")]
+    [TestCase("$\"\"\"hello\n\nworld\"\"\"", "InterpolatedRawStringLiteral 19 2 =9 \"$\\\"\\\"\\\"hello\\n\\nworld\\\"\\\"\\\"\"")]
+    [TestCase("$\"\"\"text\n\"\"\"", "InterpolatedRawStringLiteral 12 1 =4 \"$\\\"\\\"\\\"text\\n\\\"\\\"\\\"\"")]
+
     [TestCase("$$"                , @"Text                2 0  2 ""$$""")]
     [TestCase("$\"\""             , @"InterpolatedString  3 0  3 ""$\""\""""")]
     [TestCase("$\"foobar\""       , @"InterpolatedString  9 0  9 ""$\""foobar\""""")]
