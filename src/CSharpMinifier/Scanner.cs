@@ -904,33 +904,33 @@ public static class Scanner
                     else
                     {
                         // Non-brace character, check brace count against dollar count
-                        var B = interpolatedRawStringBraceCount;
-                        var D = interpolatedRawStringDollarCount;
+                        var braceCount = interpolatedRawStringBraceCount;
+                        var dollarCount = interpolatedRawStringDollarCount;
                         
-                        if (B < D)
+                        if (braceCount < dollarCount)
                         {
                             // All braces are literal, back to interpolated raw string
                             state = State.InterpolatedRawString;
                             goto restart;
                         }
-                        else if (B == D)
+                        else if (braceCount == dollarCount)
                         {
                             // Enter hole (interpolation expression)
                             var kind = interpolationState.IsSome
                                      ? TokenKind.InterpolatedRawStringLiteralMid
                                      : TokenKind.InterpolatedRawStringLiteralStart;
-                            if (TextTransit(State.Text, -B) is {} text)
+                            if (TextTransit(State.Text, -braceCount) is {} text)
                                 yield return text;
                             yield return Transit(kind, State.Text);
                             interpolationStateStack.Push(interpolationState);
                             interpolationState = new InterpolationState(InterpolatedStringKind.Raw);
                             goto restart;
                         }
-                        else // B > D
+                        else // braceCount > dollarCount
                         {
                             // Enter hole with some braces literal in the token
-                            var bracesInToken = Math.Max(B, 2 * D - 1);
-                            var bracesInHole = B - bracesInToken;
+                            var bracesInToken = Math.Max(braceCount, 2 * dollarCount - 1);
+                            var bracesInHole = braceCount - bracesInToken;
                             var kind = interpolationState.IsSome
                                      ? TokenKind.InterpolatedRawStringLiteralMid
                                      : TokenKind.InterpolatedRawStringLiteralStart;
