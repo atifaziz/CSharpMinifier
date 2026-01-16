@@ -451,6 +451,9 @@ public static class Scanner
                         // Emit any pending text before the $
                         if (TextTransit(State.InterpolatedRawStringOpeningDelimiter, -3) is {} text)
                             yield return text;
+                        // Manually adjust si to point at the $
+                        si = i - 3;
+                        spos = (pos.Line, pos.Col - 3);
                         interpolatedRawStringDollarCount = 1;
                         rawStringQuoteCount = 3;
                         rawStringClosingQuoteCount = 0;
@@ -920,8 +923,11 @@ public static class Scanner
                             var kind = interpolationState.IsSome
                                      ? TokenKind.InterpolatedRawStringLiteralMid
                                      : TokenKind.InterpolatedRawStringLiteralStart;
-                            // Back up to before the braces (and current char), skip braces to enter Text state
-                            yield return Transit(kind, State.Text, -(braceCount + 1));
+                            // Token ends just before the first brace
+                            yield return Transit(kind, State.Text, -braceCount);
+                            // Skip past the brace delimiters for the next token
+                            si += braceCount;
+                            spos = (spos.Line, spos.Col + braceCount);
                             interpolationStateStack.Push(interpolationState);
                             interpolationState = new InterpolationState(InterpolatedStringKind.Raw);
                             goto restart;
@@ -932,8 +938,11 @@ public static class Scanner
                             var kind = interpolationState.IsSome
                                      ? TokenKind.InterpolatedRawStringLiteralMid
                                      : TokenKind.InterpolatedRawStringLiteralStart;
-                            // Token includes (braceCount - dollarCount) literal braces, then (dollarCount) delimiter braces
-                            yield return Transit(kind, State.Text, -(dollarCount + 1));
+                            // Token includes (braceCount - dollarCount) literal braces, ends before delimiter braces
+                            yield return Transit(kind, State.Text, -dollarCount);
+                            // Skip past the delimiter braces for the next token
+                            si += dollarCount;
+                            spos = (spos.Line, spos.Col + dollarCount);
                             interpolationStateStack.Push(interpolationState);
                             interpolationState = new InterpolationState(InterpolatedStringKind.Raw) { Braces = 0 };
                             goto restart;
