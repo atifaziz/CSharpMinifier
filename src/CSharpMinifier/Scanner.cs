@@ -920,14 +920,17 @@ public static class Scanner
                         {
                             // Enter hole (interpolation expression)
                             // Include the opening braces in the Start/Mid token (like regular interpolated strings)
-                            var kind = interpolationState.IsSome
-                                     ? TokenKind.InterpolatedRawStringLiteralMid
-                                     : TokenKind.InterpolatedRawStringLiteralStart;
+                            // Check if si points at $ to determine if this is the first hole
+                            var kind = source[si] == '$'
+                                     ? TokenKind.InterpolatedRawStringLiteralStart
+                                     : TokenKind.InterpolatedRawStringLiteralMid;
                             // Token ends AFTER the braces (inclusive)
                             yield return Transit(kind, State.Text);
-                            // Push the current (outer) interpolation state if it exists
-                            if (interpolationState.IsSome)
-                                interpolationStateStack.Push(interpolationState);
+                            // Always push a marker state to track that we're in a hole
+                            // Use the current state if it exists, otherwise create a marker
+                            interpolationStateStack.Push(interpolationState.IsSome 
+                                ? interpolationState 
+                                : new InterpolationState(InterpolatedStringKind.Raw));
                             // Set up new interpolation state for the hole
                             interpolationState = new InterpolationState(InterpolatedStringKind.Raw) { Braces = 0 };
                             // Continue in Text state to scan hole content
@@ -935,9 +938,10 @@ public static class Scanner
                         else // braceCount > dollarCount
                         {
                             // Enter hole with some braces literal in the token
-                            var kind = interpolationState.IsSome
-                                     ? TokenKind.InterpolatedRawStringLiteralMid
-                                     : TokenKind.InterpolatedRawStringLiteralStart;
+                            // Check if si points at $ to determine if this is the first hole
+                            var kind = source[si] == '$'
+                                     ? TokenKind.InterpolatedRawStringLiteralStart
+                                     : TokenKind.InterpolatedRawStringLiteralMid;
                             // Token includes (braceCount - dollarCount) literal braces, ends before delimiter braces
                             yield return Transit(kind, State.Text, -dollarCount);
                             // Skip past the delimiter braces for the next token
