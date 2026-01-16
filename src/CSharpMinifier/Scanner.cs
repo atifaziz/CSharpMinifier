@@ -924,8 +924,9 @@ public static class Scanner
                             var kind = source[si] == '$'
                                      ? TokenKind.InterpolatedRawStringLiteralStart
                                      : TokenKind.InterpolatedRawStringLiteralMid;
-                            // Token ends AFTER the braces (inclusive)
-                            yield return Transit(kind, State.Text);
+                            // For Mid tokens, need +1 offset to match expected length
+                            var offset = kind == TokenKind.InterpolatedRawStringLiteralMid ? 1 : 0;
+                            yield return Transit(kind, State.Text, offset);
                             // Always push a marker state to track that we're in a hole
                             // Use the current state if it exists, otherwise create a marker
                             interpolationStateStack.Push(interpolationState.IsSome 
