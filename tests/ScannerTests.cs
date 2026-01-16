@@ -326,12 +326,24 @@ public class ScannerTests
     // Interpolated raw string literals (C# 11) - Phase 3
     [TestCase("$\"\"\"hello\"\"\"", "InterpolatedRawStringLiteral 12 0 12 \"$\\\"\\\"\\\"hello\\\"\\\"\\\"\"")]
 
+    // Interpolated raw string literals with holes - Phase 3
+    [TestCase("$\"\"\"{x}\"\"\"", "InterpolatedRawStringLiteralStart 4 0 4 \"$\\\"\\\"\\\"\", Identifier 1 0 =5 \"x\", InterpolatedRawStringLiteralEnd 3 0 =8 \"\\\"\\\"\\\"\"")]
+    [TestCase("$\"\"\"x = {x}\"\"\"", "InterpolatedRawStringLiteralStart 8 0 8 \"$\\\"\\\"\\\"x = \", Identifier 1 0 =9 \"x\", InterpolatedRawStringLiteralEnd 3 0 =12 \"\\\"\\\"\\\"\"")]
+    [TestCase("$\"\"\"{x}, {y}\"\"\"", "InterpolatedRawStringLiteralStart 4 0 4 \"$\\\"\\\"\\\"\", Identifier 1 0 =5 \"x\", InterpolatedRawStringLiteralMid 2 0 =6 \", \", Identifier 1 0 =8 \"y\", InterpolatedRawStringLiteralEnd 3 0 =11 \"\\\"\\\"\\\"\"")]
+    [TestCase("$\"\"\"Hello {name}!\"\"\"", "InterpolatedRawStringLiteralStart 10 0 10 \"$\\\"\\\"\\\"Hello \", Identifier 4 0 =14 \"name\", InterpolatedRawStringLiteralEnd 4 0 =18 \"!\\\"\\\"\\\"\"")]
+    [TestCase("$\"\"\"x = {x}, y = {y}\"\"\"", "InterpolatedRawStringLiteralStart 8 0 8 \"$\\\"\\\"\\\"x = \", Identifier 1 0 =9 \"x\", InterpolatedRawStringLiteralMid 7 0 =10 \", y = \", Identifier 1 0 =17 \"y\", InterpolatedRawStringLiteralEnd 3 0 =20 \"\\\"\\\"\\\"\"")]
+
     // Interpolated raw string literals (multi-line) - Phase 4
     [TestCase("$\"\"\"hello\nworld\"\"\"", "InterpolatedRawStringLiteral 18 1 =9 \"$\\\"\\\"\\\"hello\\nworld\\\"\\\"\\\"\"")]
     [TestCase("$\"\"\"line1\r\nline2\"\"\"", "InterpolatedRawStringLiteral 19 1 =9 \"$\\\"\\\"\\\"line1\\r\\nline2\\\"\\\"\\\"\"")]
     [TestCase("$\"\"\"line1\rline2\"\"\"", "InterpolatedRawStringLiteral 18 1 =9 \"$\\\"\\\"\\\"line1\\rline2\\\"\\\"\\\"\"")]
     [TestCase("$\"\"\"hello\n\nworld\"\"\"", "InterpolatedRawStringLiteral 19 2 =9 \"$\\\"\\\"\\\"hello\\n\\nworld\\\"\\\"\\\"\"")]
     [TestCase("$\"\"\"text\n\"\"\"", "InterpolatedRawStringLiteral 12 1 =4 \"$\\\"\\\"\\\"text\\n\\\"\\\"\\\"\"")]
+
+    // Interpolated raw string literals with holes (multi-line) - Phase 4  
+    [TestCase("$\"\"\"\n{x}\n\"\"\"", "InterpolatedRawStringLiteralStart 5 1 =1 \"$\\\"\\\"\\\"\\n\", Identifier 1 0 =2 \"x\", InterpolatedRawStringLiteralEnd 4 1 =4 \"\\n\\\"\\\"\\\"\"")]
+    [TestCase("$\"\"\"\nHello {name}\n\"\"\"", "InterpolatedRawStringLiteralStart 11 1 =7 \"$\\\"\\\"\\\"\\nHello \", Identifier 4 0 =11 \"name\", InterpolatedRawStringLiteralEnd 4 1 =4 \"\\n\\\"\\\"\\\"\"")]
+    [TestCase("$\"\"\"\nx = {x}, y = {y}\n\"\"\"", "InterpolatedRawStringLiteralStart 9 1 =5 \"$\\\"\\\"\\\"\\nx = \", Identifier 1 0 =6 \"x\", InterpolatedRawStringLiteralMid 7 0 =13 \", y = \", Identifier 1 0 =14 \"y\", InterpolatedRawStringLiteralEnd 4 1 =4 \"\\n\\\"\\\"\\\"\"")]
 
     [TestCase("$$"                , @"Text                2 0  2 ""$$""")]
     [TestCase("$\"\""             , @"InterpolatedString  3 0  3 ""$\""\""""")]
