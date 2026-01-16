@@ -447,7 +447,18 @@ public static class Scanner
                 {
                     if (ch == '"')
                     {
+                        // DEBUG
                         // It's $""" (interpolated raw string)
+                        // Emit any pending text before the $
+                        if (i - 3 - si > 0)
+                        {
+                            yield return new Token(TokenKind.Text,
+                                                 new Position(si, spos.Line, spos.Col),
+                                                 new Position(i - 3, pos.Line, pos.Col - 3));
+                        }
+                        // Set si to point to the $
+                        si = i - 3;
+                        spos = (pos.Line, pos.Col - 3);
                         interpolatedRawStringDollarCount = 1;
                         rawStringQuoteCount = 3;
                         rawStringClosingQuoteCount = 0;
@@ -959,6 +970,7 @@ public static class Scanner
                 }
                 case State.InterpolatedRawStringQuoteQuote:
                 {
+#pragma warning restore CA1303
                     if (ch == '"')
                     {
                         // Continue counting quotes
@@ -969,6 +981,7 @@ public static class Scanner
                         // End of quote sequence, check if we have enough
                         if (rawStringClosingQuoteCount == rawStringQuoteCount)
                         {
+#pragma warning restore CA1303
                             // Exact match - close the interpolated raw string
                             var kind = interpolationState.IsSome
                                      ? TokenKind.InterpolatedRawStringLiteralEnd
@@ -983,6 +996,7 @@ public static class Scanner
                         }
                         else
                         {
+#pragma warning restore CA1303
                             // Not a match, back to scanning interpolated raw string content
                             state = State.InterpolatedRawString;
                             goto restart;
@@ -1070,6 +1084,8 @@ public static class Scanner
                             State.InterpolatedVerbatimStringQuote => TokenKind.InterpolatedVerbatimStringLiteralEnd,
                             State.QuoteQuote => TokenKind.StringLiteral,
                             State.RawStringQuoteQuote when rawStringClosingQuoteCount == rawStringQuoteCount => TokenKind.RawStringLiteral,
+                            State.InterpolatedRawStringQuoteQuote when rawStringClosingQuoteCount == rawStringQuoteCount && interpolationState.IsSome => TokenKind.InterpolatedRawStringLiteralEnd,
+                            State.InterpolatedRawStringQuoteQuote when rawStringClosingQuoteCount == rawStringQuoteCount => TokenKind.InterpolatedRawStringLiteral,
                             _ => TokenKind.Text
                         };
 
