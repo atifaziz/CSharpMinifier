@@ -919,22 +919,18 @@ public static class Scanner
                         else if (braceCount == dollarCount)
                         {
                             // Enter hole (interpolation expression)
-                            // All braces are delimiters, not part of the token
+                            // Include the opening braces in the Start/Mid token (like regular interpolated strings)
                             var kind = interpolationState.IsSome
                                      ? TokenKind.InterpolatedRawStringLiteralMid
                                      : TokenKind.InterpolatedRawStringLiteralStart;
-                            // Token ends just before the first brace
-                            yield return Transit(kind, State.Text, -braceCount);
-                            // Update si/spos to point at the current character (first character of hole content)
-                            si = i;
-                            spos = (pos.Line, pos.Col - 1); // -1 because pos.Col has already been incremented
+                            // Token ends AFTER the braces (inclusive)
+                            yield return Transit(kind, State.Text);
                             // Push the current (outer) interpolation state if it exists
                             if (interpolationState.IsSome)
                                 interpolationStateStack.Push(interpolationState);
                             // Set up new interpolation state for the hole
                             interpolationState = new InterpolationState(InterpolatedStringKind.Raw) { Braces = 0 };
-                            // Use goto restart to reprocess the current character in Text state
-                            goto restart;
+                            // Continue in Text state to scan hole content
                         }
                         else // braceCount > dollarCount
                         {
