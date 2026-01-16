@@ -929,7 +929,7 @@ public static class Scanner
                             si += braceCount;
                             spos = (spos.Line, spos.Col + braceCount);
                             interpolationStateStack.Push(interpolationState);
-                            interpolationState = new InterpolationState(InterpolatedStringKind.Raw);
+                            interpolationState = new InterpolationState(InterpolatedStringKind.Raw) { Braces = 0 };
                             goto restart;
                         }
                         else // braceCount > dollarCount
