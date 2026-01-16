@@ -919,9 +919,7 @@ public static class Scanner
                             var kind = interpolationState.IsSome
                                      ? TokenKind.InterpolatedRawStringLiteralMid
                                      : TokenKind.InterpolatedRawStringLiteralStart;
-                            if (TextTransit(State.Text, -braceCount) is {} text)
-                                yield return text;
-                            yield return Transit(kind, State.Text);
+                            yield return Transit(kind, State.Text, -braceCount);
                             interpolationStateStack.Push(interpolationState);
                             interpolationState = new InterpolationState(InterpolatedStringKind.Raw);
                             goto restart;
@@ -929,16 +927,13 @@ public static class Scanner
                         else // braceCount > dollarCount
                         {
                             // Enter hole with some braces literal in the token
-                            var bracesInToken = Math.Max(braceCount, 2 * dollarCount - 1);
-                            var bracesInHole = braceCount - bracesInToken;
+                            var bracesInToken = braceCount - dollarCount;
                             var kind = interpolationState.IsSome
                                      ? TokenKind.InterpolatedRawStringLiteralMid
                                      : TokenKind.InterpolatedRawStringLiteralStart;
-                            if (TextTransit(State.Text, -bracesInToken) is {} text)
-                                yield return text;
-                            yield return Transit(kind, State.Text);
+                            yield return Transit(kind, State.Text, -bracesInToken);
                             interpolationStateStack.Push(interpolationState);
-                            interpolationState = new InterpolationState(InterpolatedStringKind.Raw) { Braces = bracesInHole };
+                            interpolationState = new InterpolationState(InterpolatedStringKind.Raw) { Braces = 0 };
                             goto restart;
                         }
                     }
