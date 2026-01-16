@@ -916,10 +916,12 @@ public static class Scanner
                         else if (braceCount == dollarCount)
                         {
                             // Enter hole (interpolation expression)
+                            // All braces are delimiters, not part of the token
                             var kind = interpolationState.IsSome
                                      ? TokenKind.InterpolatedRawStringLiteralMid
                                      : TokenKind.InterpolatedRawStringLiteralStart;
-                            yield return Transit(kind, State.Text, -braceCount);
+                            // Back up to before the braces (and current char), skip braces to enter Text state
+                            yield return Transit(kind, State.Text, -(braceCount + 1));
                             interpolationStateStack.Push(interpolationState);
                             interpolationState = new InterpolationState(InterpolatedStringKind.Raw);
                             goto restart;
@@ -927,11 +929,11 @@ public static class Scanner
                         else // braceCount > dollarCount
                         {
                             // Enter hole with some braces literal in the token
-                            var bracesInToken = braceCount - dollarCount;
                             var kind = interpolationState.IsSome
                                      ? TokenKind.InterpolatedRawStringLiteralMid
                                      : TokenKind.InterpolatedRawStringLiteralStart;
-                            yield return Transit(kind, State.Text, -bracesInToken);
+                            // Token includes (braceCount - dollarCount) literal braces, then (dollarCount) delimiter braces
+                            yield return Transit(kind, State.Text, -(dollarCount + 1));
                             interpolationStateStack.Push(interpolationState);
                             interpolationState = new InterpolationState(InterpolatedStringKind.Raw) { Braces = 0 };
                             goto restart;
