@@ -909,7 +909,7 @@ public static class Scanner
                         // Non-brace character, check brace count against dollar count
                         var braceCount = interpolatedRawStringBraceCount;
                         var dollarCount = interpolatedRawStringDollarCount;
-                        
+
                         if (braceCount < dollarCount)
                         {
                             // All braces are literal, back to interpolated raw string
@@ -928,8 +928,8 @@ public static class Scanner
                             yield return Transit(kind, State.Text);
                             // Always push a marker state to track that we're in a hole
                             // Use the current state if it exists, otherwise create a marker
-                            interpolationStateStack.Push(interpolationState.IsSome 
-                                ? interpolationState 
+                            interpolationStateStack.Push(interpolationState.IsSome
+                                ? interpolationState
                                 : new InterpolationState(InterpolatedStringKind.Raw));
                             // Set up new interpolation state for the hole
                             interpolationState = new InterpolationState(InterpolatedStringKind.Raw) { Braces = 0 };
@@ -949,8 +949,8 @@ public static class Scanner
                             spos = (spos.Line, spos.Col + dollarCount);
                             // Always push a marker state to track that we're in a hole
                             // Use the current state if it exists, otherwise create a marker
-                            interpolationStateStack.Push(interpolationState.IsSome 
-                                ? interpolationState 
+                            interpolationStateStack.Push(interpolationState.IsSome
+                                ? interpolationState
                                 : new InterpolationState(InterpolatedStringKind.Raw));
                             interpolationState = new InterpolationState(InterpolatedStringKind.Raw) { Braces = 0 };
                             goto restart;
