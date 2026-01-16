@@ -924,9 +924,8 @@ public static class Scanner
                             var kind = source[si] == '$'
                                      ? TokenKind.InterpolatedRawStringLiteralStart
                                      : TokenKind.InterpolatedRawStringLiteralMid;
-                            // For Mid tokens, need +1 offset to match expected length
-                            var offset = kind == TokenKind.InterpolatedRawStringLiteralMid ? 1 : 0;
-                            yield return Transit(kind, State.Text, offset);
+                            // Token ends AFTER the braces (inclusive)
+                            yield return Transit(kind, State.Text);
                             // Always push a marker state to track that we're in a hole
                             // Use the current state if it exists, otherwise create a marker
                             interpolationStateStack.Push(interpolationState.IsSome 
@@ -948,7 +947,11 @@ public static class Scanner
                             // Skip past the delimiter braces for the next token
                             si += dollarCount;
                             spos = (spos.Line, spos.Col + dollarCount);
-                            interpolationStateStack.Push(interpolationState);
+                            // Always push a marker state to track that we're in a hole
+                            // Use the current state if it exists, otherwise create a marker
+                            interpolationStateStack.Push(interpolationState.IsSome 
+                                ? interpolationState 
+                                : new InterpolationState(InterpolatedStringKind.Raw));
                             interpolationState = new InterpolationState(InterpolatedStringKind.Raw) { Braces = 0 };
                             goto restart;
                         }

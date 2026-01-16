@@ -332,7 +332,7 @@ public class ScannerTests
     [TestCase("$\"\"\"x = {x}\"\"\"", "InterpolatedRawStringLiteralStart 9 0 9 \"$\\\"\\\"\\\"x = {\"", "Text 1 0 1 \"x\"", "InterpolatedRawStringLiteralEnd 4 0 4 \"}\\\"\\\"\\\"\"")]
     [TestCase("$\"\"\"{x}, {y}\"\"\"", "InterpolatedRawStringLiteralStart 5 0 5 \"$\\\"\\\"\\\"{\"", "Text 1 0 1 \"x\"", "InterpolatedRawStringLiteralMid 4 0 4 \"}, {\"", "Text 1 0 1 \"y\"", "InterpolatedRawStringLiteralEnd 4 0 4 \"}\\\"\\\"\\\"\"")]
     [TestCase("$\"\"\"Hello {name}!\"\"\"", "InterpolatedRawStringLiteralStart 11 0 11 \"$\\\"\\\"\\\"Hello {\"", "Text 4 0 4 \"name\"", "InterpolatedRawStringLiteralEnd 5 0 5 \"}!\\\"\\\"\\\"\"")]
-    [TestCase("$\"\"\"x = {x}, y = {y}\"\"\"", "InterpolatedRawStringLiteralStart 9 0 9 \"$\\\"\\\"\\\"x = {\"", "Text 1 0 1 \"x\"", "InterpolatedRawStringLiteralMid 9 0 9 \"}, y = {\"", "Text 1 0 1 \"y\"", "InterpolatedRawStringLiteralEnd 4 0 4 \"}\\\"\\\"\\\"\"")]
+    [TestCase("$\"\"\"x = {x}, y = {y}\"\"\"", "InterpolatedRawStringLiteralStart 9 0 9 \"$\\\"\\\"\\\"x = {\"", "Text 1 0 1 \"x\"", "InterpolatedRawStringLiteralMid 8 0 8 \"}, y = {\"", "Text 1 0 1 \"y\"", "InterpolatedRawStringLiteralEnd 4 0 4 \"}\\\"\\\"\\\"\"")]
 
     // Interpolated raw string literals (multi-line) - Phase 4
     [TestCase("$\"\"\"hello\nworld\"\"\"", "InterpolatedRawStringLiteral 18 1 =9 \"$\\\"\\\"\\\"hello\\nworld\\\"\\\"\\\"\"")]
@@ -344,7 +344,7 @@ public class ScannerTests
     // Interpolated raw string literals with holes (multi-line) - Phase 4  
     [TestCase("$\"\"\"\n{x}\n\"\"\"", "InterpolatedRawStringLiteralStart 6 1 =2 \"$\\\"\\\"\\\"\\n{\"", "Text 1 0 1 \"x\"", "InterpolatedRawStringLiteralEnd 5 1 =4 \"}\\n\\\"\\\"\\\"\"")]
     [TestCase("$\"\"\"\nHello {name}\n\"\"\"", "InterpolatedRawStringLiteralStart 12 1 =8 \"$\\\"\\\"\\\"\\nHello {\"", "Text 4 0 4 \"name\"", "InterpolatedRawStringLiteralEnd 5 1 =4 \"}\\n\\\"\\\"\\\"\"")]
-    [TestCase("$\"\"\"\nx = {x}, y = {y}\n\"\"\"", "InterpolatedRawStringLiteralStart 10 1 =6 \"$\\\"\\\"\\\"\\nx = {\"", "Text 1 0 1 \"x\"", "InterpolatedRawStringLiteralMid 9 0 9 \"}, y = {\"", "Text 1 0 1 \"y\"", "InterpolatedRawStringLiteralEnd 5 1 =4 \"}\\n\\\"\\\"\\\"\"")]
+    [TestCase("$\"\"\"\nx = {x}, y = {y}\n\"\"\"", "InterpolatedRawStringLiteralStart 10 1 =6 \"$\\\"\\\"\\\"\\nx = {\"", "Text 1 0 1 \"x\"", "InterpolatedRawStringLiteralMid 8 0 8 \"}, y = {\"", "Text 1 0 1 \"y\"", "InterpolatedRawStringLiteralEnd 5 1 =4 \"}\\n\\\"\\\"\\\"\"")]
 
     [TestCase("$$"                , @"Text                2 0  2 ""$$""")]
     [TestCase("$\"\""             , @"InterpolatedString  3 0  3 ""$\""\""""")]
