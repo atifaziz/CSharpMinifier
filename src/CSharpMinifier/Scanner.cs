@@ -925,11 +925,15 @@ public static class Scanner
                                      : TokenKind.InterpolatedRawStringLiteralStart;
                             // Token ends just before the first brace
                             yield return Transit(kind, State.Text, -braceCount);
-                            // Skip past the brace delimiters for the next token
-                            si += braceCount;
-                            spos = (spos.Line, spos.Col + braceCount);
-                            interpolationStateStack.Push(interpolationState);
+                            // Update si/spos to point at the current character (first character of hole content)
+                            si = i;
+                            spos = (pos.Line, pos.Col - 1); // -1 because pos.Col has already been incremented
+                            // Push the current (outer) interpolation state if it exists
+                            if (interpolationState.IsSome)
+                                interpolationStateStack.Push(interpolationState);
+                            // Set up new interpolation state for the hole
                             interpolationState = new InterpolationState(InterpolatedStringKind.Raw) { Braces = 0 };
+                            // Use goto restart to reprocess the current character in Text state
                             goto restart;
                         }
                         else // braceCount > dollarCount
@@ -980,9 +984,10 @@ public static class Scanner
                         {
 #pragma warning restore CA1303
                             // Exact match - close the interpolated raw string
-                            var kind = interpolationState.IsSome
-                                     ? TokenKind.InterpolatedRawStringLiteralEnd
-                                     : TokenKind.InterpolatedRawStringLiteral;
+                            // Check if we've had any holes by seeing if si has moved past the $
+                            var kind = source[si] == '$'
+                                     ? TokenKind.InterpolatedRawStringLiteral
+                                     : TokenKind.InterpolatedRawStringLiteralEnd;
                             yield return Transit(kind, State.Text);
                             if (interpolationState.IsSome)
                                 interpolationState = interpolationStateStack.Pop();
@@ -1082,7 +1087,7 @@ public static class Scanner
                             State.InterpolatedVerbatimStringQuote => TokenKind.InterpolatedVerbatimStringLiteralEnd,
                             State.QuoteQuote => TokenKind.StringLiteral,
                             State.RawStringQuoteQuote when rawStringClosingQuoteCount == rawStringQuoteCount => TokenKind.RawStringLiteral,
-                            State.InterpolatedRawStringQuoteQuote when rawStringClosingQuoteCount == rawStringQuoteCount && interpolationState.IsSome => TokenKind.InterpolatedRawStringLiteralEnd,
+                            State.InterpolatedRawStringQuoteQuote when rawStringClosingQuoteCount == rawStringQuoteCount && source[si] != '$' => TokenKind.InterpolatedRawStringLiteralEnd,
                             State.InterpolatedRawStringQuoteQuote when rawStringClosingQuoteCount == rawStringQuoteCount => TokenKind.InterpolatedRawStringLiteral,
                             _ => TokenKind.Text
                         };
