@@ -957,7 +957,9 @@ public static class Scanner
                             yield return Transit(kind, State.Text);
                             // Always push a marker state to track that we're in a hole
                             // Use the current state if it exists, otherwise create a marker
-                            // Save rawStringQuoteCount for nested raw strings - always use current value
+                            // IMPORTANT: Always save current rawStringQuoteCount for nested raw strings
+                            // Even if we're already in a hole, we must preserve the rawStringQuoteCount
+                            // of the interpolated raw string we're currently in (not the outer hole's count)
                             var stateToSave = interpolationState.IsSome
                                 ? interpolationState with { RawStringQuoteCount = rawStringQuoteCount }
                                 : new InterpolationState(InterpolatedStringKind.Raw) { RawStringQuoteCount = rawStringQuoteCount };
@@ -984,7 +986,9 @@ public static class Scanner
                             // We do NOT skip them - they will be included in the next Text token
                             // Always push a marker state to track that we're in a hole
                             // Use the current state if it exists, otherwise create a marker
-                            // Save rawStringQuoteCount for nested raw strings - always use current value
+                            // IMPORTANT: Always save current rawStringQuoteCount for nested raw strings
+                            // Even if we're already in a hole, we must preserve the rawStringQuoteCount
+                            // of the interpolated raw string we're currently in (not the outer hole's count)
                             var stateToSave = interpolationState.IsSome
                                 ? interpolationState with { RawStringQuoteCount = rawStringQuoteCount }
                                 : new InterpolationState(InterpolatedStringKind.Raw) { RawStringQuoteCount = rawStringQuoteCount };
