@@ -75,11 +75,11 @@ public class ScannerTests
     [TestCase("/*")]
     [TestCase("/* foo")]
     [TestCase("/*\r")]
+    [TestCase("$$\"")]
+    [TestCase("$$\"\"")]
     [TestCase("\"\"\"")]
-    [TestCase("\"\"\"foo")]
     [TestCase("\"\"\"\"")]
-    [TestCase("\"\"\"\"\"")]
-    [TestCase("\"\"\"\"\"\"")]
+    [TestCase("Console.WriteLine(\"\"\"\"\"\");")]
     public void SyntaxError(string source)
     {
         _ = Assert.Throws<SyntaxErrorException>(() => Scanner.Scan(source).Consume());
@@ -303,54 +303,32 @@ public class ScannerTests
     [TestCase("\"\""          , @"String  2 0  2 ""\""\""""")]
     [TestCase("\"foobar\""    , @"String  8 0  8 ""\""foobar\""""")]
     [TestCase("\"foo\\\\bar\"", @"String 10 0 10 ""\""foo\\\\bar\""""")]
+    [TestCase("\"\"+\"\"+\"\"",
+              @"String      2 0 2 ""\""\""""",
+              @"Text        1 0 1 ""+""",
+              @"String      2 0 2 ""\""\""""",
+              @"Text        1 0 1 ""+""",
+              @"String      2 0 2 ""\""\""""")]
 
     [TestCase("foo=\"bar\";",
         @"Text   4 0 4 ""foo=""",
         @"String 5 0 5 ""\""bar\""""",
         @"Text   1 0 1 "";""")]
 
-    // Raw string literals (C# 11) - single-line only (Phase 1)
-    [TestCase("\"\"\"hello\"\"\"", "RawStringLiteral 11 0 11 \"\\\"\\\"\\\"hello\\\"\\\"\\\"\"")]
-    [TestCase("\"\"\"he said \"hi\" \"\"\"", "RawStringLiteral 19 0 19 \"\\\"\\\"\\\"he said \\\"hi\\\" \\\"\\\"\\\"\"")]
-    [TestCase("\"\"\"\"has \"\"\" inside\"\"\"\"", "RawStringLiteral 22 0 22 \"\\\"\\\"\\\"\\\"has \\\"\\\"\\\" inside\\\"\\\"\\\"\\\"\"")]
-    [TestCase("\"\"\"{x}\"\"\"", "RawStringLiteral 9 0 9 \"\\\"\\\"\\\"{x}\\\"\\\"\\\"\"")]
-    [TestCase("\"\"\"\\n\\t\"\"\"", "RawStringLiteral 10 0 10 \"\\\"\\\"\\\"\\\\n\\\\t\\\"\\\"\\\"\"")]
-
-    // Raw string literals (C# 11) - multi-line (Phase 2)
-    [TestCase("\"\"\"hello\nworld\"\"\"", "RawStringLiteral 17 1 =9 \"\\\"\\\"\\\"hello\\nworld\\\"\\\"\\\"\"")]
-    [TestCase("\"\"\"line1\r\nline2\"\"\"", "RawStringLiteral 18 1 =9 \"\\\"\\\"\\\"line1\\r\\nline2\\\"\\\"\\\"\"")]
-    [TestCase("\"\"\"line1\rline2\"\"\"", "RawStringLiteral 17 1 =9 \"\\\"\\\"\\\"line1\\rline2\\\"\\\"\\\"\"")]
-    [TestCase("\"\"\"hello\n\nworld\"\"\"", "RawStringLiteral 18 2 =9 \"\\\"\\\"\\\"hello\\n\\nworld\\\"\\\"\\\"\"")]
-    [TestCase("\"\"\"text\n\"\"\"", "RawStringLiteral 11 1 =4 \"\\\"\\\"\\\"text\\n\\\"\\\"\\\"\"")]
-
-    // Interpolated raw string literals (C# 11) - Phase 3
-    [TestCase("$\"\"\"hello\"\"\"", "InterpolatedRawStringLiteral 12 0 12 \"$\\\"\\\"\\\"hello\\\"\\\"\\\"\"")]
-
-    // Interpolated raw string literals with holes - Phase 3
-    // Interpolated raw strings with holes - Phase 3/4
-    [TestCase("$\"\"\"{x}\"\"\"", "InterpolatedRawStringLiteralStart 5 0 5 \"$\\\"\\\"\\\"{\"", "Text 1 0 1 \"x\"", "InterpolatedRawStringLiteralEnd 4 0 4 \"}\\\"\\\"\\\"\"")]
-    [TestCase("$\"\"\"x = {x}\"\"\"", "InterpolatedRawStringLiteralStart 9 0 9 \"$\\\"\\\"\\\"x = {\"", "Text 1 0 1 \"x\"", "InterpolatedRawStringLiteralEnd 4 0 4 \"}\\\"\\\"\\\"\"")]
-    [TestCase("$\"\"\"{x}, {y}\"\"\"", "InterpolatedRawStringLiteralStart 5 0 5 \"$\\\"\\\"\\\"{\"", "Text 1 0 1 \"x\"", "InterpolatedRawStringLiteralMid 4 0 4 \"}, {\"", "Text 1 0 1 \"y\"", "InterpolatedRawStringLiteralEnd 4 0 4 \"}\\\"\\\"\\\"\"")]
-    [TestCase("$\"\"\"Hello {name}!\"\"\"", "InterpolatedRawStringLiteralStart 11 0 11 \"$\\\"\\\"\\\"Hello {\"", "Text 4 0 4 \"name\"", "InterpolatedRawStringLiteralEnd 5 0 5 \"}!\\\"\\\"\\\"\"")]
-    [TestCase("$\"\"\"x = {x}, y = {y}\"\"\"", "InterpolatedRawStringLiteralStart 9 0 9 \"$\\\"\\\"\\\"x = {\"", "Text 1 0 1 \"x\"", "InterpolatedRawStringLiteralMid 8 0 8 \"}, y = {\"", "Text 1 0 1 \"y\"", "InterpolatedRawStringLiteralEnd 4 0 4 \"}\\\"\\\"\\\"\"")]
-
-    // Interpolated raw string literals (multi-line) - Phase 4
-    [TestCase("$\"\"\"hello\nworld\"\"\"", "InterpolatedRawStringLiteral 18 1 =9 \"$\\\"\\\"\\\"hello\\nworld\\\"\\\"\\\"\"")]
-    [TestCase("$\"\"\"line1\r\nline2\"\"\"", "InterpolatedRawStringLiteral 19 1 =9 \"$\\\"\\\"\\\"line1\\r\\nline2\\\"\\\"\\\"\"")]
-    [TestCase("$\"\"\"line1\rline2\"\"\"", "InterpolatedRawStringLiteral 18 1 =9 \"$\\\"\\\"\\\"line1\\rline2\\\"\\\"\\\"\"")]
-    [TestCase("$\"\"\"hello\n\nworld\"\"\"", "InterpolatedRawStringLiteral 19 2 =9 \"$\\\"\\\"\\\"hello\\n\\nworld\\\"\\\"\\\"\"")]
-    [TestCase("$\"\"\"text\n\"\"\"", "InterpolatedRawStringLiteral 12 1 =4 \"$\\\"\\\"\\\"text\\n\\\"\\\"\\\"\"")]
-
-    // Interpolated raw string literals with holes (multi-line) - Phase 4
-    [TestCase("$\"\"\"\n{x}\n\"\"\"", "InterpolatedRawStringLiteralStart 6 1 =2 \"$\\\"\\\"\\\"\\n{\"", "Text 1 0 1 \"x\"", "InterpolatedRawStringLiteralEnd 5 1 =4 \"}\\n\\\"\\\"\\\"\"")]
-    [TestCase("$\"\"\"\nHello {name}\n\"\"\"", "InterpolatedRawStringLiteralStart 12 1 =8 \"$\\\"\\\"\\\"\\nHello {\"", "Text 4 0 4 \"name\"", "InterpolatedRawStringLiteralEnd 5 1 =4 \"}\\n\\\"\\\"\\\"\"")]
-    [TestCase("$\"\"\"\nx = {x}, y = {y}\n\"\"\"", "InterpolatedRawStringLiteralStart 10 1 =6 \"$\\\"\\\"\\\"\\nx = {\"", "Text 1 0 1 \"x\"", "InterpolatedRawStringLiteralMid 8 0 8 \"}, y = {\"", "Text 1 0 1 \"y\"", "InterpolatedRawStringLiteralEnd 5 1 =4 \"}\\n\\\"\\\"\\\"\"")]
-
     [TestCase("$$"                , @"Text                2 0  2 ""$$""")]
     [TestCase("$\"\""             , @"InterpolatedString  3 0  3 ""$\""\""""")]
     [TestCase("$\"foobar\""       , @"InterpolatedString  9 0  9 ""$\""foobar\""""")]
     [TestCase("$\"foo\\\\bar\""   , @"InterpolatedString 11 0 11 ""$\""foo\\\\bar\""""")]
     [TestCase("$\"foo{{bar}}baz\"", @"InterpolatedString 16 0 16 ""$\""foo{{bar}}baz\""""")]
+
+    [TestCase("($\"\")",
+              @"Text                1 0 1 ""(""",
+              @"InterpolatedString  3 0 3 ""$\""\""""",
+              @"Text                1 0 1 "")""")]
+
+    [TestCase("str+$\"\"",
+              @"Text                4 0 4 ""str+""",
+              @"InterpolatedString  3 0 3 ""$\""\""""")]
 
     // C# 11 breaking change: format specifiers can't contain curly braces.
     // The first `}` in a format specifier ends the interpolation.
@@ -751,16 +729,154 @@ public class ScannerTests
         @"NewLine             2 1  =1 ""\r\n""")
     ]
 
+    // Raw string literals (C# 11)
+    [TestCase("\"\"\"raw\"\"\"", "RawString 9 0 9 \"\\\"\\\"\\\"raw\\\"\\\"\\\"\"")]
+    [TestCase("""""
+              """" "one" ""two"" """three""" """"
+              """"",
+              """
+              RawString 35 0 35 "\"\"\"\" \"one\" \"\"two\"\" \"\"\"three\"\"\" \"\"\"\""
+              """)]
+    [TestCase("str = \"\"\"hello world\"\"\";",
+        "Text       3 0 3 \"str\"",
+        "WhiteSpace 1 0 1 \" \"",
+        "Text       1 0 1 \"=\"",
+        "WhiteSpace 1 0 1 \" \"",
+        "RawString  17 0 17 \"\\\"\\\"\\\"hello world\\\"\\\"\\\"\"",
+        "Text       1 0 1 \";\"")]
+    [TestCase("str = \"\"\"foo \"bar\" baz\"\"\";",
+        "Text        3 0  3 \"str\"",
+        "WhiteSpace  1 0  1 \" \"",
+        "Text        1 0  1 \"=\"",
+        "WhiteSpace  1 0  1 \" \"",
+        "RawString  19 0 19 \"\\\"\\\"\\\"foo \\\"bar\\\" baz\\\"\\\"\\\"\"",
+        "Text        1 0  1 \";\"")]
+    [TestCase("csv = \"\"\"\n\"foo\",\"bar\",\"baz\"\n\"\"\";",
+        "Text        3 0  3 \"csv\"",
+        "WhiteSpace  1 0  1 \" \"",
+        "Text        1 0  1 \"=\"",
+        "WhiteSpace  1 0  1 \" \"",
+        "RawString  25 2 =4 \"\\\"\\\"\\\"\\n\\\"foo\\\",\\\"bar\\\",\\\"baz\\\"\\n\\\"\\\"\\\"\"",
+        "Text        1 0  1 \";\"")]
+
+    // Multi-line raw strings
+    [TestCase("\"\"\"\ntext\n\"\"\"", "RawString 12 2 =4 \"\\\"\\\"\\\"\\ntext\\n\\\"\\\"\\\"\"")]
+    [TestCase("\"\"\"\r\ntext\r\n\"\"\"", "RawString 14 2 =4 \"\\\"\\\"\\\"\\r\\ntext\\r\\n\\\"\\\"\\\"\"")]
+    [TestCase("\"\"\"\nline1\nline2\n\"\"\"", "RawString 19 3 =4 \"\\\"\\\"\\\"\\nline1\\nline2\\n\\\"\\\"\\\"\"")]
+
+    // Single-line interpolated raw strings (Phase 5)
+    [TestCase("$\"\"\"test\"\"\"", "InterpolatedRawStringLiteral 11 0 11 \"$\\\"\\\"\\\"test\\\"\\\"\\\"\"")]
+    [TestCase("""""
+              $"""" "one" ""two"" """three""" """"
+              """"",
+              """
+              InterpolatedRawString 36 0 36 "$\"\"\"\" \"one\" \"\"two\"\" \"\"\"three\"\"\" \"\"\"\""
+              """)]
+
+    [TestCase("$\"\"\"hello {x}\"\"\"",
+              "InterpolatedRawStringStart 11 0 11 \"$\\\"\\\"\\\"hello {\"",
+              "Text 1 0 1 \"x\"",
+              "InterpolatedRawStringEnd 4 0 4 \"}\\\"\\\"\\\"\"")]
+
+    // Multi-line interpolated raw strings (Phase 6)
+    [TestCase("$\"\"\"\ntext\n\"\"\"", "InterpolatedRawStringLiteral 13 2 =4 \"$\\\"\\\"\\\"\\ntext\\n\\\"\\\"\\\"\"")]
+    [TestCase("$\"\"\"\nhello {x}\n\"\"\"",
+              "InterpolatedRawStringStart 12 1 =8 \"$\\\"\\\"\\\"\\nhello {\"",
+              "Text 1 0 1 \"x\"",
+              "InterpolatedRawStringEnd 5 1 =4 \"}\\n\\\"\\\"\\\"\"")]
+    [TestCase("$$\"\"\"\nhello {{x}}\n\"\"\"",
+              "InterpolatedRawStringStart 14 1 =9 \"$$\\\"\\\"\\\"\\nhello {{\"",
+              "Text 1 0 1 \"x\"",
+              "InterpolatedRawStringEnd 6 1 =4 \"}}\\n\\\"\\\"\\\"\"")]
+    [TestCase("$\"\"\"\r\nhello {x}\r\n\"\"\"",
+              "InterpolatedRawStringStart 13 1 =8 \"$\\\"\\\"\\\"\\r\\nhello {\"",
+              "Text 1 0 1 \"x\"",
+              "InterpolatedRawStringEnd 6 1 =4 \"}\\r\\n\\\"\\\"\\\"\"")]
+    // Nested string combination tests (Phase 7)
+    [TestCase("$\"\"\"hello {\"\"\"world\"\"\"}\"\"\"",
+              "InterpolatedRawStringStart 11 0 =12 \"$\\\"\\\"\\\"hello {\"",
+              "RawString 11 0 =23 \"\\\"\\\"\\\"world\\\"\\\"\\\"\"",
+              "InterpolatedRawStringEnd 4 0 =27 \"}\\\"\\\"\\\"\"")]
+    [TestCase("$\"\"\"hello {\"world\"}\"\"\"",
+              "InterpolatedRawStringStart 11 0 =12 \"$\\\"\\\"\\\"hello {\"",
+              "String 7 0 =19 \"\\\"world\\\"\"",
+              "InterpolatedRawStringEnd 4 0 =23 \"}\\\"\\\"\\\"\"")]
+    [TestCase("$\"\"\"foo{$\"bar{\"\"\"baz\"\"\"}\"}\"\"\"",
+              "InterpolatedRawStringStart 8 0 8 \"$\\\"\\\"\\\"foo{\"",
+              "InterpolatedStringStart    6 0 6 \"$\\\"bar{\"",
+              "RawString                  9 0 9 \"\\\"\\\"\\\"baz\\\"\\\"\\\"\"",
+              "InterpolatedStringEnd      2 0 2 \"}\\\"\"",
+              "InterpolatedRawStringEnd   4 0 4 \"}\\\"\\\"\\\"\"")]
+    [TestCase("$\"foo{$\"\"\"bar{\"\"\"baz\"\"\"}\"\"\"}\"",
+              "InterpolatedStringStart    6 0 6 \"$\\\"foo{\"",
+              "InterpolatedRawStringStart 8 0 8 \"$\\\"\\\"\\\"bar{\"",
+              "RawString                  9 0 9 \"\\\"\\\"\\\"baz\\\"\\\"\\\"\"",
+              "InterpolatedRawStringEnd   4 0 4 \"}\\\"\\\"\\\"\"",
+              "InterpolatedStringEnd      2 0 2 \"}\\\"\"")]
+    [TestCase("$\"\"\"{xs[1,2]}\"\"\"",
+              "InterpolatedRawStringStart 5 0 =6 \"$\\\"\\\"\\\"{\"",
+              "Text 7 0 =13 \"xs[1,2]\"",
+              "InterpolatedRawStringEnd 4 0 =17 \"}\\\"\\\"\\\"\"")]
+    [TestCase("$$\"\"\"{single} {{{hole}}} {single}\"\"\"",
+              "InterpolatedRawStringStart 17 0 =18 \"$$\\\"\\\"\\\"{single} {{{\"",
+              "Text 4 0 =22 \"hole\"",
+              "InterpolatedRawStringEnd 15 0 =37 \"}}} {single}\\\"\\\"\\\"\"")]
+    [TestCase("$\"\"\"{\"quoted\"}\"\"\"",
+              "InterpolatedRawStringStart  5 0 5 \"$\\\"\\\"\\\"{\"",
+              "String                      8 0 8 \"\\\"quoted\\\"\"",
+              "InterpolatedRawStringEnd    4 0 4 \"}\\\"\\\"\\\"\"")]
+    [TestCase("$$\"\"\"\n{\n}\n\"\"\"",
+              "InterpolatedRawString 13 3 =4 \"$$\\\"\\\"\\\"\\n{\\n}\\n\\\"\\\"\\\"\"")]
+    // Brace escaping tests with $$ interpolation
+    [TestCase("$$\"\"\"{{{{content}}}}\"\"\"",
+              "InterpolatedRawStringStart 8 0 8 \"$$\\\"\\\"\\\"{{{\"",
+              "Text                       9 0 9 \"{content}\"",
+              "InterpolatedRawStringEnd   6 0 6 \"}}}\\\"\\\"\\\"\"")]
+    [TestCase("$$\"\"\"{{x}} {{{{escaped}}}}\"\"\"",
+              "InterpolatedRawStringStart 7 0 7 \"$$\\\"\\\"\\\"{{\"",
+              "Text                       1 0 1 \"x\"",
+              "InterpolatedRawStringMid   6 0 6 \"}} {{{\"",
+              "Text                       9 0 9 \"{escaped}\"",
+              "InterpolatedRawStringEnd   6 0 6 \"}}}\\\"\\\"\\\"\"")]
+    [TestCase("$$\"\"\"{{{x}}}\"\"\"",
+              "InterpolatedRawStringStart 8 0 8 \"$$\\\"\\\"\\\"{{{\"",
+              "Text                       1 0 1 \"x\"",
+              "InterpolatedRawStringEnd   6 0 6 \"}}}\\\"\\\"\\\"\"")]
+    [TestCase("$\"\"\"{x switch { 1 => \"a\" }}\"\"\"",
+              "InterpolatedRawStringStart 5 0 =6 \"$\\\"\\\"\\\"{\"",
+              "Text 1 0 =7 \"x\"",
+              "WhiteSpace 1 0 =8 \" \"",
+              "Text 6 0 =14 \"switch\"",
+              "WhiteSpace 1 0 =15 \" \"",
+              "Text 1 0 =16 \"{\"",
+              "WhiteSpace 1 0 =17 \" \"",
+              "Text 1 0 =18 \"1\"",
+              "WhiteSpace 1 0 =19 \" \"",
+              "Text 2 0 =21 \"=>\"",
+              "WhiteSpace 1 0 =22 \" \"",
+              "String 3 0 =25 \"\\\"a\\\"\"",
+              "WhiteSpace 1 0 =26 \" \"",
+              "Text 1 0 =27 \"}\"",
+              "InterpolatedRawStringEnd 4 0 =31 \"}\\\"\\\"\\\"\"")]
+    [TestCase("$$$\"\"\"hello { {{ {{{{{42}}}}} }} } world\"\"\"",
+        "InterpolatedRawStringStart 22 0 22 \"$$$\\\"\\\"\\\"hello { {{ {{{{{\"",
+        "Text                        2 0  2 \"42\"",
+        "InterpolatedRawStringEnd   19 0 19 \"}}}}} }} } world\\\"\\\"\\\"\"")]
+    [TestCase(@"$""""""foo {$""b{'a'}r""} baz""""""",
+        @"InterpolatedRawStringStart     9 0 9 ""$\""\""\""foo {""",
+        @"InterpolatedStringLiteralStart 4 0 4 ""$\""b{""",
+        @"CharLiteral                    3 0 3 ""\'a\'""",
+        @"InterpolatedStringLiteralEnd   3 0 3 ""}r\""""",
+        @"InterpolatedRawStringEnd       8 0 8 ""} baz\""\""\""""")]
+
     public void Scan(string source, params string[] expectations)
     {
         var tokens =
             from t in Scanner.Scan(source)
             select $"{t} {JsonString.Encode(source, t.Start.Offset, t.Length)}";
 
-        Assert.That(
-            tokens,
-            Is.EqualTo(
-                from e in
+        var desuragedExpectations =
+            from e in
                 expectations
                     .Select(e =>
                         e.Split(' ', 5, StringSplitOptions.RemoveEmptyEntries)
@@ -793,7 +909,9 @@ public class ScannerTests
                               e.Text,
                           })
                     .Skip(1)
-                select $"{e.Kind} [{e.Start}..{e.End}) {e.Text}"));
+            select $"{e.Kind} [{e.Start}..{e.End}) {e.Text}";
+
+        Assert.That(tokens, Is.EqualTo(desuragedExpectations));
     }
 
     [TestCase(@"""Hello world!"""                       , "Hello world!")]
