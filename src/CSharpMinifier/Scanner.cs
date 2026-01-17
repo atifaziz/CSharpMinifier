@@ -489,7 +489,8 @@ public static class Scanner
                             // Multiple dollars with only two quotes is an error ($$"" is invalid)
                             throw SyntaxError("Unterminated interpolated string.");
                         }
-                        if (TextTransit(State.Text, -(2 + dollarCount)) is {} text)
+                        var offset = -(dollarCount + 2);  // Back up past $""
+                        if (TextTransit(State.Text, offset) is {} text)
                             yield return text;
                         yield return Transit(TokenKind.InterpolatedStringLiteral, State.Text);
                         goto restart;
@@ -1088,10 +1089,11 @@ public static class Scanner
                 pos.Col++;
                 // Emit any pending text before the $""
                 // i is pointing past the last ", so $"" starts at i-2-1 = i-3
-                var dollarPos = i - 2 - interpolatedRawStringDollarCount;
+                var dollarCount = interpolatedRawStringDollarCount;
+                var dollarPos = i - 2 - dollarCount;
                 if (si < dollarPos)
                 {
-                    var textEndCol = pos.Col - 2 - interpolatedRawStringDollarCount;
+                    var textEndCol = pos.Col - 2 - dollarCount;
                     var textToken = new Token(TokenKind.Text, 
                         new Position(si, spos.Line, spos.Col),
                         new Position(dollarPos, pos.Line, textEndCol));
