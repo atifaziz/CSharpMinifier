@@ -967,21 +967,17 @@ public static class Scanner
                             var bracesForHole = braceCount - bracesInToken;
                             // Token ends after bracesInToken braces from the start of the brace sequence
                             yield return Transit(kind, State.Text, -bracesForHole);
-                            // The delimiter is D braces. If bracesForHole > 0, we need to skip past the delimiter.
-                            // If bracesForHole == 0, all braces (including delimiter) are in the token, so don't skip.
-                            if (bracesForHole > 0)
-                            {
-                                si += dollarCount;
-                                spos = (spos.Line, spos.Col + dollarCount);
-                            }
+                            // After Transit, si points at the first brace NOT in the token
+                            // These remaining braces belong to the hole and initialize the brace balance
+                            // We do NOT skip them - they will be included in the next Text token
                             // Always push a marker state to track that we're in a hole
                             // Use the current state if it exists, otherwise create a marker
                             interpolationStateStack.Push(interpolationState.IsSome
                                 ? interpolationState
                                 : new InterpolationState(InterpolatedStringKind.Raw));
-                            // Initialize brace balance: if bracesForHole > D, we have extra braces in the hole
+                            // Initialize brace balance to the number of remaining braces
                             interpolationState = new InterpolationState(InterpolatedStringKind.Raw) { 
-                                Braces = bracesForHole > 0 ? bracesForHole - dollarCount : 0 
+                                Braces = bracesForHole
                             };
                             goto restart;
                         }
