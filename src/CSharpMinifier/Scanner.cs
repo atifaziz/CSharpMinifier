@@ -216,6 +216,7 @@ public static class Scanner
                             state = State.At;
                             break;
                         case ('$', _):
+                            interpolatedRawStringDollarCount = 1;
                             state = State.Dollar;
                             break;
                         case ('(', { IsSome: true }):
@@ -419,6 +420,10 @@ public static class Scanner
                         case '@':
                             state = State.DollarAt;
                             break;
+                        case '$':
+                            // Multiple consecutive dollars ($$, $$$, etc.)
+                            interpolatedRawStringDollarCount++;
+                            break;
                         case '"':
                             state = State.DollarQuote;
                             break;
@@ -437,6 +442,13 @@ public static class Scanner
                     else
                     {
                         // It was $" (regular interpolated string)
+                        var dollarCount = interpolatedRawStringDollarCount;
+                        if (dollarCount > 1)
+                        {
+                            // Multiple dollars with single quote is text, not valid interpolated string start
+                            state = State.Text;
+                            goto restart;
+                        }
                         if (TextTransit(State.InterpolatedString, -2) is {} text)
                             yield return text;
                         goto restart;
@@ -447,20 +459,27 @@ public static class Scanner
                 {
                     if (ch == '"')
                     {
-                        // It's $""" (interpolated raw string)
-                        // Emit any pending text before the $
-                        if (TextTransit(State.InterpolatedRawStringOpeningDelimiter, -3) is {} text)
+                        // It's $""" (or $$""", etc.) - interpolated raw string
+                        // Emit any pending text before the $s
+                        var dollarCount = interpolatedRawStringDollarCount;
+                        if (TextTransit(State.InterpolatedRawStringOpeningDelimiter, -(dollarCount + 2)) is {} text)
                             yield return text;
-                        // Manually adjust si to point at the $
-                        si = i - 3;
-                        spos = (pos.Line, pos.Col - 3);
-                        interpolatedRawStringDollarCount = 1;
+                        // Manually adjust si to point at the first $
+                        si = i - (dollarCount + 2);
+                        spos = (pos.Line, pos.Col - (dollarCount + 2));
+                        // dollarCount is already set from Dollar state
                         rawStringQuoteCount = 3;
                         rawStringClosingQuoteCount = 0;
                     }
                     else
                     {
-                        // It was $"" (empty interpolated string)
+                        // It was $"" (or $$"", etc.) - empty interpolated string (error for multiple dollars)
+                        var dollarCount = interpolatedRawStringDollarCount;
+                        if (dollarCount > 1)
+                        {
+                            // Multiple dollars with only two quotes is an error ($$"" is invalid)
+                            throw SyntaxError("Unterminated interpolated string.");
+                        }
                         if (TextTransit(State.Text, -2) is {} text)
                             yield return text;
                         yield return Transit(TokenKind.InterpolatedStringLiteral, State.Text);
@@ -1042,7 +1061,21 @@ public static class Scanner
             case State.InterpolatedRawStringQuote:
                 throw SyntaxError("Unterminated string starting.");
             case State.DollarQuoteQuote:
-                // Special case: $"" is an empty interpolated string
+                // Special case: $"" is an empty interpolated string, but $$"" or more dollars is an error
+                if (interpolatedRawStringDollarCount > 1)
+                    throw SyntaxError("Unterminated interpolated string.");
+                // Emit any pending text before the $""
+                // i is pointing past the last ", so $"" starts at i-2-1 = i-3
+                var dollarPos = i - 2 - interpolatedRawStringDollarCount;
+                if (si < dollarPos)
+                {
+                    var textToken = new Token(TokenKind.Text, 
+                        new Position(si, spos.Line, spos.Col),
+                        new Position(dollarPos, pos.Line, pos.Col - 2 - interpolatedRawStringDollarCount));
+                    yield return textToken;
+                    si = dollarPos;
+                    spos = (pos.Line, pos.Col - 2 - interpolatedRawStringDollarCount);
+                }
                 pos.Col++;
                 yield return Transit(TokenKind.InterpolatedStringLiteral, State.Text);
                 yield break;
