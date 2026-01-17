@@ -1098,7 +1098,7 @@ public static class Scanner
                 if (si < dollarPos)
                 {
                     var textEndCol = pos.Col - 2 - dollarCount;
-                    var textToken = new Token(TokenKind.Text, 
+                    var textToken = new Token(TokenKind.Text,
                         new Position(si, spos.Line, spos.Col),
                         new Position(dollarPos, pos.Line, textEndCol));
                     yield return textToken;
