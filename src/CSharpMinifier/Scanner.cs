@@ -953,6 +953,7 @@ public static class Scanner
                             // Set up new interpolation state for the hole
                             interpolationState = new InterpolationState(InterpolatedStringKind.Raw) { Braces = 0 };
                             // Continue in Text state to scan hole content
+                            goto restart;
                         }
                         else // braceCount > dollarCount
                         {
