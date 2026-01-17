@@ -267,14 +267,14 @@ public static class Scanner
                             }
 
                             interpolationState = interpolationStateStack.Count > 0 ? interpolationStateStack.Pop() : new();
-                            
+
                             // Restore rawStringQuoteCount when returning to interpolated raw string state
                             if (newState == State.InterpolatedRawString)
                             {
                                 rawStringClosingQuoteCount = 0;
                                 rawStringQuoteCount = interpolationState.RawStringQuoteCount;
                             }
-                            
+
                             break;
                         }
                         case (' ', _):
@@ -994,7 +994,7 @@ public static class Scanner
                                 : new InterpolationState(InterpolatedStringKind.Raw) { RawStringQuoteCount = rawStringQuoteCount };
                             interpolationStateStack.Push(stateToSave);
                             // Initialize brace balance to the number of remaining braces
-                            interpolationState = new InterpolationState(InterpolatedStringKind.Raw) { 
+                            interpolationState = new InterpolationState(InterpolatedStringKind.Raw) {
                                 Braces = bracesForHole
                             };
                             goto restart;
