@@ -1064,19 +1064,21 @@ public static class Scanner
                 // Special case: $"" is an empty interpolated string, but $$"" or more dollars is an error
                 if (interpolatedRawStringDollarCount > 1)
                     throw SyntaxError("Unterminated interpolated string.");
+                // Increment pos.Col to account for EOF position
+                pos.Col++;
                 // Emit any pending text before the $""
                 // i is pointing past the last ", so $"" starts at i-2-1 = i-3
                 var dollarPos = i - 2 - interpolatedRawStringDollarCount;
                 if (si < dollarPos)
                 {
+                    var textEndCol = pos.Col - 2 - interpolatedRawStringDollarCount;
                     var textToken = new Token(TokenKind.Text, 
                         new Position(si, spos.Line, spos.Col),
-                        new Position(dollarPos, pos.Line, pos.Col - 2 - interpolatedRawStringDollarCount));
+                        new Position(dollarPos, pos.Line, textEndCol));
                     yield return textToken;
                     si = dollarPos;
-                    spos = (pos.Line, pos.Col - 2 - interpolatedRawStringDollarCount);
+                    spos = (pos.Line, textEndCol);
                 }
-                pos.Col++;
                 yield return Transit(TokenKind.InterpolatedStringLiteral, State.Text);
                 yield break;
             case State.RawStringQuoteQuote:
