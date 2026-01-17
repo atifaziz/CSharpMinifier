@@ -961,17 +961,27 @@ public static class Scanner
                             var kind = source[si] == '$'
                                      ? TokenKind.InterpolatedRawStringLiteralStart
                                      : TokenKind.InterpolatedRawStringLiteralMid;
-                            // Token includes (braceCount - dollarCount) literal braces, ends before delimiter braces
-                            yield return Transit(kind, State.Text, -dollarCount);
-                            // Skip past the delimiter braces for the next token
-                            si += dollarCount;
-                            spos = (spos.Line, spos.Col + dollarCount);
+                            // According to D/B rules: emit min(B, 2D-1) braces in the token
+                            var bracesInToken = Math.Min(braceCount, 2 * dollarCount - 1);
+                            var bracesForHole = braceCount - bracesInToken;
+                            // Token ends after bracesInToken braces from the start of the brace sequence
+                            yield return Transit(kind, State.Text, -bracesForHole);
+                            // The delimiter is D braces. If bracesForHole > 0, we need to skip past the delimiter.
+                            // If bracesForHole == 0, all braces (including delimiter) are in the token, so don't skip.
+                            if (bracesForHole > 0)
+                            {
+                                si += dollarCount;
+                                spos = (spos.Line, spos.Col + dollarCount);
+                            }
                             // Always push a marker state to track that we're in a hole
                             // Use the current state if it exists, otherwise create a marker
                             interpolationStateStack.Push(interpolationState.IsSome
                                 ? interpolationState
                                 : new InterpolationState(InterpolatedStringKind.Raw));
-                            interpolationState = new InterpolationState(InterpolatedStringKind.Raw) { Braces = 0 };
+                            // Initialize brace balance: if bracesForHole > D, we have extra braces in the hole
+                            interpolationState = new InterpolationState(InterpolatedStringKind.Raw) { 
+                                Braces = bracesForHole > 0 ? bracesForHole - dollarCount : 0 
+                            };
                             goto restart;
                         }
                     }
