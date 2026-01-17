@@ -957,9 +957,9 @@ public static class Scanner
                             yield return Transit(kind, State.Text);
                             // Always push a marker state to track that we're in a hole
                             // Use the current state if it exists, otherwise create a marker
-                            // Save rawStringQuoteCount for nested raw strings
+                            // Save rawStringQuoteCount for nested raw strings - always use current value
                             var stateToSave = interpolationState.IsSome
-                                ? interpolationState
+                                ? interpolationState with { RawStringQuoteCount = rawStringQuoteCount }
                                 : new InterpolationState(InterpolatedStringKind.Raw) { RawStringQuoteCount = rawStringQuoteCount };
                             interpolationStateStack.Push(stateToSave);
                             // Set up new interpolation state for the hole
@@ -984,9 +984,9 @@ public static class Scanner
                             // We do NOT skip them - they will be included in the next Text token
                             // Always push a marker state to track that we're in a hole
                             // Use the current state if it exists, otherwise create a marker
-                            // Save rawStringQuoteCount for nested raw strings
+                            // Save rawStringQuoteCount for nested raw strings - always use current value
                             var stateToSave = interpolationState.IsSome
-                                ? interpolationState
+                                ? interpolationState with { RawStringQuoteCount = rawStringQuoteCount }
                                 : new InterpolationState(InterpolatedStringKind.Raw) { RawStringQuoteCount = rawStringQuoteCount };
                             interpolationStateStack.Push(stateToSave);
                             // Initialize brace balance to the number of remaining braces
@@ -1033,8 +1033,8 @@ public static class Scanner
                                      ? TokenKind.InterpolatedRawStringLiteral
                                      : TokenKind.InterpolatedRawStringLiteralEnd;
                             yield return Transit(kind, State.Text);
-                            if (interpolationState.IsSome)
-                                interpolationState = interpolationStateStack.Pop();
+                            // Don't pop interpolation state here - it was already popped when exiting the hole
+                            // If this interpolated raw string had no holes, interpolationState is already correct
                             rawStringQuoteCount = 0;
                             rawStringClosingQuoteCount = 0;
                             interpolatedRawStringDollarCount = 0;
