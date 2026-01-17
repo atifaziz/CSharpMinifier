@@ -480,7 +480,7 @@ public static class Scanner
                             // Multiple dollars with only two quotes is an error ($$"" is invalid)
                             throw SyntaxError("Unterminated interpolated string.");
                         }
-                        if (TextTransit(State.Text, -2) is {} text)
+                        if (TextTransit(State.Text, -(2 + dollarCount)) is {} text)
                             yield return text;
                         yield return Transit(TokenKind.InterpolatedStringLiteral, State.Text);
                         goto restart;
