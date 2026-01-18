@@ -777,6 +777,32 @@ public class ScannerTests
               "InterpolatedRawStringStart 11 0 11 \"$\\\"\\\"\\\"hello {\"",
               "Text 1 0 1 \"x\"",
               "InterpolatedRawStringEnd 4 0 4 \"}\\\"\\\"\\\"\"")]
+    [TestCase(""""
+              $"""hello {$$"""{{{x}}}"""}"""
+              """",
+              "InterpolatedRawStringStart 11 0 11 \"$\\\"\\\"\\\"hello {\"",
+              "InterpolatedRawStringStart  8 0  8 \"$$\\\"\\\"\\\"{{{\"",
+              "Text                        1 0  1 \"x\"",
+              "InterpolatedRawStringEnd    6 0  6 \"}}}\\\"\\\"\\\"\"",
+              "InterpolatedRawStringEnd    4 0  4 \"}\\\"\\\"\\\"\"")]
+    [TestCase(""""
+              $$"""hello {{$"""{{{x}}}"""}}"""
+              """",
+              "InterpolatedRawStringStart 13 0 13 \"$$\\\"\\\"\\\"hello {{\"",
+              "InterpolatedRawStringStart  5 0  5 \"$\\\"\\\"\\\"{\"",
+              "Text                        5 0  5 \"{{x}}\"",
+              "InterpolatedRawStringEnd    4 0  4 \"}\\\"\\\"\\\"\"",
+              "InterpolatedRawStringEnd    5 0  5 \"}}\\\"\\\"\\\"\"")]
+    [TestCase("$$$\"\"\"\"\"{{{$$\"\"\"\"{{$\"\"\"{x}\"\"\"}}\"\"\"\"}}}{{{y}}}\"\"\"\"\"",
+              "InterpolatedRawStringStart 11 0 11 \"$$$\\\"\\\"\\\"\\\"\\\"{{{\"",
+              "InterpolatedRawStringStart  8 0  8 \"$$\\\"\\\"\\\"\\\"{{\"",
+              "InterpolatedRawStringStart  5 0  5 \"$\\\"\\\"\\\"{\"",
+              "Text                        1 0  1 \"x\"",
+              "InterpolatedRawStringEnd    4 0  4 \"}\\\"\\\"\\\"\"",
+              "InterpolatedRawStringEnd    6 0  6 \"}}\\\"\\\"\\\"\\\"\"",
+              "InterpolatedRawStringMid    6 0  6 \"}}}{{{\"",
+              "Text                        1 0  1 \"y\"",
+              "InterpolatedRawStringEnd    8 0  8 \"}}}\\\"\\\"\\\"\\\"\\\"\"")]
 
     // Multi-line interpolated raw strings (Phase 6)
     [TestCase("$\"\"\"\ntext\n\"\"\"", "InterpolatedRawStringLiteral 13 2 =4 \"$\\\"\\\"\\\"\\ntext\\n\\\"\\\"\\\"\"")]
