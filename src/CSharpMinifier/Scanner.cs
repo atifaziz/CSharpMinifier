@@ -90,6 +90,7 @@ public static class Scanner
         public int Braces      { get; set; }
         public int Brackets    { get; set; }
         public int RawStringQuoteCount { get; set; }  // For interpolated raw strings
+        public int DollarCount { get; set; }  // For interpolated raw strings
     }
 
     static IEnumerable<Token> ScanImpl(string source)
@@ -268,11 +269,12 @@ public static class Scanner
 
                             interpolationState = interpolationStateStack.Count > 0 ? interpolationStateStack.Pop() : new();
 
-                            // Restore rawStringQuoteCount when returning to interpolated raw string state
+                            // Restore rawStringQuoteCount and dollarCount when returning to interpolated raw string state
                             if (newState == State.InterpolatedRawString)
                             {
                                 rawStringClosingQuoteCount = 0;
                                 rawStringQuoteCount = interpolationState.RawStringQuoteCount;
+                                interpolatedRawStringDollarCount = interpolationState.DollarCount;
                             }
 
                             break;
@@ -957,12 +959,12 @@ public static class Scanner
                             yield return Transit(kind, State.Text);
                             // Always push a marker state to track that we're in a hole
                             // Use the current state if it exists, otherwise create a marker
-                            // IMPORTANT: Always save current rawStringQuoteCount for nested raw strings
-                            // Even if we're already in a hole, we must preserve the rawStringQuoteCount
+                            // IMPORTANT: Always save current rawStringQuoteCount and dollarCount for nested raw strings
+                            // Even if we're already in a hole, we must preserve the rawStringQuoteCount and dollarCount
                             // of the interpolated raw string we're currently in (not the outer hole's count)
                             var stateToSave = interpolationState.IsSome
-                                ? interpolationState with { RawStringQuoteCount = rawStringQuoteCount }
-                                : new InterpolationState(InterpolatedStringKind.Raw) { RawStringQuoteCount = rawStringQuoteCount };
+                                ? interpolationState with { RawStringQuoteCount = rawStringQuoteCount, DollarCount = interpolatedRawStringDollarCount }
+                                : new InterpolationState(InterpolatedStringKind.Raw) { RawStringQuoteCount = rawStringQuoteCount, DollarCount = interpolatedRawStringDollarCount };
                             interpolationStateStack.Push(stateToSave);
                             // Set up new interpolation state for the hole
                             interpolationState = new InterpolationState(InterpolatedStringKind.Raw) { Braces = 0 };
@@ -986,12 +988,12 @@ public static class Scanner
                             // We do NOT skip them - they will be included in the next Text token
                             // Always push a marker state to track that we're in a hole
                             // Use the current state if it exists, otherwise create a marker
-                            // IMPORTANT: Always save current rawStringQuoteCount for nested raw strings
-                            // Even if we're already in a hole, we must preserve the rawStringQuoteCount
+                            // IMPORTANT: Always save current rawStringQuoteCount and dollarCount for nested raw strings
+                            // Even if we're already in a hole, we must preserve the rawStringQuoteCount and dollarCount
                             // of the interpolated raw string we're currently in (not the outer hole's count)
                             var stateToSave = interpolationState.IsSome
-                                ? interpolationState with { RawStringQuoteCount = rawStringQuoteCount }
-                                : new InterpolationState(InterpolatedStringKind.Raw) { RawStringQuoteCount = rawStringQuoteCount };
+                                ? interpolationState with { RawStringQuoteCount = rawStringQuoteCount, DollarCount = interpolatedRawStringDollarCount }
+                                : new InterpolationState(InterpolatedStringKind.Raw) { RawStringQuoteCount = rawStringQuoteCount, DollarCount = interpolatedRawStringDollarCount };
                             interpolationStateStack.Push(stateToSave);
                             // Initialize brace balance to the number of remaining braces
                             interpolationState = new InterpolationState(InterpolatedStringKind.Raw) {
