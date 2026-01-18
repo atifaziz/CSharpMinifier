@@ -901,8 +901,10 @@ public class ScannerTests
             from t in Scanner.Scan(source)
             select $"{t} {JsonString.Encode(source, t.Start.Offset, t.Length)}";
 
-        var desuragedExpectations =
-            from e in
+        Assert.That(
+            tokens,
+            Is.EqualTo(
+                from e in
                 expectations
                     .Select(e =>
                         e.Split(' ', 5, StringSplitOptions.RemoveEmptyEntries)
@@ -935,9 +937,7 @@ public class ScannerTests
                               e.Text,
                           })
                     .Skip(1)
-            select $"{e.Kind} [{e.Start}..{e.End}) {e.Text}";
-
-        Assert.That(tokens, Is.EqualTo(desuragedExpectations));
+                select $"{e.Kind} [{e.Start}..{e.End}) {e.Text}"));
     }
 
     [TestCase(@"""Hello world!"""                       , "Hello world!")]
