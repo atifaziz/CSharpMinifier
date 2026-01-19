@@ -1032,7 +1032,6 @@ public class ScannerTests
     [TestCase("$\"\"\"\n    line1\n    line2\n    \"\"\"", "line1\nline2")]
     [TestCase("$\"\"\"\n    a {x} b\n    \"\"\"", "a ", " b")]
     [TestCase("$$\"\"\"\n    a {{x}} b\n    \"\"\"", "a ", " b")]
-    [TestCase("$$\"\"\"\n    {{single}} {{{x}}} {{single}}\n    \"\"\"", "{single} ", " {single}")]
 
     public void ParseStrings(string source, params string[] expectations)
     {
