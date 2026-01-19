@@ -56,11 +56,6 @@ partial class TokenKindExtensions
         /* CharLiteral                            */ Literal,
         /* StringLiteral                          */ Literal | String,
         /* VerbatimStringLiteral                  */ Literal | String | VerbatimString,
-        /* RawStringLiteral                       */ Literal | String | RawString,
-        /* InterpolatedRawStringLiteral           */ Literal | String | InterpolatedString | RawString,
-        /* InterpolatedRawStringLiteralStart      */ Literal | String | InterpolatedString | RawString | InterpolatedStringStart,
-        /* InterpolatedRawStringLiteralMid        */ Literal | String | InterpolatedString | RawString | InterpolatedStringMid,
-        /* InterpolatedRawStringLiteralEnd        */ Literal | String | InterpolatedString | RawString | InterpolatedStringEnd,
         /* InterpolatedStringLiteral              */ Literal | String | InterpolatedString,
         /* InterpolatedStringLiteralStart         */ Literal | String | InterpolatedString | InterpolatedStringStart,
         /* InterpolatedStringLiteralMid           */ Literal | String | InterpolatedString | InterpolatedStringMid,
@@ -69,6 +64,11 @@ partial class TokenKindExtensions
         /* InterpolatedVerbatimStringLiteralStart */ Literal | String | InterpolatedString | VerbatimString | InterpolatedStringStart,
         /* InterpolatedVerbatimStringLiteralMid   */ Literal | String | InterpolatedString | VerbatimString | InterpolatedStringMid,
         /* InterpolatedVerbatimStringLiteralEnd   */ Literal | String | InterpolatedString | VerbatimString | InterpolatedStringEnd,
-        /* PreprocessorDirective                  */ None
+        /* PreprocessorDirective                  */ None,
+        /* RawStringLiteral                       */ Literal | String | RawString,
+        /* InterpolatedRawStringLiteral           */ Literal | String | InterpolatedString | RawString,
+        /* InterpolatedRawStringLiteralStart      */ Literal | String | InterpolatedString | RawString | InterpolatedStringStart,
+        /* InterpolatedRawStringLiteralMid        */ Literal | String | InterpolatedString | RawString | InterpolatedStringMid,
+        /* InterpolatedRawStringLiteralEnd        */ Literal | String | InterpolatedString | RawString | InterpolatedStringEnd,
     ];
 }
