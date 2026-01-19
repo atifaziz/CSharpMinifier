@@ -34,7 +34,7 @@ CSharpMinifier.Token.Length.get -> int
 CSharpMinifier.Token.Start.get -> CSharpMinifier.Position
 CSharpMinifier.Token.Start.init -> void
 CSharpMinifier.Token.Token() -> void
-CSharpMinifier.Token.Token(CSharpMinifier.TokenKind Kind, CSharpMinifier.Position Start, CSharpMinifier.Position End) -> void
+CSharpMinifier.Token.Token(CSharpMinifier.TokenKind kind, CSharpMinifier.Position start, CSharpMinifier.Position end) -> void
 CSharpMinifier.TokenExtensions
 CSharpMinifier.TokenKind
 CSharpMinifier.TokenKind.CharLiteral = 5 -> CSharpMinifier.TokenKind

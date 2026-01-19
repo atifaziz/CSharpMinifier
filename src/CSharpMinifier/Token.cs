@@ -70,8 +70,15 @@ public static partial class TokenKindExtensions
     }
 }
 
-public readonly record struct Token(TokenKind Kind, Position Start, Position End)
+public readonly record struct Token
 {
+    public Token(TokenKind kind, Position start, Position end) =>
+        (Kind, Start, End) = (kind, start, end);
+
+    public TokenKind Kind  { get; init; }
+    public Position  Start { get; init; }
+    public Position  End   { get; init; }
+
     public int Length => End.Offset - Start.Offset;
 
     public override string ToString() => $"{Kind} [{Start}..{End})";
