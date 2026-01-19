@@ -38,6 +38,10 @@ CSharpMinifier.Token.Token(CSharpMinifier.TokenKind Kind, CSharpMinifier.Positio
 CSharpMinifier.TokenExtensions
 CSharpMinifier.TokenKind
 CSharpMinifier.TokenKind.CharLiteral = 5 -> CSharpMinifier.TokenKind
+CSharpMinifier.TokenKind.InterpolatedRawStringLiteral = 18 -> CSharpMinifier.TokenKind
+CSharpMinifier.TokenKind.InterpolatedRawStringLiteralEnd = 21 -> CSharpMinifier.TokenKind
+CSharpMinifier.TokenKind.InterpolatedRawStringLiteralMid = 20 -> CSharpMinifier.TokenKind
+CSharpMinifier.TokenKind.InterpolatedRawStringLiteralStart = 19 -> CSharpMinifier.TokenKind
 CSharpMinifier.TokenKind.InterpolatedStringLiteral = 8 -> CSharpMinifier.TokenKind
 CSharpMinifier.TokenKind.InterpolatedStringLiteralEnd = 11 -> CSharpMinifier.TokenKind
 CSharpMinifier.TokenKind.InterpolatedStringLiteralMid = 10 -> CSharpMinifier.TokenKind
@@ -49,6 +53,7 @@ CSharpMinifier.TokenKind.InterpolatedVerbatimStringLiteralStart = 13 -> CSharpMi
 CSharpMinifier.TokenKind.MultiLineComment = 4 -> CSharpMinifier.TokenKind
 CSharpMinifier.TokenKind.NewLine = 2 -> CSharpMinifier.TokenKind
 CSharpMinifier.TokenKind.PreprocessorDirective = 16 -> CSharpMinifier.TokenKind
+CSharpMinifier.TokenKind.RawStringLiteral = 17 -> CSharpMinifier.TokenKind
 CSharpMinifier.TokenKind.SingleLineComment = 3 -> CSharpMinifier.TokenKind
 CSharpMinifier.TokenKind.StringLiteral = 6 -> CSharpMinifier.TokenKind
 CSharpMinifier.TokenKind.Text = 0 -> CSharpMinifier.TokenKind
@@ -66,6 +71,7 @@ CSharpMinifier.TokenKindTraits.InterpolatedStringMid = 128 -> CSharpMinifier.Tok
 CSharpMinifier.TokenKindTraits.InterpolatedStringStart = 64 -> CSharpMinifier.TokenKindTraits
 CSharpMinifier.TokenKindTraits.Literal = 4 -> CSharpMinifier.TokenKindTraits
 CSharpMinifier.TokenKindTraits.None = 0 -> CSharpMinifier.TokenKindTraits
+CSharpMinifier.TokenKindTraits.RawString = 512 -> CSharpMinifier.TokenKindTraits
 CSharpMinifier.TokenKindTraits.String = 8 -> CSharpMinifier.TokenKindTraits
 CSharpMinifier.TokenKindTraits.VerbatimString = 16 -> CSharpMinifier.TokenKindTraits
 CSharpMinifier.TokenKindTraits.WhiteSpace = 2 -> CSharpMinifier.TokenKindTraits

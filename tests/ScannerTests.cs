@@ -75,6 +75,11 @@ public class ScannerTests
     [TestCase("/*")]
     [TestCase("/* foo")]
     [TestCase("/*\r")]
+    [TestCase("$$\"")]
+    [TestCase("$$\"\"")]
+    [TestCase("\"\"\"")]
+    [TestCase("\"\"\"\"")]
+    [TestCase("Console.WriteLine(\"\"\"\"\"\");")]
     public void SyntaxError(string source)
     {
         _ = Assert.Throws<SyntaxErrorException>(() => Scanner.Scan(source).Consume());
@@ -298,6 +303,12 @@ public class ScannerTests
     [TestCase("\"\""          , @"String  2 0  2 ""\""\""""")]
     [TestCase("\"foobar\""    , @"String  8 0  8 ""\""foobar\""""")]
     [TestCase("\"foo\\\\bar\"", @"String 10 0 10 ""\""foo\\\\bar\""""")]
+    [TestCase("\"\"+\"\"+\"\"",
+              @"String      2 0 2 ""\""\""""",
+              @"Text        1 0 1 ""+""",
+              @"String      2 0 2 ""\""\""""",
+              @"Text        1 0 1 ""+""",
+              @"String      2 0 2 ""\""\""""")]
 
     [TestCase("foo=\"bar\";",
         @"Text   4 0 4 ""foo=""",
@@ -309,6 +320,13 @@ public class ScannerTests
     [TestCase("$\"foobar\""       , @"InterpolatedString  9 0  9 ""$\""foobar\""""")]
     [TestCase("$\"foo\\\\bar\""   , @"InterpolatedString 11 0 11 ""$\""foo\\\\bar\""""")]
     [TestCase("$\"foo{{bar}}baz\"", @"InterpolatedString 16 0 16 ""$\""foo{{bar}}baz\""""")]
+    [TestCase("($\"\")",
+              @"Text                1 0 1 ""(""",
+              @"InterpolatedString  3 0 3 ""$\""\""""",
+              @"Text                1 0 1 "")""")]
+    [TestCase("str+$\"\"",
+              @"Text                4 0 4 ""str+""",
+              @"InterpolatedString  3 0 3 ""$\""\""""")]
 
     // C# 11 breaking change: format specifiers can't contain curly braces.
     // The first `}` in a format specifier ends the interpolation.
@@ -708,6 +726,174 @@ public class ScannerTests
         @"Text                1 0   1 ""}""",
         @"NewLine             2 1  =1 ""\r\n""")
     ]
+
+    // Raw string literals (C# 11)
+    [TestCase("\"\"\"raw\"\"\"", "RawString 9 0 9 \"\\\"\\\"\\\"raw\\\"\\\"\\\"\"")]
+    [TestCase("""""
+              """" "one" ""two"" """three""" """"
+              """"",
+              """
+              RawString 35 0 35 "\"\"\"\" \"one\" \"\"two\"\" \"\"\"three\"\"\" \"\"\"\""
+              """)]
+    [TestCase(""""str = """hello world""";"""",
+        "Text       3 0 3 \"str\"",
+        "WhiteSpace 1 0 1 \" \"",
+        "Text       1 0 1 \"=\"",
+        "WhiteSpace 1 0 1 \" \"",
+        "RawString  17 0 17 \"\\\"\\\"\\\"hello world\\\"\\\"\\\"\"",
+        "Text       1 0 1 \";\"")]
+    [TestCase(""""str = """foo "bar" baz""";"""",
+        "Text        3 0  3 \"str\"",
+        "WhiteSpace  1 0  1 \" \"",
+        "Text        1 0  1 \"=\"",
+        "WhiteSpace  1 0  1 \" \"",
+        "RawString  19 0 19 \"\\\"\\\"\\\"foo \\\"bar\\\" baz\\\"\\\"\\\"\"",
+        "Text        1 0  1 \";\"")]
+    [TestCase("csv = \"\"\"\n\"foo\",\"bar\",\"baz\"\n\"\"\";",
+        "Text        3 0  3 \"csv\"",
+        "WhiteSpace  1 0  1 \" \"",
+        "Text        1 0  1 \"=\"",
+        "WhiteSpace  1 0  1 \" \"",
+        "RawString  25 2 =4 \"\\\"\\\"\\\"\\n\\\"foo\\\",\\\"bar\\\",\\\"baz\\\"\\n\\\"\\\"\\\"\"",
+        "Text        1 0  1 \";\"")]
+
+    // Multi-line raw strings
+    [TestCase("\"\"\"\ntext\n\"\"\""        , @"RawString 12 2 =4 ""\""\""\""\ntext\n\""\""\""""")]
+    [TestCase("\"\"\"\r\ntext\r\n\"\"\""    , @"RawString 14 2 =4 ""\""\""\""\r\ntext\r\n\""\""\""""")]
+    [TestCase("\"\"\"\nline1\nline2\n\"\"\"", @"RawString 19 3 =4 ""\""\""\""\nline1\nline2\n\""\""\""""")]
+
+    // Single-line interpolated raw strings
+    [TestCase("$\"\"\"test\"\"\"", @"InterpolatedRawString 11 0 11 ""$\""\""\""test\""\""\""""")]
+    [TestCase("""""
+              $"""" "one" ""two"" """three""" """"
+              """"",
+              """
+              InterpolatedRawString 36 0 36 "$\"\"\"\" \"one\" \"\"two\"\" \"\"\"three\"\"\" \"\"\"\""
+              """)]
+
+    [TestCase(""""
+              $"""hello {x}"""
+              """",
+              @"InterpolatedRawStringStart 11 0 11 ""$\""\""\""hello {""",
+              @"Text 1 0 1 ""x""",
+              @"InterpolatedRawStringEnd 4 0 4 ""}\""\""\""""")]
+
+    // Multi-line interpolated raw strings
+    [TestCase("$\"\"\"\ntext\n\"\"\"", @"InterpolatedRawString 13 2 =4 ""$\""\""\""\ntext\n\""\""\""""")]
+    [TestCase("$\"\"\"\nhello {x}\n\"\"\"",
+              @"InterpolatedRawStringStart 12 1 =8 ""$\""\""\""\nhello {""",
+              @"Text                        1 0  1 ""x""",
+              @"InterpolatedRawStringEnd    5 1 =4 ""}\n\""\""\""""")]
+    [TestCase("$$\"\"\"\nhello {{x}}\n\"\"\"",
+              @"InterpolatedRawStringStart 14 1 =9 ""$$\""\""\""\nhello {{""",
+              @"Text                        1 0  1 ""x""",
+              @"InterpolatedRawStringEnd    6 1 =4 ""}}\n\""\""\""""")]
+    [TestCase("$\"\"\"\r\nhello {x}\r\n\"\"\"",
+              @"InterpolatedRawStringStart 13 1 =8 ""$\""\""\""\r\nhello {""",
+              @"Text                        1 0  1 ""x""",
+              @"InterpolatedRawStringEnd    6 1 =4 ""}\r\n\""\""\""""")]
+    // Nested string combination tests
+    [TestCase(""""
+              $"""hello {"""world"""}"""
+              """",
+              @"InterpolatedRawStringStart 11 0 11 ""$\""\""\""hello {""",
+              @"RawString                  11 0 11 ""\""\""\""world\""\""\""""",
+              @"InterpolatedRawStringEnd    4 0  4 ""}\""\""\""""")]
+    [TestCase(""""
+              $"""hello {"world"}"""
+              """",
+              @"InterpolatedRawStringStart 11 0 11 ""$\""\""\""hello {""",
+              @"String                      7 0  7 ""\""world\""""",
+              @"InterpolatedRawStringEnd    4 0  4 ""}\""\""\""""")]
+    [TestCase(""""
+              $"""foo{$"bar{"""baz"""}"}"""
+              """",
+              @"InterpolatedRawStringStart  8 0  8 ""$\""\""\""foo{""",
+              @"InterpolatedStringStart     6 0  6 ""$\""bar{""",
+              @"RawString                   9 0  9 ""\""\""\""baz\""\""\""""",
+              @"InterpolatedStringEnd       2 0  2 ""}\""""",
+              @"InterpolatedRawStringEnd    4 0  4 ""}\""\""\""""")]
+    [TestCase(""""
+              $"foo{$"""bar{"""baz"""}"""}"
+              """",
+              @"InterpolatedStringStart     6 0  6 ""$\""foo{""",
+              @"InterpolatedRawStringStart  8 0  8 ""$\""\""\""bar{""",
+              @"RawString                   9 0  9 ""\""\""\""baz\""\""\""""",
+              @"InterpolatedRawStringEnd    4 0  4 ""}\""\""\""""",
+              @"InterpolatedStringEnd       2 0  2 ""}\""""")]
+    [TestCase(""""
+              $"""{xs[1,2]}"""
+              """",
+              @"InterpolatedRawStringStart  5 0  5 ""$\""\""\""{""",
+              @"Text                        7 0  7 ""xs[1,2]""",
+              @"InterpolatedRawStringEnd    4 0  4 ""}\""\""\""""")]
+    [TestCase(""""
+              $$"""{single} {{{hole}}} {single}"""
+              """",
+              @"InterpolatedRawStringStart 17 0 17 ""$$\""\""\""{single} {{{""",
+              @"Text                        4 0  4 ""hole""",
+              @"InterpolatedRawStringEnd   15 0 15 ""}}} {single}\""\""\""""")]
+    [TestCase(""""
+              $"""{"quoted"}"""
+              """",
+              @"InterpolatedRawStringStart  5 0  5 ""$\""\""\""{""",
+              @"String                      8 0  8 ""\""quoted\""""",
+              @"InterpolatedRawStringEnd    4 0  4 ""}\""\""\""""")]
+    [TestCase("$$\"\"\"\n{\n}\n\"\"\"",
+              @"InterpolatedRawString 13 3 =4 ""$$\""\""\""\n{\n}\n\""\""\""""")]
+    // Brace escaping tests with $$ interpolation
+    [TestCase(""""
+              $$"""{{{{content}}}}"""
+              """",
+              @"InterpolatedRawStringStart  8 0  8 ""$$\""\""\""{{{""",
+              @"Text                        9 0  9 ""{content}""",
+              @"InterpolatedRawStringEnd    6 0  6 ""}}}\""\""\""""")]
+    [TestCase(""""
+              $$"""{{x}} {{{{escaped}}}}"""
+              """",
+              @"InterpolatedRawStringStart  7 0  7 ""$$\""\""\""{{""",
+              @"Text                        1 0  1 ""x""",
+              @"InterpolatedRawStringMid    6 0  6 ""}} {{{""",
+              @"Text                        9 0  9 ""{escaped}""",
+              @"InterpolatedRawStringEnd    6 0  6 ""}}}\""\""\""""")]
+    [TestCase(""""
+              $$"""{{{x}}}"""
+              """",
+              @"InterpolatedRawStringStart  8 0  8 ""$$\""\""\""{{{""",
+              @"Text                        1 0  1 ""x""",
+              @"InterpolatedRawStringEnd    6 0  6 ""}}}\""\""\""""")]
+    [TestCase(""""
+              $"""{x switch { 1 => "a" }}"""
+              """",
+              @"InterpolatedRawStringStart  5 0  5 ""$\""\""\""{""",
+              @"Text                        1 0  1 ""x""",
+              @"WhiteSpace                  1 0  1 "" """,
+              @"Text                        6 0  6 ""switch""",
+              @"WhiteSpace                  1 0  1 "" """,
+              @"Text                        1 0  1 ""{""",
+              @"WhiteSpace                  1 0  1 "" """,
+              @"Text                        1 0  1 ""1""",
+              @"WhiteSpace                  1 0  1 "" """,
+              @"Text                        2 0  2 ""=>""",
+              @"WhiteSpace                  1 0  1 "" """,
+              @"String                      3 0  3 ""\""a\""""",
+              @"WhiteSpace                  1 0  1 "" """,
+              @"Text                        1 0  1 ""}""",
+              @"InterpolatedRawStringEnd    4 0  4 ""}\""\""\""""")]
+    [TestCase(""""
+              $$$"""hello { {{ {{{{{42}}}}} }} } world"""
+              """",
+              @"InterpolatedRawStringStart 22 0 22 ""$$$\""\""\""hello { {{ {{{{{""",
+              @"Text                        2 0  2 ""42""",
+              @"InterpolatedRawStringEnd   19 0 19 ""}}}}} }} } world\""\""\""""")]
+    [TestCase(""""
+              $"""foo {$"b{'a'}r"} baz"""
+              """",
+              @"InterpolatedRawStringStart  9 0 9 ""$\""\""\""foo {""",
+              @"InterpolatedStringStart     4 0 4 ""$\""b{""",
+              @"Char                        3 0 3 ""\'a\'""",
+              @"InterpolatedStringEnd       3 0 3 ""}r\""""",
+              @"InterpolatedRawStringEnd    8 0 8 ""} baz\""\""\""""")]
 
     public void Scan(string source, params string[] expectations)
     {

@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace CSharpMinifier;
 
@@ -45,7 +46,12 @@ public static class Scanner
         VerbatimString,
         VerbatimStringQuote,
         VerbatimStringCr,
+        Quote,
+        QuoteQuote,
         Dollar,
+        DollarDollar,
+        DollarQuote,
+        DollarQuoteQuote,
         InterpolatedString,
         InterpolatedStringEscape,
         InterpolatedStringBrace,
@@ -55,6 +61,15 @@ public static class Scanner
         InterpolatedVerbatimStringQuote,
         InterpolatedVerbatimStringBrace,
         InterpolatedVerbatimStringCr,
+        RawString,
+        RawStringOpening,
+        RawStringClosing,
+        RawStringCr,
+        InterpolatedRawString,
+        InterpolatedRawStringOpening,
+        InterpolatedRawStringClosing,
+        InterpolatedRawStringBrace,
+        InterpolatedRawStringCr,
         Char,
         CharEscape,
         PreprocessorDirective,
@@ -63,7 +78,7 @@ public static class Scanner
         PreprocessorDirectiveTrailingWhiteSpaceSlash,
     }
 
-    enum InterpolatedStringKind { None, Regular, Verbatim }
+    enum InterpolatedStringKind { None, Regular, Verbatim, Raw }
 
     struct InterpolationState(InterpolatedStringKind kind)
     {
@@ -71,9 +86,11 @@ public static class Scanner
 
         public readonly bool IsSome => InterpolatedStringKind is not InterpolatedStringKind.None;
 
-        public int Parentheses { get; set; }
-        public int Braces      { get; set; }
-        public int Brackets    { get; set; }
+        public int Parentheses { get; set;  }
+        public int Braces      { get; set;  }
+        public int Brackets    { get; set;  }
+        public int Dollars     { get; init; } // $ count before opening quotes of interpolated raw strings
+        public int Quotes      { get; init; } // opening quote count for raw strings
     }
 
     static IEnumerable<Token> ScanImpl(string source)
@@ -87,6 +104,9 @@ public static class Scanner
         int i;
         var interpolationState = new InterpolationState();
         var interpolationStateStack = new Stack<InterpolationState>();
+        var dollars = 0;
+        var quotesOrBraces = 0;  // For counting consecutive quotes or braces during scanning
+        var rawQuoteCountdown = 0;
 
         T TransitReturn<T>(State newState, int offset, T token)
         {
@@ -112,6 +132,32 @@ public static class Scanner
             throw new SyntaxErrorException($"{message} The syntax error is at line {pos.Line} and column {pos.Col} (or offset {i}). The last anchor was at line {spos.Line} and column {spos.Col} (or offset {si})");
 
         static bool IsDollarOrAt(char ch) => ch is '$' or '@';
+
+        Token? EnterInterpolation(InterpolationState newState, int offset)
+        {
+            var scannerState = newState.InterpolatedStringKind switch
+            {
+                InterpolatedStringKind.Regular => State.InterpolatedString,
+                InterpolatedStringKind.Verbatim => State.InterpolatedVerbatimString,
+                InterpolatedStringKind.Raw => State.InterpolatedRawString,
+                InterpolatedStringKind.None or _ => throw new UnreachableException(),
+            };
+            var text = TextTransit(scannerState, offset);
+            if (interpolationState.IsSome)
+                interpolationStateStack.Push(interpolationState);
+            interpolationState = newState;
+            dollars = quotesOrBraces = 0;
+            return text;
+        }
+
+        Token ExitInterpolation(TokenKind tokenKind, int offset = 0)
+        {
+            Debug.Assert(interpolationState.IsSome);
+
+            var token = Transit(tokenKind, State.Text, offset);
+            interpolationState = interpolationStateStack.Count > 0 ? interpolationStateStack.Pop() : new();
+            return token;
+        }
 
         //
         // While the C# language specification defines the following line
@@ -183,8 +229,7 @@ public static class Scanner
                             break;
                         case ('"', _):
                         {
-                            if (TextTransit(State.String) is {} text)
-                                yield return text;
+                            state = State.Quote;
                             break;
                         }
                         case ('\'', _):
@@ -202,9 +247,18 @@ public static class Scanner
                         case ('(', { IsSome: true }):
                             interpolationState.Parentheses++;
                             break;
+                        case (')', { IsSome: true, Parentheses: 0 }):
+                            throw SyntaxError("Parentheses mismatch in interpolated string expression.");
                         case (')', { IsSome: true }):
-                            if (interpolationState.Parentheses-- == 0)
-                                throw SyntaxError("Parentheses mismatch in interpolated string expression.");
+                            interpolationState.Parentheses--;
+                            break;
+                        case ('[', { IsSome: true }):
+                            interpolationState.Brackets++;
+                            break;
+                        case (']', { IsSome: true, Brackets: 0 }):
+                            throw SyntaxError("Brackets mismatch in interpolated string expression.");
+                        case (']', { IsSome: true }):
+                            interpolationState.Brackets--;
                             break;
                         case ('{', { IsSome: true }):
                             interpolationState.Braces++;
@@ -212,19 +266,16 @@ public static class Scanner
                         case ('}', { IsSome: true, Braces: > 0 }):
                             interpolationState.Braces--;
                             break;
-                        case ('[', { IsSome: true }):
-                            interpolationState.Brackets++;
-                            break;
-                        case (']', { IsSome: true }):
-                            if (interpolationState.Brackets-- == 0)
-                                throw SyntaxError("Brackets mismatch in interpolated string expression.");
-                            break;
                         case (',' or ':', { IsSome: true, Parentheses: 0, Braces: 0, Brackets: 0 }):
                         case ('}', { IsSome: true }) :
                         {
-                            var newState = interpolationState.InterpolatedStringKind == InterpolatedStringKind.Verbatim
-                                         ? State.InterpolatedVerbatimString
-                                         : State.InterpolatedString;
+                            var newState = interpolationState.InterpolatedStringKind switch
+                            {
+                                InterpolatedStringKind.Verbatim => State.InterpolatedVerbatimString,
+                                InterpolatedStringKind.Raw => State.InterpolatedRawString,
+                                InterpolatedStringKind.Regular => State.InterpolatedString,
+                                InterpolatedStringKind.None or _ => throw new UnreachableException(),
+                            };
 
                             if (TextTransit(newState) is {} text)
                                 yield return text;
@@ -240,7 +291,6 @@ public static class Scanner
                                 throw SyntaxError(message);
                             }
 
-                            interpolationState = interpolationStateStack.Count > 0 ? interpolationStateStack.Pop() : new();
                             break;
                         }
                         case (' ', _):
@@ -396,12 +446,70 @@ public static class Scanner
                             state = State.DollarAt;
                             break;
                         case '"':
-                            if (TextTransit(State.InterpolatedString, -1) is {} text)
-                                yield return text;
+                            // Could be regular interpolated string or interpolated raw string so
+                            // wait to see if next char is also a quote.
+                            state = State.DollarQuote;
+                            break;
+                        case '$':
+                            // Multiple dollar signs so track count for potential raw string
+                            // interpolation.
+                            dollars = 2;
+                            state = State.DollarDollar;
                             break;
                         default:
                             state = State.Text;
                             goto restart;
+                    }
+                    break;
+                }
+                case State.DollarDollar:
+                {
+                    switch (ch)
+                    {
+                        case '$':
+                            dollars++;
+                            break;
+                        case '"':
+                            quotesOrBraces = 1;
+                            state = State.InterpolatedRawStringOpening;
+                            break;
+                        default:
+                            state = State.Text;
+                            goto restart;
+                    }
+                    break;
+                }
+                case State.DollarQuote:
+                {
+                    if (ch == '"')
+                    {
+                        // Seen `$""`, but that's not enough to know if it's an empty interpolated
+                        // string or the start of a raw string, so defer decision until the next
+                        // char is seen.
+                        state = State.DollarQuoteQuote;
+                    }
+                    else
+                    {
+                        if (EnterInterpolation(new(InterpolatedStringKind.Regular), -2) is {} text)
+                            yield return text;
+                        goto restart;
+                    }
+                    break;
+                }
+                case State.DollarQuoteQuote:
+                {
+                    if (ch == '"') // 3rd quote; mark the start of an interpolated raw string
+                    {
+                        dollars = 1;
+                        quotesOrBraces = 3;
+                        state = State.InterpolatedRawStringOpening;
+                    }
+                    else // Regular interpolated string that's empty, i.e.: $""
+                    {
+                        if (TextTransit(State.Text, -3) is {} text)
+                            yield return text;
+                        yield return Transit(TokenKind.InterpolatedStringLiteral, State.Text);
+                        goto restart;
                     }
                     break;
                 }
@@ -412,10 +520,10 @@ public static class Scanner
 #pragma warning disable IDE0010 // Add missing cases (default continue)
                     {
                         case '"':
-                            yield return Transit(source[si] == '$'
-                                                 ? TokenKind.InterpolatedStringLiteral
-                                                 : TokenKind.InterpolatedStringLiteralEnd,
-                                                 State.Text, 1);
+                            yield return
+                                ExitInterpolation(source[si] == '$'
+                                                  ? TokenKind.InterpolatedStringLiteral
+                                                  : TokenKind.InterpolatedStringLiteralEnd, 1);
                             break;
                         case '\\':
                             state = State.InterpolatedStringEscape;
@@ -446,9 +554,6 @@ public static class Scanner
                                              ? TokenKind.InterpolatedStringLiteralStart
                                              : TokenKind.InterpolatedStringLiteralMid,
                                              State.Text);
-                        if (interpolationState.IsSome)
-                            interpolationStateStack.Push(interpolationState);
-                        interpolationState = new(InterpolatedStringKind.Regular);
                         goto restart;
                     }
                     break;
@@ -458,7 +563,7 @@ public static class Scanner
                 {
                     if (ch == '"')
                     {
-                        if (TextTransit(State.InterpolatedVerbatimString, -2) is {} text)
+                        if (EnterInterpolation(new(InterpolatedStringKind.Verbatim), -2) is {} text)
                             yield return text;
                     }
                     else
@@ -494,10 +599,10 @@ public static class Scanner
                     }
                     else
                     {
-                        yield return Transit(IsDollarOrAt(source[si])
-                                             ? TokenKind.InterpolatedVerbatimStringLiteral
-                                             : TokenKind.InterpolatedVerbatimStringLiteralEnd,
-                                             State.Text);
+                        yield return
+                            ExitInterpolation(IsDollarOrAt(source[si])
+                                              ? TokenKind.InterpolatedVerbatimStringLiteral
+                                              : TokenKind.InterpolatedVerbatimStringLiteralEnd);
                         goto restart;
                     }
                     break;
@@ -514,9 +619,35 @@ public static class Scanner
                                              ? TokenKind.InterpolatedVerbatimStringLiteralStart
                                              : TokenKind.InterpolatedVerbatimStringLiteralMid,
                                              State.Text);
-                        if (interpolationState.IsSome)
-                            interpolationStateStack.Push(interpolationState);
-                        interpolationState = new(InterpolatedStringKind.Verbatim);
+                        goto restart;
+                    }
+                    break;
+                }
+                case State.Quote:
+                {
+                    if (ch == '"')
+                    {
+                        state = State.QuoteQuote;
+                    }
+                    else
+                    {
+                        if (TextTransit(State.String, -1) is {} text)
+                            yield return text;
+                    }
+                    break;
+                }
+                case State.QuoteQuote:
+                {
+                    if (ch == '"')
+                    {
+                        quotesOrBraces = 3;
+                        state = State.RawStringOpening;
+                    }
+                    else // was an empty string literal ""
+                    {
+                        if (TextTransit(State.String, -2) is {} text)
+                            yield return text;
+                        yield return Transit(TokenKind.StringLiteral, State.Text);
                         goto restart;
                     }
                     break;
@@ -670,6 +801,187 @@ public static class Scanner
                     }
                     break;
                 }
+                case State.RawStringOpening:
+                {
+                    if (ch == '"')
+                    {
+                        quotesOrBraces++;
+                    }
+                    else
+                    {
+                        if (TextTransit(State.RawString, -quotesOrBraces) is {} text)
+                            yield return text;
+                        goto restart;
+                    }
+                    break;
+                }
+                case State.RawString:
+                {
+                    switch (ch)
+                    {
+                        case '"': // Start counting (down) closing quotes
+                            rawQuoteCountdown = quotesOrBraces - 1;
+                            state = State.RawStringClosing;
+                            break;
+                        case '\r':
+                            state = State.RawStringCr;
+                            break;
+                        case '\n':
+                            pos = (pos.Line + 1, 0);
+                            break;
+                        default: // Continue consuming raw string content
+                            break;
+                    }
+                    break;
+                }
+                case State.RawStringClosing:
+                {
+                    if (ch == '"')
+                    {
+                        if (--rawQuoteCountdown == 0)
+                            yield return Transit(TokenKind.RawStringLiteral, State.Text, 1);
+                    }
+                    else // Not enough quotes, continue in raw string content
+                    {
+                        rawQuoteCountdown = 0;
+                        state = State.RawString;
+                        goto restart;
+                    }
+                    break;
+                }
+                case State.RawStringCr:
+                {
+                    if (ch != '\n')
+                        pos = (pos.Line + 1, ch == '\r' ? 0 : 1);
+                    state = State.RawString;
+                    goto restart;
+                }
+                case State.InterpolatedRawStringOpening:
+                {
+                    if (ch == '"')
+                    {
+                        quotesOrBraces++;
+                    }
+                    else // Count of dollars & opening quotes for raw string delimiter now known!
+                    {
+                        Debug.Assert(dollars > 0);
+                        Debug.Assert(quotesOrBraces >= 3);
+
+                        var newState = new InterpolationState(InterpolatedStringKind.Raw)
+                        {
+                            Dollars = dollars,
+                            Quotes = quotesOrBraces,
+                        };
+
+                        if (EnterInterpolation(newState, -dollars - quotesOrBraces) is {} text)
+                            yield return text;
+
+                        goto restart;
+                    }
+                    break;
+                }
+                case State.InterpolatedRawString:
+                {
+                    switch (ch)
+                    {
+                        case '"': // Start counting (down) closing quotes
+                        {
+                            rawQuoteCountdown = interpolationState.Quotes - 1;
+                            state = State.InterpolatedRawStringClosing;
+                            break;
+                        }
+                        case '{': // Potential hole opening
+                        {
+                            if (interpolationState.Dollars == 1) // Single brace case
+                            {
+                                var tokenKind = source[si] == '$'
+                                    ? TokenKind.InterpolatedRawStringLiteralStart
+                                    : TokenKind.InterpolatedRawStringLiteralMid;
+                                yield return Transit(tokenKind, State.Text, 1);
+                            }
+                            else // Need more braces; transition to brace counting state
+                            {
+                                quotesOrBraces = 1;
+                                state = State.InterpolatedRawStringBrace;
+                            }
+
+                            break;
+                        }
+                        case '\r':
+                            state = State.InterpolatedRawStringCr;
+                            break;
+                        case '\n':
+                            pos = (pos.Line + 1, 0);
+                            break;
+                        default:
+                            break;
+                    }
+
+                    break;
+                }
+                case State.InterpolatedRawStringClosing:
+                {
+                    if (ch == '"')
+                    {
+                        if (--rawQuoteCountdown == 0)
+                        {
+                            yield return ExitInterpolation(source[si] == '$'
+                                                           ? TokenKind.InterpolatedRawStringLiteral
+                                                           : TokenKind.InterpolatedRawStringLiteralEnd, 1);
+                        }
+                    }
+                    else // Not enough quotes, continue in interpolated raw string content
+                    {
+                        rawQuoteCountdown = 0;
+                        state = State.InterpolatedRawString;
+                        goto restart;
+                    }
+
+                    break;
+                }
+                case State.InterpolatedRawStringBrace:
+                {
+                    if (ch == '{') // Keep counting opening braces
+                    {
+                        quotesOrBraces++;
+                    }
+                    else if (quotesOrBraces < interpolationState.Dollars) // Not enough braces so it's just content
+                    {
+                        quotesOrBraces = 0;
+                        state = State.InterpolatedRawString;
+                        goto restart;
+                    }
+                    else
+                    {
+                        // Maximum allowed braces are 2*D-1 for D dollar signs
+                        var maxAllowedBraces = interpolationState.Dollars * 2 - 1;
+                        var actualBraces = Math.Min(quotesOrBraces, maxAllowedBraces);
+
+                        // Technically, C# does not permit to more than the maximum allowed braces,
+                        // but tolerate any excess as part of the interpolated expression (hole).
+
+                        var innerBraces = quotesOrBraces - actualBraces;
+
+                        var tokenKind = source[si] == '$'
+                                      ? TokenKind.InterpolatedRawStringLiteralStart
+                                      : TokenKind.InterpolatedRawStringLiteralMid;
+
+                        yield return Transit(tokenKind, State.Text, -innerBraces);
+
+                        interpolationState.Braces = innerBraces;
+                        quotesOrBraces = 0;
+                        goto restart;
+                    }
+
+                    break;
+                }
+                case State.InterpolatedRawStringCr:
+                {
+                    if (ch != '\n')
+                        pos = (pos.Line + 1, ch == '\r' ? 0 : 1);
+                    state = State.InterpolatedRawString;
+                    goto restart;
+                }
                 default:
                     throw new UnreachableException();
             }
@@ -689,7 +1001,29 @@ public static class Scanner
             case State.InterpolatedVerbatimString:
             case State.InterpolatedVerbatimStringBrace:
             case State.InterpolatedVerbatimStringCr:
+            case State.RawString:
+            case State.RawStringCr:
+            case State.InterpolatedRawString:
+            case State.InterpolatedRawStringBrace:
+            case State.InterpolatedRawStringCr:
+            case State.Quote:
+            case State.DollarQuote:
+            case State.InterpolatedRawStringOpening:
+            case State.RawStringOpening:
+            case State.RawStringClosing:
                 throw SyntaxError("Unterminated string starting.");
+            case State.QuoteQuote:
+            case State.DollarQuoteQuote:
+            {
+                pos.Col++;
+                var interpolated = state == State.DollarQuoteQuote;
+
+                if (TextTransit(state, -2 - (interpolated ? 1 : 0)) is { } text)
+                    yield return text;
+
+                yield return CreateToken(interpolated ? TokenKind.InterpolatedStringLiteral : TokenKind.StringLiteral);
+                break;
+            }
             case State.Char:
                 throw SyntaxError("Unterminated character literal.");
             case State.MultiLineComment:

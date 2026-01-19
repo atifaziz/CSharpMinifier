@@ -42,6 +42,11 @@ public enum TokenKind
     InterpolatedVerbatimStringLiteralMid,
     InterpolatedVerbatimStringLiteralEnd,
     PreprocessorDirective,
+    RawStringLiteral,
+    InterpolatedRawStringLiteral,
+    InterpolatedRawStringLiteralStart,
+    InterpolatedRawStringLiteralMid,
+    InterpolatedRawStringLiteralEnd,
 }
 
 public static partial class TokenKindExtensions

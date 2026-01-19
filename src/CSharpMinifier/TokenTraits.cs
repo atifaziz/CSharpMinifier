@@ -37,6 +37,7 @@ public enum TokenKindTraits
     InterpolatedStringStart = 0x040,
     InterpolatedStringMid   = 0x080,
     InterpolatedStringEnd   = 0x100,
+    RawString               = 0x200,
 }
 
 partial class TokenKindExtensions
@@ -63,6 +64,11 @@ partial class TokenKindExtensions
         /* InterpolatedVerbatimStringLiteralStart */ Literal | String | InterpolatedString | VerbatimString | InterpolatedStringStart,
         /* InterpolatedVerbatimStringLiteralMid   */ Literal | String | InterpolatedString | VerbatimString | InterpolatedStringMid,
         /* InterpolatedVerbatimStringLiteralEnd   */ Literal | String | InterpolatedString | VerbatimString | InterpolatedStringEnd,
-        /* PreprocessorDirective                  */ None
+        /* PreprocessorDirective                  */ None,
+        /* RawStringLiteral                       */ Literal | String | RawString,
+        /* InterpolatedRawStringLiteral           */ Literal | String | InterpolatedString | RawString,
+        /* InterpolatedRawStringLiteralStart      */ Literal | String | InterpolatedString | RawString | InterpolatedStringStart,
+        /* InterpolatedRawStringLiteralMid        */ Literal | String | InterpolatedString | RawString | InterpolatedStringMid,
+        /* InterpolatedRawStringLiteralEnd        */ Literal | String | InterpolatedString | RawString | InterpolatedStringEnd,
     ];
 }

@@ -62,11 +62,13 @@ minimal grammar of a C# source, such as:
 - Multi-line comments; that is, everything between `/*` and `*/`
 - Pre-processor directives
 - Strings literals of all sorts:
-  - regular e,g, , e.g. `"..."`
-  - verbatim, e.g. , e.g. `@"..."`
+  - regular, e.g. `"..."`
+  - verbatim, e.g. `@"..."`
   - interpolated, e.g. `$"..."`
   - interpolated verbatim, e.g. `$@"..."`
     (or [`@$"..."` starting with C# 8][alt-ivs])
+  - raw, e.g. `"""..."""`
+  - interpolated raw, e.g. `$"""...{expr}..."""`
 
 Everything surrounding or in-between the above is treated as raw and unparsed
 _text_. As a consequence, the C# source does not have to be a full C# program
