@@ -491,8 +491,6 @@ static class CSharpString
                     }
                 }
                 
-                // Handle brace escaping: {{, }}, {{{, }}} etc.
-                // For $$, we need to replace {{ with { and }} with }
                 interpolated = true;
                 break;
             }
