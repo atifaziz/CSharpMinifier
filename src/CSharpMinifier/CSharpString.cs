@@ -377,7 +377,12 @@ static class CSharpString
                         var actualContentStart = firstNewlinePos + 1;
                         
                         // Content ends at the last newline (we don't include the final newline)
+                        // If the last newline is \n and preceded by \r, exclude the \r too
                         var actualContentEnd = lastNewlinePos;
+                        if (lastNewlinePos > contentStart && source[lastNewlinePos] == '\n' && source[lastNewlinePos - 1] == '\r')
+                        {
+                            actualContentEnd = lastNewlinePos - 1; // Exclude the \r before the \n
+                        }
                         
                         // The indentation is determined by the whitespace before closing quotes
                         // which is from closingQuoteLineStart to contentEnd
@@ -481,6 +486,10 @@ static class CSharpString
                         
                         var actualContentStart = firstNewlinePos + 1;
                         var actualContentEnd = lastNewlinePos;
+                        if (lastNewlinePos > contentStart && source[lastNewlinePos] == '\n' && source[lastNewlinePos - 1] == '\r')
+                        {
+                            actualContentEnd = lastNewlinePos - 1; // Exclude the \r before the \n
+                        }
                         var closingLineIndentLength = contentEnd - closingQuoteLineStart;
                         
                         r = NormalizeRawStringWhitespace(source, actualContentStart, actualContentEnd, closingQuoteLineStart, closingLineIndentLength);
@@ -547,11 +556,13 @@ static class CSharpString
                 
                 // Check if multi-line and apply normalization if indentation context is provided
                 var hasNewline = false;
+                var firstNewlinePos = -1;
                 for (var i = contentStart; i < contentEnd; i++)
                 {
                     if (source[i] == '\n')
                     {
                         hasNewline = true;
+                        firstNewlinePos = i;
                         break;
                     }
                 }
@@ -563,12 +574,79 @@ static class CSharpString
                 }
                 else
                 {
-                    // Multi-line with indentation context: apply normalization
-                    r = NormalizeRawStringWhitespace(source, contentStart, contentEnd, indentationLineStart.Value, indentLength);
-                    if (!r)
-                        return r;
+                    // Multi-line with indentation context
+                    // For Start tokens: skip opening newline and remove indentation from first line
+                    // For Mid/End tokens: just extract content (they're mid-line or end-of-line)
                     
-                    s = r.Value;
+                    if (kind == TokenKind.InterpolatedRawStringLiteralStart)
+                    {
+                        // Skip the opening newline
+                        var actualContentStart = firstNewlinePos + 1;
+                        
+                        // Remove indentation from the first line of content
+                        var lineStart = actualContentStart;
+                        var lineEnd = contentEnd;
+                        
+                        // Find end of first line (or use contentEnd if no more newlines)
+                        for (var i = actualContentStart; i < contentEnd; i++)
+                        {
+                            if (source[i] == '\n')
+                            {
+                                lineEnd = i;
+                                break;
+                            }
+                        }
+                        
+                        // Remove indentation from this line
+                        if (lineEnd - lineStart >= indentLength)
+                        {
+                            // Validate indentation matches
+                            var indentMatches = true;
+                            for (var j = 0; j < indentLength; j++)
+                            {
+                                if (source[lineStart + j] != source[indentationLineStart.Value + j])
+                                {
+                                    indentMatches = false;
+                                    break;
+                                }
+                            }
+                            
+                            if (!indentMatches)
+                                return StringValueParseResult.Error(StringValueParseResultStatus.InvalidRawStringWhitespace, lineStart);
+                            
+                            s = source.Substring(lineStart + indentLength, contentEnd - lineStart - indentLength);
+                        }
+                        else
+                        {
+                            // Line is shorter than indentation - might be whitespace-only or error
+                            s = source.Substring(lineStart, contentEnd - lineStart);
+                        }
+                    }
+                    else
+                    {
+                        // Mid/End tokens: extract content, but for End tokens, exclude the final newline
+                        var actualContentEnd = contentEnd;
+                        
+                        if (kind == TokenKind.InterpolatedRawStringLiteralEnd)
+                        {
+                            // Find and exclude the last newline
+                            for (var i = contentEnd - 1; i >= contentStart; i--)
+                            {
+                                if (source[i] == '\n')
+                                {
+                                    actualContentEnd = i;
+                                    // Also exclude preceding \r if CRLF
+                                    if (i > contentStart && source[i - 1] == '\r')
+                                    {
+                                        actualContentEnd = i - 1;
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        s = contentStart < actualContentEnd ? source.Substring(contentStart, actualContentEnd - contentStart) : string.Empty;
+                    }
                 }
                 
                 interpolated = true;
@@ -844,8 +922,11 @@ static class CSharpString
                     }
                 }
                 
-                // Preserve line ending
-                _ = sb.Append('\r');
+                // Preserve line ending (but not the final one before closing quotes)
+                if (i + 1 < contentEnd) // Not the last \r or part of last CRLF
+                {
+                    _ = sb.Append('\r');
+                }
                 i++;
                 
                 // Check for CRLF
