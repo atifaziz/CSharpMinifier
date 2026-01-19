@@ -1013,6 +1013,19 @@ public class ScannerTests
     [TestCase("$\"{{}}\"", @"{}")]
     [TestCase("$@\"{{\n}}\"", "{\n}")]
 
+    // Raw string literal tests (non-interpolated)
+    [TestCase("\"\"\"test\"\"\"", "test")]
+    [TestCase("\"\"\"\"test\"\"\"\"", "\"test\"")]
+    [TestCase("\"\"\"\"\"test\"\"\"\"\"", "\"\"test\"\"")]
+    [TestCase("\"\"\"\"\"\"", "")]
+    [TestCase("\"\"\"foo \"bar\" baz\"\"\"", "foo \"bar\" baz")]
+    [TestCase("\"\"\"\ntext\n\"\"\"", "text")]
+    [TestCase("\"\"\"\r\ntext\r\n\"\"\"", "text")]
+    [TestCase("\"\"\"\nline1\nline2\n\"\"\"", "line1\nline2")]
+    [TestCase("\"\"\"\n    text\n    \"\"\"", "text")]
+    [TestCase("\"\"\"\n        line1\n        line2\n        \"\"\"", "line1\nline2")]
+    [TestCase("\"\"\"\n    line1\n        line2\n    \"\"\"", "line1\n    line2")]
+
     public void ParseStrings(string source, params string[] expectations)
     {
         Assert.That(Scanner.ParseStrings(source), Is.EqualTo(expectations));

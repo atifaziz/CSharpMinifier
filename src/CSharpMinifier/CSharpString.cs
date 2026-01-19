@@ -28,6 +28,9 @@ enum StringValueParseResultStatus
     InvalidEscapeSequence,
     InvalidUnicodeEscapeCharacterSequence,
     InvalidHexadecimalEscapeSequence,
+    InvalidRawStringWhitespace,
+    InvalidRawStringQuotes,
+    InvalidRawStringFormat,
 }
 
 readonly record struct StringValueParseResult
@@ -66,6 +69,12 @@ readonly record struct StringValueParseResult
                 "Invalid Unicode character escape sequence in string.",
             StringValueParseResultStatus.InvalidHexadecimalEscapeSequence =>
                 "Invalid hexadecimal escape sequence in string.",
+            StringValueParseResultStatus.InvalidRawStringWhitespace =>
+                "Invalid whitespace indentation in raw string literal.",
+            StringValueParseResultStatus.InvalidRawStringQuotes =>
+                "Opening and closing quote counts don't match in raw string literal.",
+            StringValueParseResultStatus.InvalidRawStringFormat =>
+                "Invalid format in multi-line raw string literal.",
             _ => throw new InvalidOperationException()
         });
 
@@ -151,6 +160,112 @@ static class CSharpString
                 verbatim = interpolated = true;
                 var i = source.IndexOf('}', startIndex, endIndex - startIndex) + 1;
                 s = source.Slice(i, end);
+                break;
+            }
+            case TokenKind.RawStringLiteral:
+            {
+                // Raw string: """content"""
+                // Count opening quotes
+                var openingQuoteCount = CountLeadingChars(source, startIndex, endIndex, '"');
+                
+                // Opening quotes must be at least 3
+                if (openingQuoteCount < 3)
+                    return StringValueParseResult.Error(StringValueParseResultStatus.InvalidToken, startIndex);
+                
+                // Find where content starts (after opening quotes)
+                var contentStart = startIndex + openingQuoteCount;
+                
+                // Count closing quotes (work backwards from end)
+                var closingQuoteCount = 0;
+                for (var i = endIndex - 1; i >= contentStart && source[i] == '"'; i--)
+                    closingQuoteCount++;
+                
+                // Validate quote counts match
+                if (openingQuoteCount != closingQuoteCount)
+                    return StringValueParseResult.Error(StringValueParseResultStatus.InvalidRawStringQuotes, startIndex);
+                
+                // Find where content ends (before closing quotes)
+                var contentEnd = endIndex - closingQuoteCount;
+                
+                // Check if this is a multi-line raw string (contains newline)
+                var hasNewline = false;
+                var firstNewlinePos = -1;
+                for (var i = contentStart; i < contentEnd; i++)
+                {
+                    if (source[i] == '\n')
+                    {
+                        hasNewline = true;
+                        firstNewlinePos = i;
+                        break;
+                    }
+                }
+                
+                if (!hasNewline)
+                {
+                    // Single-line: no whitespace normalization needed
+                    s = source.Substring(contentStart, contentEnd - contentStart);
+                }
+                else
+                {
+                    // Multi-line: apply whitespace normalization rules
+                    
+                    // Find the last newline before closing quotes
+                    var lastNewlinePos = -1;
+                    for (var i = contentEnd - 1; i >= contentStart; i--)
+                    {
+                        if (source[i] == '\n')
+                        {
+                            lastNewlinePos = i;
+                            break;
+                        }
+                    }
+                    
+                    if (lastNewlinePos < 0)
+                    {
+                        // This shouldn't happen if hasNewline is true, but handle it
+                        s = source.Substring(contentStart, contentEnd - contentStart);
+                    }
+                    else
+                    {
+                        // The closing quote line starts after the last newline
+                        var closingQuoteLineStart = lastNewlinePos + 1;
+                        
+                        // Check everything after opening quotes on same line is whitespace
+                        var afterOpeningQuotes = contentStart;
+                        var firstLineEnd = firstNewlinePos;
+                        
+                        // Scan from after quotes to first newline
+                        for (var i = afterOpeningQuotes; i < firstLineEnd; i++)
+                        {
+                            if (source[i] is not (' ' or '\t' or '\r'))
+                            {
+                                return StringValueParseResult.Error(StringValueParseResultStatus.InvalidRawStringFormat, i);
+                            }
+                        }
+                        
+                        // Check everything before closing quotes on same line is whitespace
+                        for (var i = closingQuoteLineStart; i < contentEnd; i++)
+                        {
+                            if (source[i] is not (' ' or '\t' or '\r'))
+                            {
+                                return StringValueParseResult.Error(StringValueParseResultStatus.InvalidRawStringFormat, i);
+                            }
+                        }
+                        
+                        // Content starts after the first newline (and skip \n from CRLF if present)
+                        var actualContentStart = firstNewlinePos + 1;
+                        
+                        // Content ends at the last newline (we don't include the final newline)
+                        var actualContentEnd = lastNewlinePos;
+                        
+                        // Apply whitespace normalization
+                        r = NormalizeRawStringWhitespace(source, actualContentStart, actualContentEnd, closingQuoteLineStart);
+                        if (!r)
+                            return r;
+                        
+                        s = r.Value;
+                    }
+                }
                 break;
             }
             default:
@@ -292,5 +407,199 @@ static class CSharpString
         }
 
         return false;
+    }
+
+    /// <summary>
+    /// Counts consecutive occurrences of a specific character starting from a position.
+    /// </summary>
+    static int CountLeadingChars(string source, int startIndex, int endIndex, char ch)
+    {
+        var count = 0;
+        for (var i = startIndex; i < endIndex && source[i] == ch; i++)
+            count++;
+        return count;
+    }
+
+    /// <summary>
+    /// Normalizes whitespace in multi-line raw string literals per C# spec.
+    /// Extracts indentation from closing quote line and removes it from all content lines.
+    /// </summary>
+    static StringValueParseResult NormalizeRawStringWhitespace(string source, int contentStart, int contentEnd, int closingQuoteLineStart)
+    {
+        // Find indentation from closing quote line (all chars from line start to closing quotes)
+        var indentLength = contentEnd - closingQuoteLineStart;
+        
+        // If no indentation required, just extract content
+        if (indentLength == 0)
+        {
+            var content = source.Substring(contentStart, contentEnd - contentStart);
+            return StringValueParseResult.Success(content);
+        }
+
+        var sb = new StringBuilder();
+        var lineStart = contentStart;
+        var i = contentStart;
+
+        while (i < contentEnd)
+        {
+            // Find end of current line
+            if (source[i] == '\n')
+            {
+                // Process the line (excluding the newline)
+                var lineEnd = i;
+                
+                // Check if line starts with correct indentation
+                var lineLength = lineEnd - lineStart;
+                
+                // Empty or whitespace-only lines still need validation
+                if (lineLength > 0)
+                {
+                    // Validate indentation: must have at least indentLength chars matching exactly
+                    if (lineLength < indentLength)
+                    {
+                        // Check if line is all whitespace - if so, include it
+                        var allWhitespace = true;
+                        for (var j = lineStart; j < lineEnd; j++)
+                        {
+                            if (source[j] is not (' ' or '\t'))
+                            {
+                                allWhitespace = false;
+                                break;
+                            }
+                        }
+                        
+                        if (!allWhitespace)
+                            return StringValueParseResult.Error(StringValueParseResultStatus.InvalidRawStringWhitespace, lineStart);
+                        
+                        // For whitespace-only lines, include them as-is
+                        _ = sb.Append(source, lineStart, lineLength);
+                    }
+                    else
+                    {
+                        // Validate that the indentation matches exactly (char by char)
+                        for (var j = 0; j < indentLength; j++)
+                        {
+                            if (source[lineStart + j] != source[closingQuoteLineStart + j])
+                                return StringValueParseResult.Error(StringValueParseResultStatus.InvalidRawStringWhitespace, lineStart);
+                        }
+                        
+                        // Add line content without the indentation prefix
+                        _ = sb.Append(source, lineStart + indentLength, lineLength - indentLength);
+                    }
+                }
+                
+                // Add newline (but not the final one before closing quotes)
+                if (i + 1 < contentEnd) // Not the last newline
+                {
+                    _ = sb.Append('\n');
+                }
+                
+                i++;
+                lineStart = i;
+            }
+            else if (source[i] == '\r')
+            {
+                // Process the line (excluding \r and potentially \n)
+                var lineEnd = i;
+                
+                // Check if line starts with correct indentation
+                var lineLength = lineEnd - lineStart;
+                
+                if (lineLength > 0)
+                {
+                    // Validate indentation
+                    if (lineLength < indentLength)
+                    {
+                        // Check if line is all whitespace
+                        var allWhitespace = true;
+                        for (var j = lineStart; j < lineEnd; j++)
+                        {
+                            if (source[j] is not (' ' or '\t'))
+                            {
+                                allWhitespace = false;
+                                break;
+                            }
+                        }
+                        
+                        if (!allWhitespace)
+                            return StringValueParseResult.Error(StringValueParseResultStatus.InvalidRawStringWhitespace, lineStart);
+                        
+                        // For whitespace-only lines, include them as-is
+                        _ = sb.Append(source, lineStart, lineLength);
+                    }
+                    else
+                    {
+                        // Validate that the indentation matches exactly
+                        for (var j = 0; j < indentLength; j++)
+                        {
+                            if (source[lineStart + j] != source[closingQuoteLineStart + j])
+                                return StringValueParseResult.Error(StringValueParseResultStatus.InvalidRawStringWhitespace, lineStart);
+                        }
+                        
+                        // Add line content without the indentation prefix
+                        _ = sb.Append(source, lineStart + indentLength, lineLength - indentLength);
+                    }
+                }
+                
+                // Preserve line ending
+                _ = sb.Append('\r');
+                i++;
+                
+                // Check for CRLF
+                if (i < contentEnd && source[i] == '\n')
+                {
+                    // Only add \n if not the final newline before closing quotes
+                    if (i + 1 < contentEnd)
+                    {
+                        _ = sb.Append('\n');
+                    }
+                    i++;
+                }
+                
+                lineStart = i;
+            }
+            else
+            {
+                i++;
+            }
+        }
+        
+        // Handle last line if it doesn't end with newline
+        if (lineStart < contentEnd)
+        {
+            var lineLength = contentEnd - lineStart;
+            
+            if (lineLength < indentLength)
+            {
+                // Check if line is all whitespace
+                var allWhitespace = true;
+                for (var j = lineStart; j < contentEnd; j++)
+                {
+                    if (source[j] is not (' ' or '\t'))
+                    {
+                        allWhitespace = false;
+                        break;
+                    }
+                }
+                
+                if (!allWhitespace)
+                    return StringValueParseResult.Error(StringValueParseResultStatus.InvalidRawStringWhitespace, lineStart);
+                
+                _ = sb.Append(source, lineStart, lineLength);
+            }
+            else
+            {
+                // Validate indentation
+                for (var j = 0; j < indentLength; j++)
+                {
+                    if (source[lineStart + j] != source[closingQuoteLineStart + j])
+                        return StringValueParseResult.Error(StringValueParseResultStatus.InvalidRawStringWhitespace, lineStart);
+                }
+                
+                _ = sb.Append(source, lineStart + indentLength, lineLength - indentLength);
+            }
+        }
+
+        return StringValueParseResult.Success(sb.ToString());
     }
 }
