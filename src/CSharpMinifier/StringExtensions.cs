@@ -23,6 +23,6 @@ static class StringExtensions
     public static string Slice(this string str, int startIndex, int endIndex)
     {
         if (str == null) throw new ArgumentNullException(nameof(str));
-        return str.Substring(startIndex, endIndex - startIndex);
+        return str[startIndex..endIndex];
     }
 }
