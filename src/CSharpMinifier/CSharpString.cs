@@ -105,7 +105,9 @@ static class CSharpString
             foreach (var token in tokens)
             {
                 // Check if this is an interpolated raw string Start token
-                if (token.Kind == TokenKind.InterpolatedRawStringLiteralStart)
+                // If we're not currently inside another raw interpolated string, push onto stack
+                // If we are inside one, it will be buffered below
+                if (token.Kind == TokenKind.InterpolatedRawStringLiteralStart && stack.Count == 0)
                 {
                     // Extract dollar and quote counts from the token
                     var dollarCount = CountLeadingChars(source, token.Start.Offset, token.End.Offset, '$');
@@ -129,20 +131,24 @@ static class CSharpString
                 // Check if this is an End token and we have an active interpolation
                 if (token.Kind == TokenKind.InterpolatedRawStringLiteralEnd && stack.Count > 0)
                 {
-                    // Pop the state
-                    var (_, _, bufferedTokens, startToken) = stack.Pop();
+                    // Check if this End matches the Start on top of stack
+                    // Count braces and quotes to determine if they match
+                    var (startDollars, startQuotes, bufferedTokens, startToken) = stack.Peek();
                     
-                    // Determine indentation from the End token
-                    // Find the last newline before the closing quotes
-                    var dollarCount = CountLeadingChars(source, token.Start.Offset, token.End.Offset, '}');
-                    var afterBraces = token.Start.Offset + dollarCount;
+                    var endBraceCount = CountLeadingChars(source, token.Start.Offset, token.End.Offset, '}');
+                    var afterBraces = token.Start.Offset + endBraceCount;
+                    var endQuoteCount = 0;
+                    for (var idx = token.End.Offset - 1; idx >= afterBraces && source[idx] == '"'; idx--)
+                        endQuoteCount++;
                     
-                    // Count closing quotes
-                    var closingQuoteCount = 0;
-                    for (var i = token.End.Offset - 1; i >= afterBraces && source[i] == '"'; i--)
-                        closingQuoteCount++;
+                    // If dollar and quote counts match, this End is for our Start
+                    if (endBraceCount == startDollars && endQuoteCount == startQuotes)
+                    {
+                        // Pop the state - the values are already in startToken and bufferedTokens from Peek above
+                        var (_, _, _, _) = stack.Pop();
                     
-                    var beforeClosingQuotes = token.End.Offset - closingQuoteCount;
+                        // Determine indentation from the End token
+                        var beforeClosingQuotes = token.End.Offset - endQuoteCount;
                     
                     // Find last newline to determine indentation
                     var lastNewlinePos = -1;
@@ -172,11 +178,16 @@ static class CSharpString
                             throw startResult.ToSyntaxError();
                     }
                     
-                    // Process buffered tokens (Mids and any nested strings/text)
-                    foreach (var bufferedToken in bufferedTokens)
+                    // Process buffered tokens
+                    // Mid tokens need indentation context, other tokens are processed recursively
+                    var bufferIndex = 0;
+                    while (bufferIndex < bufferedTokens.Count)
                     {
+                        var bufferedToken = bufferedTokens[bufferIndex];
+                        
                         if (bufferedToken.Kind == TokenKind.InterpolatedRawStringLiteralMid)
                         {
+                            // Mid token needs indentation context from outer End
                             var midResult = TryParse(source, bufferedToken.Kind, bufferedToken.Start.Offset, bufferedToken.End.Offset, closingQuoteLineStart, indentLength);
                             switch (midResult.Status, midResult.Value)
                             {
@@ -188,10 +199,38 @@ static class CSharpString
                                 default:
                                     throw midResult.ToSyntaxError();
                             }
+                            bufferIndex++;
+                        }
+                        else if (bufferedToken.Kind == TokenKind.InterpolatedRawStringLiteralStart)
+                        {
+                            // Nested raw interpolated string - find its matching End and process as a group
+                            // Recursively process this Start and all tokens until matching End
+                            var nestedTokens = new List<Token> { bufferedToken };
+                            bufferIndex++;
+                            var nestedLevel = 1;
+                            
+                            while (bufferIndex < bufferedTokens.Count && nestedLevel > 0)
+                            {
+                                var t = bufferedTokens[bufferIndex];
+                                nestedTokens.Add(t);
+                                
+                                if (t.Kind == TokenKind.InterpolatedRawStringLiteralStart)
+                                    nestedLevel++;
+                                else if (t.Kind == TokenKind.InterpolatedRawStringLiteralEnd)
+                                    nestedLevel--;
+                                
+                                bufferIndex++;
+                            }
+                            
+                            // Recursively process the nested tokens
+                            foreach (var value in ParseValues(nestedTokens, source, selector))
+                            {
+                                yield return value;
+                            }
                         }
                         else
                         {
-                            // Regular token (nested string, text, etc.)
+                            // Regular token (string, text, etc.)
                             var bufferedResult = TryParse(source, bufferedToken.Kind, bufferedToken.Start.Offset, bufferedToken.End.Offset);
                             switch (bufferedResult.Status, bufferedResult.Value)
                             {
@@ -203,6 +242,7 @@ static class CSharpString
                                 default:
                                     throw bufferedResult.ToSyntaxError();
                             }
+                            bufferIndex++;
                         }
                     }
                     
@@ -219,7 +259,9 @@ static class CSharpString
                             throw endResult.ToSyntaxError();
                     }
                     
-                    continue;
+                        continue;
+                    }
+                    // else: End token doesn't match - must be for a nested string, so fall through to buffer it
                 }
                 
                 // If we're inside a raw interpolated string, buffer this token

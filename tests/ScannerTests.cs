@@ -1054,6 +1054,10 @@ public class ScannerTests
     // Multiple nested strings
     [TestCase("$\"\"\"a {\"b\"} c {\"d\"} e\"\"\"", "a ", "b", " c ", "d", " e")]
     [TestCase("$\"\"\"a {$\"b\"} c {\"d\"} e\"\"\"", "a ", "b", " c ", "d", " e")]
+    // Three levels of nesting
+    [TestCase(""""""
+              $$$"""""foo {{{$$"""bar {{$"""baz {$"qux"}"""}}"""}}}"""""
+              """""", "foo ", "bar ", "baz ", "qux")]
 
     public void ParseStrings(string source, params string[] expectations)
     {
