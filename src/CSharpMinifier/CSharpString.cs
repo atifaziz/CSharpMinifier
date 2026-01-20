@@ -169,10 +169,13 @@ static class CSharpString
                     var startResult = TryParse(source, startToken.Kind, startToken.Start.Offset, startToken.End.Offset, closingQuoteLineStart, indentLength);
                     switch (startResult.Status, startResult.Value)
                     {
-                        case (StringValueParseResultStatus.Success, {} value):
+                        case (StringValueParseResultStatus.Success, {} value) when !string.IsNullOrEmpty(value):
                             yield return selector(startToken, source, value);
                             break;
                         case (StringValueParseResultStatus.InvalidToken, _):
+                            break;
+                        case (StringValueParseResultStatus.Success, ""):
+                            // Skip empty strings from raw interpolated string tokens
                             break;
                         default:
                             throw startResult.ToSyntaxError();
@@ -191,10 +194,13 @@ static class CSharpString
                             var midResult = TryParse(source, bufferedToken.Kind, bufferedToken.Start.Offset, bufferedToken.End.Offset, closingQuoteLineStart, indentLength);
                             switch (midResult.Status, midResult.Value)
                             {
-                                case (StringValueParseResultStatus.Success, {} value):
+                                case (StringValueParseResultStatus.Success, {} value) when !string.IsNullOrEmpty(value):
                                     yield return selector(bufferedToken, source, value);
                                     break;
                                 case (StringValueParseResultStatus.InvalidToken, _):
+                                    break;
+                                case (StringValueParseResultStatus.Success, ""):
+                                    // Skip empty strings from raw interpolated string tokens
                                     break;
                                 default:
                                     throw midResult.ToSyntaxError();
@@ -250,10 +256,13 @@ static class CSharpString
                     var endResult = TryParse(source, token.Kind, token.Start.Offset, token.End.Offset, closingQuoteLineStart, indentLength);
                     switch (endResult.Status, endResult.Value)
                     {
-                        case (StringValueParseResultStatus.Success, {} value):
+                        case (StringValueParseResultStatus.Success, {} value) when !string.IsNullOrEmpty(value):
                             yield return selector(token, source, value);
                             break;
                         case (StringValueParseResultStatus.InvalidToken, _):
+                            break;
+                        case (StringValueParseResultStatus.Success, ""):
+                            // Skip empty strings from raw interpolated string tokens
                             break;
                         default:
                             throw endResult.ToSyntaxError();
