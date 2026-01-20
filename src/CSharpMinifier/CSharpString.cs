@@ -70,11 +70,11 @@ readonly record struct StringValueParseResult
             StringValueParseResultStatus.InvalidHexadecimalEscapeSequence =>
                 "Invalid hexadecimal escape sequence in string.",
             StringValueParseResultStatus.InvalidRawStringWhitespace =>
-                "Invalid whitespace indentation in raw string literal.",
+                "Invalid whitespace in raw string literal. Content lines must start with the exact same whitespace as the closing delimiter line.",
             StringValueParseResultStatus.InvalidRawStringQuotes =>
-                "Opening and closing quote counts don't match in raw string literal.",
+                "Invalid raw string literal. Opening and closing quote counts must match.",
             StringValueParseResultStatus.InvalidRawStringFormat =>
-                "Invalid format in multi-line raw string literal.",
+                "Invalid raw string literal format.",
             _ => throw new InvalidOperationException()
         });
 
@@ -84,6 +84,171 @@ readonly record struct StringValueParseResult
 
 static class CSharpString
 {
+    /// <summary>
+    /// Counts consecutive occurrences of a character starting from a given position.
+    /// </summary>
+    static int CountLeadingChars(string source, int startIndex, int endIndex, char ch)
+    {
+        var count = 0;
+        for (var i = startIndex; i < endIndex && source[i] == ch; i++)
+            count++;
+        return count;
+    }
+
+    /// <summary>
+    /// Normalizes whitespace for a multi-line raw string literal content.
+    /// </summary>
+    static StringValueParseResult NormalizeRawStringWhitespace(string source, int contentStart, int contentEnd, int indentStart, int indentLength)
+    {
+        var sb = new StringBuilder();
+        var lineStart = contentStart;
+        var isFirstOutputLine = true;
+
+        while (lineStart < contentEnd)
+        {
+            // Find the end of this line
+            var lineEnd = lineStart;
+            while (lineEnd < contentEnd && source[lineEnd] != '\n' && source[lineEnd] != '\r')
+                lineEnd++;
+
+            var lineLength = lineEnd - lineStart;
+
+            // Add newline before this line (except for the first line)
+            if (!isFirstOutputLine)
+            {
+                // We need to figure out what newline preceded this line
+                // Look backwards from lineStart to find the newline character(s)
+                if (lineStart > contentStart)
+                {
+                    if (lineStart >= 2 && source[lineStart - 2] == '\r' && source[lineStart - 1] == '\n')
+                        _ = sb.Append("\r\n");
+                    else if (source[lineStart - 1] == '\n')
+                        _ = sb.Append('\n');
+                    else if (source[lineStart - 1] == '\r')
+                        _ = sb.Append('\r');
+                }
+            }
+
+            if (lineLength > 0)
+            {
+                // Validate and strip indentation prefix
+                if (lineLength < indentLength)
+                {
+                    // Line is shorter than required indentation
+                    // Check if the remaining characters match the prefix (whitespace-only line)
+                    for (var i = 0; i < lineLength; i++)
+                    {
+                        if (source[lineStart + i] != source[indentStart + i])
+                            return StringValueParseResult.Error(StringValueParseResultStatus.InvalidRawStringWhitespace, lineStart + i);
+                    }
+                    // Whitespace-only line - include as empty (nothing to append)
+                }
+                else
+                {
+                    // Validate the indentation prefix matches exactly
+                    for (var i = 0; i < indentLength; i++)
+                    {
+                        if (source[lineStart + i] != source[indentStart + i])
+                            return StringValueParseResult.Error(StringValueParseResultStatus.InvalidRawStringWhitespace, lineStart + i);
+                    }
+
+                    // Append content after stripping indentation
+                    _ = sb.Append(source, lineStart + indentLength, lineLength - indentLength);
+                }
+            }
+
+            isFirstOutputLine = false;
+
+            // Move to next line
+            if (lineEnd < contentEnd)
+            {
+                var newlineLength = 1;
+                if (source[lineEnd] == '\r' && lineEnd + 1 < contentEnd && source[lineEnd + 1] == '\n')
+                    newlineLength = 2;
+
+                lineStart = lineEnd + newlineLength;
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        return StringValueParseResult.Success(sb.ToString());
+    }
+
+    /// <summary>
+    /// Extracts content from a single-line raw string (no whitespace normalization needed).
+    /// </summary>
+    static string ExtractSingleLineRawContent(string source, int contentStart, int contentEnd) =>
+        source.Substring(contentStart, contentEnd - contentStart);
+
+    /// <summary>
+    /// Parses raw string literal content, applying whitespace normalization for multi-line strings.
+    /// </summary>
+    static StringValueParseResult ParseRawStringContent(string source, int contentStart, int contentEnd, int closingQuoteStart)
+    {
+        // Check if multi-line (contains newline in content)
+        var hasNewline = false;
+        for (var i = contentStart; i < contentEnd; i++)
+        {
+            if (source[i] is '\n' or '\r')
+            {
+                hasNewline = true;
+                break;
+            }
+        }
+
+        if (!hasNewline)
+        {
+            // Single-line raw string - no whitespace normalization
+            return StringValueParseResult.Success(ExtractSingleLineRawContent(source, contentStart, contentEnd));
+        }
+
+        // Multi-line: find the start of the closing quote line for indentation
+        // The closing quote line starts after the last newline before the closing quotes
+        var closingQuoteLine = closingQuoteStart;
+        while (closingQuoteLine > 0 && source[closingQuoteLine - 1] != '\n' && source[closingQuoteLine - 1] != '\r')
+            closingQuoteLine--;
+
+        // Calculate indentation length (whitespace before closing quotes on that line)
+        var indentLength = closingQuoteStart - closingQuoteLine;
+
+        // Skip opening line content (whitespace after opening quotes on same line is ignored)
+        // Find the first newline after opening quotes
+        var contentStartAfterFirstNewline = contentStart;
+        while (contentStartAfterFirstNewline < contentEnd && source[contentStartAfterFirstNewline] != '\n' && source[contentStartAfterFirstNewline] != '\r')
+            contentStartAfterFirstNewline++;
+
+        // Skip the first newline itself
+        if (contentStartAfterFirstNewline < contentEnd)
+        {
+            if (source[contentStartAfterFirstNewline] == '\r' && contentStartAfterFirstNewline + 1 < contentEnd && source[contentStartAfterFirstNewline + 1] == '\n')
+                contentStartAfterFirstNewline += 2;
+            else
+                contentStartAfterFirstNewline++;
+        }
+
+        // Find where content ends (everything up to but not including the newline before closing quotes)
+        var contentEndBeforeLastNewline = closingQuoteLine;
+        // Go back past the newline that precedes the closing quote line
+        if (contentEndBeforeLastNewline > contentStartAfterFirstNewline)
+        {
+            if (source[contentEndBeforeLastNewline - 1] == '\n')
+            {
+                contentEndBeforeLastNewline--;
+                if (contentEndBeforeLastNewline > contentStartAfterFirstNewline && source[contentEndBeforeLastNewline - 1] == '\r')
+                    contentEndBeforeLastNewline--;
+            }
+            else if (source[contentEndBeforeLastNewline - 1] == '\r')
+            {
+                contentEndBeforeLastNewline--;
+            }
+        }
+
+        return NormalizeRawStringWhitespace(source, contentStartAfterFirstNewline, contentEndBeforeLastNewline, closingQuoteLine, indentLength);
+    }
+
     public static IEnumerable<string>
             ParseValues(IEnumerable<Token> tokens, string source) =>
         ParseValues(tokens, source, (_, _, str) => str);
@@ -98,199 +263,60 @@ static class CSharpString
 
         return _(); IEnumerable<T> _()
         {
-            // Stack for tracking nested interpolated raw strings
-            // Each entry: (dollarCount, quoteCount, bufferedTokens, startToken)
-            var stack = new Stack<(int Dollars, int Quotes, List<Token> Buffered, Token Start)>();
+            // Stack depth tracks how many nested raw string contexts we're in
+            // Only the outermost Start creates a new buffer context
+            var nestingDepth = 0;
+            var buffer = new List<Token>();
 
             foreach (var token in tokens)
             {
-                // Check if this is an interpolated raw string Start token
-                // If we're not currently inside another raw interpolated string, push onto stack
-                // If we are inside one, it will be buffered below
-                if (token.Kind == TokenKind.InterpolatedRawStringLiteralStart && stack.Count == 0)
+                // Track Start tokens for nesting depth
+                if (token.Kind == TokenKind.InterpolatedRawStringLiteralStart)
                 {
-                    // Extract dollar and quote counts from the token
-                    var dollarCount = CountLeadingChars(source, token.Start.Offset, token.End.Offset, '$');
-                    var afterDollars = token.Start.Offset + dollarCount;
-                    var quoteCount = CountLeadingChars(source, afterDollars, token.End.Offset, '"');
-
-                    // Push new state onto stack
-                    stack.Push((dollarCount, quoteCount, new List<Token>(), token));
+                    if (nestingDepth == 0)
+                    {
+                        // Start of a new outer raw string - begin buffering
+                        buffer.Clear();
+                        buffer.Add(token);
+                        nestingDepth = 1;
+                    }
+                    else
+                    {
+                        // Inner Start - just buffer it
+                        buffer.Add(token);
+                        nestingDepth++;
+                    }
                     continue;
                 }
 
-                // Check if this is a Mid token and we have an active interpolation
-                if (token.Kind == TokenKind.InterpolatedRawStringLiteralMid && stack.Count > 0)
+                // Track End tokens for nesting depth
+                if (token.Kind == TokenKind.InterpolatedRawStringLiteralEnd)
                 {
-                    // Buffer this token
-                    var (_, _, buffered, _) = stack.Peek();
-                    buffered.Add(token);
+                    if (nestingDepth > 0)
+                    {
+                        buffer.Add(token);
+                        nestingDepth--;
+
+                        // When we return to depth 0, we have a complete outer raw string
+                        if (nestingDepth == 0)
+                        {
+                            // Process the buffered tokens recursively
+                            foreach (var bufferedResult in ProcessBufferedRawString(buffer, source, selector))
+                                yield return bufferedResult;
+                            buffer.Clear();
+                        }
+                    }
                     continue;
                 }
 
-                // Check if this is an End token and we have an active interpolation
-                if (token.Kind == TokenKind.InterpolatedRawStringLiteralEnd && stack.Count > 0)
+                // If we're inside a raw string context, buffer this token
+                if (nestingDepth > 0)
                 {
-                    // Check if this End matches the Start on top of stack
-                    // Count braces and quotes to determine if they match
-                    var (startDollars, startQuotes, bufferedTokens, startToken) = stack.Peek();
-
-                    var endBraceCount = CountLeadingChars(source, token.Start.Offset, token.End.Offset, '}');
-                    var afterBraces = token.Start.Offset + endBraceCount;
-                    var endQuoteCount = 0;
-                    for (var idx = token.End.Offset - 1; idx >= afterBraces && source[idx] == '"'; idx--)
-                        endQuoteCount++;
-
-                    // If dollar and quote counts match, this End is for our Start
-                    if (endBraceCount == startDollars && endQuoteCount == startQuotes)
-                    {
-                        // Pop the state - the values are already in startToken and bufferedTokens from Peek above
-                        var (_, _, _, _) = stack.Pop();
-
-                        // Determine indentation from the End token
-                        var beforeClosingQuotes = token.End.Offset - endQuoteCount;
-
-                    // Find last newline to determine indentation
-                    var lastNewlinePos = -1;
-                    for (var i = beforeClosingQuotes - 1; i >= afterBraces; i--)
-                    {
-                        if (source[i] == '\n')
-                        {
-                            lastNewlinePos = i;
-                            break;
-                        }
-                    }
-
-                    var closingQuoteLineStart = lastNewlinePos >= 0 ? lastNewlinePos + 1 : (int?)null;
-                    var indentLength = closingQuoteLineStart.HasValue ? beforeClosingQuotes - closingQuoteLineStart.Value : 0;
-
-                    // Now reprocess Start, all buffered tokens, and End with the indentation context
-                    // Process Start token
-                    var startResult = TryParse(source, startToken.Kind, startToken.Start.Offset, startToken.End.Offset, closingQuoteLineStart, indentLength);
-                    switch (startResult.Status, startResult.Value)
-                    {
-                        case (StringValueParseResultStatus.Success, {} value) when !string.IsNullOrEmpty(value):
-                            yield return selector(startToken, source, value);
-                            break;
-                        case (StringValueParseResultStatus.InvalidToken, _):
-                            break;
-                        case (StringValueParseResultStatus.Success, ""):
-                            // Skip empty strings from raw interpolated string tokens
-                            break;
-                        default:
-                            throw startResult.ToSyntaxError();
-                    }
-
-                    // Process buffered tokens
-                    // Mid tokens need indentation context, other tokens are processed recursively
-                    var bufferIndex = 0;
-                    while (bufferIndex < bufferedTokens.Count)
-                    {
-                        var bufferedToken = bufferedTokens[bufferIndex];
-
-                        if (bufferedToken.Kind == TokenKind.InterpolatedRawStringLiteralMid)
-                        {
-                            // Mid token needs indentation context from outer End
-                            var midResult = TryParse(source, bufferedToken.Kind, bufferedToken.Start.Offset, bufferedToken.End.Offset, closingQuoteLineStart, indentLength);
-                            switch (midResult.Status, midResult.Value)
-                            {
-                                case (StringValueParseResultStatus.Success, {} value) when !string.IsNullOrEmpty(value):
-                                    yield return selector(bufferedToken, source, value);
-                                    break;
-                                case (StringValueParseResultStatus.InvalidToken, _):
-                                    break;
-                                case (StringValueParseResultStatus.Success, ""):
-                                    // Skip empty strings from raw interpolated string tokens
-                                    break;
-                                default:
-                                    throw midResult.ToSyntaxError();
-                            }
-                            bufferIndex++;
-                        }
-                        else if (bufferedToken.Kind == TokenKind.InterpolatedRawStringLiteralStart)
-                        {
-                            // Nested raw interpolated string - find its matching End and process as a group
-                            // Recursively process this Start and all tokens until matching End
-                            var nestedTokens = new List<Token> { bufferedToken };
-                            bufferIndex++;
-                            var nestedLevel = 1;
-
-                            while (bufferIndex < bufferedTokens.Count && nestedLevel > 0)
-                            {
-                                var t = bufferedTokens[bufferIndex];
-                                nestedTokens.Add(t);
-
-                                if (t.Kind == TokenKind.InterpolatedRawStringLiteralStart)
-                                    nestedLevel++;
-                                else if (t.Kind == TokenKind.InterpolatedRawStringLiteralEnd)
-                                    nestedLevel--;
-
-                                bufferIndex++;
-                            }
-
-                            // Recursively process the nested tokens
-                            foreach (var value in ParseValues(nestedTokens, source, selector))
-                            {
-                                yield return value;
-                            }
-                        }
-                        else
-                        {
-                            // Regular token (string, text, etc.)
-                            var bufferedResult = TryParse(source, bufferedToken.Kind, bufferedToken.Start.Offset, bufferedToken.End.Offset);
-                            switch (bufferedResult.Status, bufferedResult.Value)
-                            {
-                                case (StringValueParseResultStatus.Success, {} value):
-                                    yield return selector(bufferedToken, source, value);
-                                    break;
-                                case (StringValueParseResultStatus.InvalidToken, _):
-                                    break;
-                                default:
-                                    throw bufferedResult.ToSyntaxError();
-                            }
-                            bufferIndex++;
-                        }
-                    }
-
-                    // Process End token
-                    var endResult = TryParse(source, token.Kind, token.Start.Offset, token.End.Offset, closingQuoteLineStart, indentLength);
-                    switch (endResult.Status, endResult.Value)
-                    {
-                        case (StringValueParseResultStatus.Success, {} value) when !string.IsNullOrEmpty(value):
-                            yield return selector(token, source, value);
-                            break;
-                        case (StringValueParseResultStatus.InvalidToken, _):
-                            break;
-                        case (StringValueParseResultStatus.Success, ""):
-                            // Skip empty strings from raw interpolated string tokens
-                            break;
-                        default:
-                            throw endResult.ToSyntaxError();
-                    }
-
-                        continue;
-                    }
-                    // else: End token doesn't match - must be for a nested string, so fall through to buffer it
-                }
-
-                // If we're inside a raw interpolated string, buffer this token
-                if (stack.Count > 0)
-                {
-                    var (_, _, buffered, _) = stack.Peek();
-                    buffered.Add(token);
+                    buffer.Add(token);
                     continue;
                 }
 
-                // Check for error case: Mid or End without matching Start
-                if ((token.Kind == TokenKind.InterpolatedRawStringLiteralMid ||
-                     token.Kind == TokenKind.InterpolatedRawStringLiteralEnd) &&
-                    stack.Count == 0)
-                {
-                    // Invalid token stream - unmatched Mid or End
-                    throw new SyntaxErrorException($"Unmatched {token.Kind} token at offset {token.Start.Offset}");
-                }
-
-                // Normal token processing (not part of interpolated raw string state machine)
+                // Regular token processing (not inside a raw string context)
                 var result = TryParse(source, token.Kind, token.Start.Offset, token.End.Offset);
                 switch (result.Status, result.Value)
                 {
@@ -303,17 +329,324 @@ static class CSharpString
                         throw result.ToSyntaxError();
                 }
             }
-
-            // Check for unclosed interpolated raw strings
-            if (stack.Count > 0)
-            {
-                throw new SyntaxErrorException("Unclosed interpolated raw string literal");
-            }
         }
     }
 
-    static StringValueParseResult TryParse(string source, TokenKind kind, int startIndex, int endIndex,
-                                           int? indentationLineStart = null, int indentLength = 0)
+    /// <summary>
+    /// Processes a buffered sequence of tokens that form a complete interpolated raw string
+    /// (including nested raw strings).
+    /// </summary>
+    static IEnumerable<T> ProcessBufferedRawString<T>(
+        List<Token> buffer, string source, Func<Token, string, string, T> selector)
+    {
+        if (buffer.Count < 2)
+            yield break;
+
+        var startToken = buffer[0];
+        var endToken = buffer[buffer.Count - 1];
+
+        // Get dollar and quote counts from Start token
+        var dollarCount = CountLeadingChars(source, startToken.Start.Offset, startToken.End.Offset, '$');
+        var quoteStart = startToken.Start.Offset + dollarCount;
+        var quoteCount = CountLeadingChars(source, quoteStart, startToken.End.Offset, '"');
+
+        // Extract indentation info from the End token
+        var endIndentInfo = GetRawStringEndIndentation(source, endToken, quoteCount);
+
+        // Process Start token
+        var startResult = TryParseInterpolatedRawStringPart(source, startToken, dollarCount, quoteCount, endIndentInfo, isStart: true, isEnd: false);
+        if (startResult.Status == StringValueParseResultStatus.Success)
+        {
+            if (!string.IsNullOrEmpty(startResult.Value))
+                yield return selector(startToken, source, startResult.Value!);
+            // Empty string is valid - just don't yield
+        }
+        else if (startResult.Status != StringValueParseResultStatus.InvalidToken)
+        {
+            throw startResult.ToSyntaxError();
+        }
+
+        // Process tokens in between (index 1 to count-2)
+        var i = 1;
+        while (i < buffer.Count - 1)
+        {
+            var token = buffer[i];
+
+            if (token.Kind == TokenKind.InterpolatedRawStringLiteralMid)
+            {
+                // Mid token from this raw string
+                var midResult = TryParseInterpolatedRawStringPart(source, token, dollarCount, quoteCount, endIndentInfo, isStart: false, isEnd: false);
+                if (midResult.Status == StringValueParseResultStatus.Success)
+                {
+                    if (!string.IsNullOrEmpty(midResult.Value))
+                        yield return selector(token, source, midResult.Value!);
+                    // Empty string is valid - just don't yield
+                }
+                else if (midResult.Status != StringValueParseResultStatus.InvalidToken)
+                {
+                    throw midResult.ToSyntaxError();
+                }
+                i++;
+            }
+            else if (token.Kind == TokenKind.InterpolatedRawStringLiteralStart)
+            {
+                // Nested raw string - find its matching End and process recursively
+                var nestedBuffer = new List<Token> { token };
+                var nestedDepth = 1;
+                i++;
+                while (i < buffer.Count - 1 && nestedDepth > 0)
+                {
+                    var nestedToken = buffer[i];
+                    nestedBuffer.Add(nestedToken);
+                    if (nestedToken.Kind == TokenKind.InterpolatedRawStringLiteralStart)
+                        nestedDepth++;
+                    else if (nestedToken.Kind == TokenKind.InterpolatedRawStringLiteralEnd)
+                        nestedDepth--;
+                    i++;
+                }
+
+                // Process the nested raw string recursively
+                foreach (var result in ProcessBufferedRawString(nestedBuffer, source, selector))
+                    yield return result;
+            }
+            else
+            {
+                // Other token (non-raw string) - process normally
+                var innerResult = TryParse(source, token.Kind, token.Start.Offset, token.End.Offset);
+                switch (innerResult.Status, innerResult.Value)
+                {
+                    case (StringValueParseResultStatus.Success, {} value):
+                        yield return selector(token, source, value);
+                        break;
+                    case (StringValueParseResultStatus.InvalidToken, _):
+                        break;
+                    default:
+                        throw innerResult.ToSyntaxError();
+                }
+                i++;
+            }
+        }
+
+        // Process End token
+        var endResult = TryParseInterpolatedRawStringPart(source, endToken, dollarCount, quoteCount, endIndentInfo, isStart: false, isEnd: true);
+        if (endResult.Status == StringValueParseResultStatus.Success)
+        {
+            if (!string.IsNullOrEmpty(endResult.Value))
+                yield return selector(endToken, source, endResult.Value!);
+            // Empty string is valid - just don't yield
+        }
+        else if (endResult.Status != StringValueParseResultStatus.InvalidToken)
+        {
+            throw endResult.ToSyntaxError();
+        }
+    }
+
+    /// <summary>
+    /// Gets the indentation information from an interpolated raw string End token.
+    /// Returns (closingQuoteLine, indentLength) where closingQuoteLine is the index of the start of the line with closing quotes.
+    /// </summary>
+    static (int ClosingQuoteLine, int IndentLength) GetRawStringEndIndentation(string source, Token endToken, int quoteCount)
+    {
+        // End token format: }...} content """
+        // We need to find the closing quotes and extract the indentation
+
+        var endOffset = endToken.End.Offset;
+        var closingQuoteStart = endOffset - quoteCount;
+
+        // Find the start of the closing quote line
+        var closingQuoteLine = closingQuoteStart;
+        while (closingQuoteLine > endToken.Start.Offset && source[closingQuoteLine - 1] != '\n' && source[closingQuoteLine - 1] != '\r')
+            closingQuoteLine--;
+
+        // Calculate indentation length
+        var indentEnd = closingQuoteLine;
+        while (indentEnd < closingQuoteStart && source[indentEnd] is ' ' or '\t')
+            indentEnd++;
+
+        return (closingQuoteLine, indentEnd - closingQuoteLine);
+    }
+
+    /// <summary>
+    /// Parses a part of an interpolated raw string (Start, Mid, or End token).
+    /// </summary>
+    static StringValueParseResult TryParseInterpolatedRawStringPart(
+        string source, Token token, int dollarCount, int quoteCount,
+        (int ClosingQuoteLine, int IndentLength) endIndentInfo,
+        bool isStart, bool isEnd)
+    {
+        var startOffset = token.Start.Offset;
+        var endOffset = token.End.Offset;
+
+        int contentStart, contentEnd;
+
+        if (isStart)
+        {
+            // Start token format: $...$"""...content...{...{
+            // Skip dollars and opening quotes
+            contentStart = startOffset + dollarCount + quoteCount;
+
+            // Find the trailing braces (dollarCount of them)
+            contentEnd = endOffset - dollarCount;
+        }
+        else if (isEnd)
+        {
+            // End token format: }...}content"""
+            // Skip leading braces
+            contentStart = startOffset + dollarCount;
+
+            // Stop before closing quotes
+            contentEnd = endOffset - quoteCount;
+        }
+        else
+        {
+            // Mid token format: }...}content{...{
+            // Skip leading braces
+            contentStart = startOffset + dollarCount;
+
+            // Stop before trailing braces
+            contentEnd = endOffset - dollarCount;
+        }
+
+        // Check if multi-line (for whitespace normalization)
+        var hasNewline = false;
+        for (var i = contentStart; i < contentEnd; i++)
+        {
+            if (source[i] is '\n' or '\r')
+            {
+                hasNewline = true;
+                break;
+            }
+        }
+
+        string content;
+        if (hasNewline)
+        {
+            // Multi-line: apply whitespace normalization using indentation from End token
+            var result = NormalizeRawStringPartWhitespace(source, contentStart, contentEnd, endIndentInfo.IndentLength, isStart, isEnd);
+            if (result.Status != StringValueParseResultStatus.Success)
+                return result;
+            content = result.Value ?? string.Empty;
+        }
+        else
+        {
+            // Single-line or no indentation: extract directly
+            content = source.Substring(contentStart, contentEnd - contentStart);
+        }
+
+        // Replace escaped braces for interpolated strings
+        if (dollarCount > 0)
+        {
+            var escapedOpen = new string('{', dollarCount + 1);
+            var escapedClose = new string('}', dollarCount + 1);
+            content = content.Replace(escapedOpen, new string('{', dollarCount))
+                            .Replace(escapedClose, new string('}', dollarCount));
+        }
+
+        return StringValueParseResult.Success(content);
+    }
+
+    /// <summary>
+    /// Normalizes whitespace for a part of an interpolated raw string.
+    /// </summary>
+    static StringValueParseResult NormalizeRawStringPartWhitespace(
+        string source, int contentStart, int contentEnd, int indentLength,
+        bool isStart, bool isEnd)
+    {
+        var sb = new StringBuilder();
+        var lineStart = contentStart;
+        var firstLine = true;
+
+        while (lineStart < contentEnd)
+        {
+            // Find the end of this line
+            var lineEnd = lineStart;
+            while (lineEnd < contentEnd && source[lineEnd] != '\n' && source[lineEnd] != '\r')
+                lineEnd++;
+
+            // For Start token's first line, skip whitespace after opening quotes (it's ignored)
+            if (isStart && firstLine)
+            {
+                // Skip to the newline - content on opening quote line is ignored
+            }
+            else
+            {
+                // Check if this is the last line (before closing quotes in End token)
+                var isLastLine = lineEnd >= contentEnd;
+
+                // For End token's last line, don't include the content (it's just the indentation before closing quotes)
+                if (!(isEnd && isLastLine))
+                {
+                    var lineLength = lineEnd - lineStart;
+
+                    // For End token's first line, don't strip indentation - it's a continuation
+                    // of the previous source line, not the start of a new content line
+                    if (isEnd && firstLine)
+                    {
+                        _ = sb.Append(source, lineStart, lineLength);
+                    }
+                    else if (lineLength >= indentLength)
+                    {
+                        // Strip indentation and append
+                        _ = sb.Append(source, lineStart + indentLength, lineLength - indentLength);
+                    }
+                    // Short lines (whitespace-only) are allowed - they become empty
+                }
+            }
+
+            // Handle newline
+            if (lineEnd < contentEnd)
+            {
+                var newlineLength = 1;
+                if (source[lineEnd] == '\r' && lineEnd + 1 < contentEnd && source[lineEnd + 1] == '\n')
+                    newlineLength = 2;
+
+                // For Start token, skip the first newline (after opening quotes)
+                // For End token, skip the newline if the next line is just the indentation before closing quotes
+                // (or if there's nothing after the newline, meaning no indentation)
+                var nextLineStart = lineEnd + newlineLength;
+                var skipBecauseEnd = false;
+                if (isEnd)
+                {
+                    if (nextLineStart >= contentEnd)
+                    {
+                        // No content after newline - it's the newline before non-indented closing quotes
+                        skipBecauseEnd = true;
+                    }
+                    else
+                    {
+                        // Check if everything after the newline is whitespace (the indentation)
+                        var allWhitespace = true;
+                        for (var i = nextLineStart; i < contentEnd; i++)
+                        {
+                            if (source[i] is not (' ' or '\t'))
+                            {
+                                allWhitespace = false;
+                                break;
+                            }
+                        }
+                        skipBecauseEnd = allWhitespace;
+                    }
+                }
+
+                var skipNewline = (isStart && firstLine) || skipBecauseEnd;
+
+                if (!skipNewline)
+                    _ = sb.Append(source, lineEnd, newlineLength);
+
+                lineStart = lineEnd + newlineLength;
+            }
+            else
+            {
+                break;
+            }
+
+            firstLine = false;
+        }
+
+        return StringValueParseResult.Success(sb.ToString());
+    }
+
+    static StringValueParseResult TryParse(string source, TokenKind kind, int startIndex, int endIndex)
     {
         if (source == null) throw new ArgumentNullException(nameof(source));
 
@@ -362,372 +695,31 @@ static class CSharpString
             }
             case TokenKind.RawStringLiteral:
             {
-                // Raw string: """content"""
                 // Count opening quotes
-                var openingQuoteCount = CountLeadingChars(source, startIndex, endIndex, '"');
-
-                // Opening quotes must be at least 3
-                if (openingQuoteCount < 3)
-                    return StringValueParseResult.Error(StringValueParseResultStatus.InvalidToken, startIndex);
-
-                // Find where content starts (after opening quotes)
-                var contentStart = startIndex + openingQuoteCount;
-
-                // Count closing quotes (work backwards from end)
-                var closingQuoteCount = 0;
-                for (var i = endIndex - 1; i >= contentStart && source[i] == '"'; i--)
-                    closingQuoteCount++;
-
-                // Validate quote counts match
-                if (openingQuoteCount != closingQuoteCount)
-                    return StringValueParseResult.Error(StringValueParseResultStatus.InvalidRawStringQuotes, startIndex);
-
-                // Find where content ends (before closing quotes)
-                var contentEnd = endIndex - closingQuoteCount;
-
-                // Check if this is a multi-line raw string (contains newline)
-                var hasNewline = false;
-                var firstNewlinePos = -1;
-                for (var i = contentStart; i < contentEnd; i++)
-                {
-                    if (source[i] == '\n')
-                    {
-                        hasNewline = true;
-                        firstNewlinePos = i;
-                        break;
-                    }
-                }
-
-                if (!hasNewline)
-                {
-                    // Single-line: no whitespace normalization needed
-                    s = source.Substring(contentStart, contentEnd - contentStart);
-                }
-                else
-                {
-                    // Multi-line: apply whitespace normalization rules
-
-                    // Find the last newline before closing quotes
-                    var lastNewlinePos = -1;
-                    for (var i = contentEnd - 1; i >= contentStart; i--)
-                    {
-                        if (source[i] == '\n')
-                        {
-                            lastNewlinePos = i;
-                            break;
-                        }
-                    }
-
-                    if (lastNewlinePos < 0)
-                    {
-                        // This shouldn't happen if hasNewline is true, but handle it
-                        s = source.Substring(contentStart, contentEnd - contentStart);
-                    }
-                    else
-                    {
-                        // The closing quote line starts after the last newline
-                        var closingQuoteLineStart = lastNewlinePos + 1;
-
-                        // Check everything after opening quotes on same line is whitespace
-                        var afterOpeningQuotes = contentStart;
-                        var firstLineEnd = firstNewlinePos;
-
-                        // Scan from after quotes to first newline
-                        for (var i = afterOpeningQuotes; i < firstLineEnd; i++)
-                        {
-                            if (source[i] is not (' ' or '\t' or '\r'))
-                            {
-                                return StringValueParseResult.Error(StringValueParseResultStatus.InvalidRawStringFormat, i);
-                            }
-                        }
-
-                        // Check everything before closing quotes on same line is whitespace
-                        for (var i = closingQuoteLineStart; i < contentEnd; i++)
-                        {
-                            if (source[i] is not (' ' or '\t' or '\r'))
-                            {
-                                return StringValueParseResult.Error(StringValueParseResultStatus.InvalidRawStringFormat, i);
-                            }
-                        }
-
-                        // Content starts after the first newline (and skip \n from CRLF if present)
-                        var actualContentStart = firstNewlinePos + 1;
-
-                        // Content ends at the last newline (we don't include the final newline)
-                        // If the last newline is \n and preceded by \r, exclude the \r too
-                        var actualContentEnd = lastNewlinePos;
-                        if (lastNewlinePos > contentStart && source[lastNewlinePos] == '\n' && source[lastNewlinePos - 1] == '\r')
-                        {
-                            actualContentEnd = lastNewlinePos - 1; // Exclude the \r before the \n
-                        }
-
-                        // The indentation is determined by the whitespace before closing quotes
-                        // which is from closingQuoteLineStart to contentEnd
-                        var closingLineIndentLength = contentEnd - closingQuoteLineStart;
-
-                        // Apply whitespace normalization
-                        r = NormalizeRawStringWhitespace(source, actualContentStart, actualContentEnd, closingQuoteLineStart, closingLineIndentLength);
-                        if (!r)
-                            return r;
-
-                        s = r.Value;
-                    }
-                }
-                break;
+                var quoteCount = CountLeadingChars(source, startIndex, endIndex, '"');
+                var contentStart = startIndex + quoteCount;
+                var closingQuoteStart = endIndex - quoteCount;
+                return ParseRawStringContent(source, contentStart, closingQuoteStart, closingQuoteStart);
             }
             case TokenKind.InterpolatedRawStringLiteral:
             {
-                // Complete interpolated raw string without holes: $"""content"""
-                // Skip dollars at start
+                // Count dollars then quotes
                 var dollarCount = CountLeadingChars(source, startIndex, endIndex, '$');
-                var afterDollars = startIndex + dollarCount;
-
-                // Count opening quotes
-                var openingQuoteCount = CountLeadingChars(source, afterDollars, endIndex, '"');
-
-                // Opening quotes must be at least 3
-                if (openingQuoteCount < 3)
-                    return StringValueParseResult.Error(StringValueParseResultStatus.InvalidToken, startIndex);
-
-                // Find where content starts (after dollars and opening quotes)
-                var contentStart = afterDollars + openingQuoteCount;
-
-                // Count closing quotes (work backwards from end)
-                var closingQuoteCount = 0;
-                for (var i = endIndex - 1; i >= contentStart && source[i] == '"'; i--)
-                    closingQuoteCount++;
-
-                // Validate quote counts match
-                if (openingQuoteCount != closingQuoteCount)
-                    return StringValueParseResult.Error(StringValueParseResultStatus.InvalidRawStringQuotes, startIndex);
-
-                // Find where content ends (before closing quotes)
-                var contentEnd = endIndex - closingQuoteCount;
-
-                // Check if this is a multi-line raw string
-                var hasNewline = false;
-                var firstNewlinePos = -1;
-                for (var i = contentStart; i < contentEnd; i++)
+                var quoteStart = startIndex + dollarCount;
+                var quoteCount = CountLeadingChars(source, quoteStart, endIndex, '"');
+                var contentStart = quoteStart + quoteCount;
+                var closingQuoteStart = endIndex - quoteCount;
+                var result = ParseRawStringContent(source, contentStart, closingQuoteStart, closingQuoteStart);
+                if (result.Status == StringValueParseResultStatus.Success && result.Value != null)
                 {
-                    if (source[i] == '\n')
-                    {
-                        hasNewline = true;
-                        firstNewlinePos = i;
-                        break;
-                    }
+                    // For interpolated raw strings, replace escaped braces
+                    var escapedOpen = new string('{', dollarCount + 1);
+                    var escapedClose = new string('}', dollarCount + 1);
+                    var replacedValue = result.Value.Replace(escapedOpen, new string('{', dollarCount))
+                                                    .Replace(escapedClose, new string('}', dollarCount));
+                    return StringValueParseResult.Success(replacedValue);
                 }
-
-                if (!hasNewline)
-                {
-                    // Single-line: no whitespace normalization needed
-                    s = source.Substring(contentStart, contentEnd - contentStart);
-                }
-                else
-                {
-                    // Multi-line: apply whitespace normalization
-                    var lastNewlinePos = -1;
-                    for (var i = contentEnd - 1; i >= contentStart; i--)
-                    {
-                        if (source[i] == '\n')
-                        {
-                            lastNewlinePos = i;
-                            break;
-                        }
-                    }
-
-                    if (lastNewlinePos < 0)
-                    {
-                        s = source.Substring(contentStart, contentEnd - contentStart);
-                    }
-                    else
-                    {
-                        var closingQuoteLineStart = lastNewlinePos + 1;
-
-                        // Check everything after opening quotes on same line is whitespace
-                        for (var i = contentStart; i < firstNewlinePos; i++)
-                        {
-                            if (source[i] is not (' ' or '\t' or '\r'))
-                            {
-                                return StringValueParseResult.Error(StringValueParseResultStatus.InvalidRawStringFormat, i);
-                            }
-                        }
-
-                        // Check everything before closing quotes on same line is whitespace
-                        for (var i = closingQuoteLineStart; i < contentEnd; i++)
-                        {
-                            if (source[i] is not (' ' or '\t' or '\r'))
-                            {
-                                return StringValueParseResult.Error(StringValueParseResultStatus.InvalidRawStringFormat, i);
-                            }
-                        }
-
-                        var actualContentStart = firstNewlinePos + 1;
-                        var actualContentEnd = lastNewlinePos;
-                        if (lastNewlinePos > contentStart && source[lastNewlinePos] == '\n' && source[lastNewlinePos - 1] == '\r')
-                        {
-                            actualContentEnd = lastNewlinePos - 1; // Exclude the \r before the \n
-                        }
-                        var closingLineIndentLength = contentEnd - closingQuoteLineStart;
-
-                        r = NormalizeRawStringWhitespace(source, actualContentStart, actualContentEnd, closingQuoteLineStart, closingLineIndentLength);
-                        if (!r)
-                            return r;
-
-                        s = r.Value;
-                    }
-                }
-
-                interpolated = true;
-                break;
-            }
-            case TokenKind.InterpolatedRawStringLiteralStart:
-            case TokenKind.InterpolatedRawStringLiteralMid:
-            case TokenKind.InterpolatedRawStringLiteralEnd:
-            {
-                // These cases require indentation context from End token
-                // Determine position based on token type
-                var pos = startIndex;
-
-                // For Start tokens, skip dollars first
-                if (kind == TokenKind.InterpolatedRawStringLiteralStart)
-                {
-                    var dollarCount = CountLeadingChars(source, pos, endIndex, '$');
-                    pos += dollarCount;
-
-                    // Then skip opening quotes
-                    var openingQuoteCount = CountLeadingChars(source, pos, endIndex, '"');
-                    pos += openingQuoteCount;
-                }
-                else
-                {
-                    // For Mid/End, skip closing braces first
-                    var braceCount = CountLeadingChars(source, pos, endIndex, '}');
-                    pos += braceCount;
-                }
-
-                // Find where the content ends (before trailing braces or quotes)
-                int contentEnd;
-                if (kind == TokenKind.InterpolatedRawStringLiteralEnd)
-                {
-                    // End: content ends before closing quotes
-                    // Count closing quotes from the end
-                    var closingQuoteCount = 0;
-                    for (var i = endIndex - 1; i >= pos && source[i] == '"'; i--)
-                        closingQuoteCount++;
-
-                    contentEnd = endIndex - closingQuoteCount;
-                }
-                else
-                {
-                    // Start/Mid: content ends before trailing opening braces
-                    // Count opening braces from the end
-                    var trailingBraceCount = 0;
-                    for (var i = endIndex - 1; i >= pos && source[i] == '{'; i--)
-                        trailingBraceCount++;
-
-                    contentEnd = endIndex - trailingBraceCount;
-                }
-
-                // Content is from pos to contentEnd
-                var contentStart = pos;
-
-                // Check if multi-line and apply normalization if indentation context is provided
-                var hasNewline = false;
-                var firstNewlinePos = -1;
-                for (var i = contentStart; i < contentEnd; i++)
-                {
-                    if (source[i] == '\n')
-                    {
-                        hasNewline = true;
-                        firstNewlinePos = i;
-                        break;
-                    }
-                }
-
-                if (!hasNewline || !indentationLineStart.HasValue)
-                {
-                    // Single-line or no indentation context: just extract content
-                    s = contentStart < contentEnd ? source.Substring(contentStart, contentEnd - contentStart) : string.Empty;
-                }
-                else
-                {
-                    // Multi-line with indentation context
-                    // For Start tokens: skip opening newline and remove indentation from first line
-                    // For Mid/End tokens: just extract content (they're mid-line or end-of-line)
-
-                    if (kind == TokenKind.InterpolatedRawStringLiteralStart)
-                    {
-                        // Skip the opening newline
-                        var actualContentStart = firstNewlinePos + 1;
-
-                        // Remove indentation from the first line of content
-                        var lineStart = actualContentStart;
-                        var lineEnd = contentEnd;
-
-                        // Find end of first line (or use contentEnd if no more newlines)
-                        for (var i = actualContentStart; i < contentEnd; i++)
-                        {
-                            if (source[i] == '\n')
-                            {
-                                lineEnd = i;
-                                break;
-                            }
-                        }
-
-                        // Remove indentation from this line
-                        if (lineEnd - lineStart >= indentLength)
-                        {
-                            // Validate indentation matches
-                            var indentMatches = true;
-                            for (var j = 0; j < indentLength; j++)
-                            {
-                                if (source[lineStart + j] != source[indentationLineStart.Value + j])
-                                {
-                                    indentMatches = false;
-                                    break;
-                                }
-                            }
-
-                            if (!indentMatches)
-                                return StringValueParseResult.Error(StringValueParseResultStatus.InvalidRawStringWhitespace, lineStart);
-
-                            s = source.Substring(lineStart + indentLength, contentEnd - lineStart - indentLength);
-                        }
-                        else
-                        {
-                            // Line is shorter than indentation - might be whitespace-only or error
-                            s = source.Substring(lineStart, contentEnd - lineStart);
-                        }
-                    }
-                    else
-                    {
-                        // Mid/End tokens: extract content, but for End tokens, exclude the final newline
-                        var actualContentEnd = contentEnd;
-
-                        if (kind == TokenKind.InterpolatedRawStringLiteralEnd)
-                        {
-                            // Find and exclude the last newline
-                            for (var i = contentEnd - 1; i >= contentStart; i--)
-                            {
-                                if (source[i] == '\n')
-                                {
-                                    actualContentEnd = i;
-                                    // Also exclude preceding \r if CRLF
-                                    if (i > contentStart && source[i - 1] == '\r')
-                                    {
-                                        actualContentEnd = i - 1;
-                                    }
-                                    break;
-                                }
-                            }
-                        }
-
-                        s = contentStart < actualContentEnd ? source.Substring(contentStart, actualContentEnd - contentStart) : string.Empty;
-                    }
-                }
-
-                interpolated = true;
-                break;
+                return result;
             }
             default:
                 return StringValueParseResult.Error(StringValueParseResultStatus.InvalidToken, startIndex);
@@ -868,199 +860,5 @@ static class CSharpString
         }
 
         return false;
-    }
-
-    /// <summary>
-    /// Counts consecutive occurrences of a specific character starting from a position.
-    /// </summary>
-    static int CountLeadingChars(string source, int startIndex, int endIndex, char ch)
-    {
-        var count = 0;
-        for (var i = startIndex; i < endIndex && source[i] == ch; i++)
-            count++;
-        return count;
-    }
-
-    /// <summary>
-    /// Normalizes whitespace in multi-line raw string literals per C# spec.
-    /// Extracts indentation from closing quote line and removes it from all content lines.
-    /// </summary>
-    static StringValueParseResult NormalizeRawStringWhitespace(string source, int contentStart, int contentEnd, int closingQuoteLineStart, int indentLength)
-    {
-        // If no indentation required, just extract content
-        if (indentLength == 0)
-        {
-            var content = source.Substring(contentStart, contentEnd - contentStart);
-            return StringValueParseResult.Success(content);
-        }
-
-        var sb = new StringBuilder();
-        var lineStart = contentStart;
-        var i = contentStart;
-
-        while (i < contentEnd)
-        {
-            // Find end of current line
-            if (source[i] == '\n')
-            {
-                // Process the line (excluding the newline)
-                var lineEnd = i;
-
-                // Check if line starts with correct indentation
-                var lineLength = lineEnd - lineStart;
-
-                // Empty or whitespace-only lines still need validation
-                if (lineLength > 0)
-                {
-                    // Validate indentation: must have at least indentLength chars matching exactly
-                    if (lineLength < indentLength)
-                    {
-                        // Check if line is all whitespace - if so, include it
-                        var allWhitespace = true;
-                        for (var j = lineStart; j < lineEnd; j++)
-                        {
-                            if (source[j] is not (' ' or '\t'))
-                            {
-                                allWhitespace = false;
-                                break;
-                            }
-                        }
-
-                        if (!allWhitespace)
-                            return StringValueParseResult.Error(StringValueParseResultStatus.InvalidRawStringWhitespace, lineStart);
-
-                        // For whitespace-only lines, include them as-is
-                        _ = sb.Append(source, lineStart, lineLength);
-                    }
-                    else
-                    {
-                        // Validate that the indentation matches exactly (char by char)
-                        for (var j = 0; j < indentLength; j++)
-                        {
-                            if (source[lineStart + j] != source[closingQuoteLineStart + j])
-                                return StringValueParseResult.Error(StringValueParseResultStatus.InvalidRawStringWhitespace, lineStart);
-                        }
-
-                        // Add line content without the indentation prefix
-                        _ = sb.Append(source, lineStart + indentLength, lineLength - indentLength);
-                    }
-                }
-
-                // Add newline (but not the final one before closing quotes)
-                if (i + 1 < contentEnd) // Not the last newline
-                {
-                    _ = sb.Append('\n');
-                }
-
-                i++;
-                lineStart = i;
-            }
-            else if (source[i] == '\r')
-            {
-                // Process the line (excluding \r and potentially \n)
-                var lineEnd = i;
-
-                // Check if line starts with correct indentation
-                var lineLength = lineEnd - lineStart;
-
-                if (lineLength > 0)
-                {
-                    // Validate indentation
-                    if (lineLength < indentLength)
-                    {
-                        // Check if line is all whitespace
-                        var allWhitespace = true;
-                        for (var j = lineStart; j < lineEnd; j++)
-                        {
-                            if (source[j] is not (' ' or '\t'))
-                            {
-                                allWhitespace = false;
-                                break;
-                            }
-                        }
-
-                        if (!allWhitespace)
-                            return StringValueParseResult.Error(StringValueParseResultStatus.InvalidRawStringWhitespace, lineStart);
-
-                        // For whitespace-only lines, include them as-is
-                        _ = sb.Append(source, lineStart, lineLength);
-                    }
-                    else
-                    {
-                        // Validate that the indentation matches exactly
-                        for (var j = 0; j < indentLength; j++)
-                        {
-                            if (source[lineStart + j] != source[closingQuoteLineStart + j])
-                                return StringValueParseResult.Error(StringValueParseResultStatus.InvalidRawStringWhitespace, lineStart);
-                        }
-
-                        // Add line content without the indentation prefix
-                        _ = sb.Append(source, lineStart + indentLength, lineLength - indentLength);
-                    }
-                }
-
-                // Preserve line ending (but not the final one before closing quotes)
-                if (i + 1 < contentEnd) // Not the last \r or part of last CRLF
-                {
-                    _ = sb.Append('\r');
-                }
-                i++;
-
-                // Check for CRLF
-                if (i < contentEnd && source[i] == '\n')
-                {
-                    // Only add \n if not the final newline before closing quotes
-                    if (i + 1 < contentEnd)
-                    {
-                        _ = sb.Append('\n');
-                    }
-                    i++;
-                }
-
-                lineStart = i;
-            }
-            else
-            {
-                i++;
-            }
-        }
-
-        // Handle last line if it doesn't end with newline
-        if (lineStart < contentEnd)
-        {
-            var lineLength = contentEnd - lineStart;
-
-            if (lineLength < indentLength)
-            {
-                // Check if line is all whitespace
-                var allWhitespace = true;
-                for (var j = lineStart; j < contentEnd; j++)
-                {
-                    if (source[j] is not (' ' or '\t'))
-                    {
-                        allWhitespace = false;
-                        break;
-                    }
-                }
-
-                if (!allWhitespace)
-                    return StringValueParseResult.Error(StringValueParseResultStatus.InvalidRawStringWhitespace, lineStart);
-
-                _ = sb.Append(source, lineStart, lineLength);
-            }
-            else
-            {
-                // Validate indentation
-                for (var j = 0; j < indentLength; j++)
-                {
-                    if (source[lineStart + j] != source[closingQuoteLineStart + j])
-                        return StringValueParseResult.Error(StringValueParseResultStatus.InvalidRawStringWhitespace, lineStart);
-                }
-
-                _ = sb.Append(source, lineStart + indentLength, lineLength - indentLength);
-            }
-        }
-
-        return StringValueParseResult.Success(sb.ToString());
     }
 }
