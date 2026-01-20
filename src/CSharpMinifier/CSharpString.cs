@@ -158,7 +158,7 @@ static class CSharpString
                     var closingQuoteLineStart = lastNewlinePos >= 0 ? lastNewlinePos + 1 : (int?)null;
                     var indentLength = closingQuoteLineStart.HasValue ? beforeClosingQuotes - closingQuoteLineStart.Value : 0;
                     
-                    // Now reprocess Start, all Mids, and End with the indentation context
+                    // Now reprocess Start, all buffered tokens, and End with the indentation context
                     // Process Start token
                     var startResult = TryParse(source, startToken.Kind, startToken.Start.Offset, startToken.End.Offset, closingQuoteLineStart, indentLength);
                     switch (startResult.Status, startResult.Value)
@@ -172,19 +172,37 @@ static class CSharpString
                             throw startResult.ToSyntaxError();
                     }
                     
-                    // Process Mid tokens
-                    foreach (var midToken in bufferedTokens)
+                    // Process buffered tokens (Mids and any nested strings/text)
+                    foreach (var bufferedToken in bufferedTokens)
                     {
-                        var midResult = TryParse(source, midToken.Kind, midToken.Start.Offset, midToken.End.Offset, closingQuoteLineStart, indentLength);
-                        switch (midResult.Status, midResult.Value)
+                        if (bufferedToken.Kind == TokenKind.InterpolatedRawStringLiteralMid)
                         {
-                            case (StringValueParseResultStatus.Success, {} value):
-                                yield return selector(midToken, source, value);
-                                break;
-                            case (StringValueParseResultStatus.InvalidToken, _):
-                                break;
-                            default:
-                                throw midResult.ToSyntaxError();
+                            var midResult = TryParse(source, bufferedToken.Kind, bufferedToken.Start.Offset, bufferedToken.End.Offset, closingQuoteLineStart, indentLength);
+                            switch (midResult.Status, midResult.Value)
+                            {
+                                case (StringValueParseResultStatus.Success, {} value):
+                                    yield return selector(bufferedToken, source, value);
+                                    break;
+                                case (StringValueParseResultStatus.InvalidToken, _):
+                                    break;
+                                default:
+                                    throw midResult.ToSyntaxError();
+                            }
+                        }
+                        else
+                        {
+                            // Regular token (nested string, text, etc.)
+                            var bufferedResult = TryParse(source, bufferedToken.Kind, bufferedToken.Start.Offset, bufferedToken.End.Offset);
+                            switch (bufferedResult.Status, bufferedResult.Value)
+                            {
+                                case (StringValueParseResultStatus.Success, {} value):
+                                    yield return selector(bufferedToken, source, value);
+                                    break;
+                                case (StringValueParseResultStatus.InvalidToken, _):
+                                    break;
+                                default:
+                                    throw bufferedResult.ToSyntaxError();
+                            }
                         }
                     }
                     
@@ -201,6 +219,14 @@ static class CSharpString
                             throw endResult.ToSyntaxError();
                     }
                     
+                    continue;
+                }
+                
+                // If we're inside a raw interpolated string, buffer this token
+                if (stack.Count > 0)
+                {
+                    var (_, _, buffered, _) = stack.Peek();
+                    buffered.Add(token);
                     continue;
                 }
                 

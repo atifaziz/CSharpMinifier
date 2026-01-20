@@ -1033,6 +1033,28 @@ public class ScannerTests
     [TestCase("$\"\"\"\n    a {x} b\n    \"\"\"", "a ", " b")]
     [TestCase("$$\"\"\"\n    a {{x}} b\n    \"\"\"", "a ", " b")]
 
+    // Nested string literals in raw interpolated strings
+    [TestCase("$\"\"\"foo {\"bar\"} baz\"\"\"", "foo ", "bar", " baz")]
+    [TestCase("$\"\"\"foo {@\"bar\"} baz\"\"\"", "foo ", "bar", " baz")]
+    [TestCase("$\"\"\"foo {\"\"\"bar\"\"\"} baz\"\"\"", "foo ", "bar", " baz")]
+    [TestCase("$\"\"\"foo {$\"bar\"} baz\"\"\"", "foo ", "bar", " baz")]
+    [TestCase("$\"\"\"foo {$@\"bar\"} baz\"\"\"", "foo ", "bar", " baz")]
+    [TestCase("$\"\"\"foo {$\"\"\"bar\"\"\"} baz\"\"\"", "foo ", "bar", " baz")]
+    [TestCase("$$\"\"\"foo {{\"bar\"}} baz\"\"\"", "foo ", "bar", " baz")]
+    [TestCase("$$\"\"\"foo {{@\"bar\"}} baz\"\"\"", "foo ", "bar", " baz")]
+    [TestCase("$$\"\"\"foo {{\"\"\"bar\"\"\"}} baz\"\"\"", "foo ", "bar", " baz")]
+    [TestCase("$$\"\"\"foo {{$\"bar\"}} baz\"\"\"", "foo ", "bar", " baz")]
+    [TestCase("$$\"\"\"foo {{$@\"bar\"}} baz\"\"\"", "foo ", "bar", " baz")]
+    [TestCase("$$\"\"\"foo {{$\"\"\"bar\"\"\"}} baz\"\"\"", "foo ", "bar", " baz")]
+    // Multi-line nested strings
+    [TestCase("$\"\"\"\nfoo {\"bar\"} baz\n\"\"\"", "foo ", "bar", " baz")]
+    [TestCase("$\"\"\"\n    foo {\"bar\"} baz\n    \"\"\"", "foo ", "bar", " baz")]
+    [TestCase("$\"\"\"\n    foo {$\"bar\"} baz\n    \"\"\"", "foo ", "bar", " baz")]
+    [TestCase("$\"\"\"\n    foo {\"\"\"bar\"\"\"} baz\n    \"\"\"", "foo ", "bar", " baz")]
+    // Multiple nested strings
+    [TestCase("$\"\"\"a {\"b\"} c {\"d\"} e\"\"\"", "a ", "b", " c ", "d", " e")]
+    [TestCase("$\"\"\"a {$\"b\"} c {\"d\"} e\"\"\"", "a ", "b", " c ", "d", " e")]
+
     public void ParseStrings(string source, params string[] expectations)
     {
         Assert.That(Scanner.ParseStrings(source), Is.EqualTo(expectations));
