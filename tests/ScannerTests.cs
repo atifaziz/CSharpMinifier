@@ -1022,6 +1022,9 @@ public class ScannerTests
     [TestCase("\"\"\"\n    text\n    \"\"\"", "text")]
     [TestCase("\"\"\"\n        line1\n        line2\n        \"\"\"", "line1\nline2")]
     [TestCase("\"\"\"\n    line1\n        line2\n    \"\"\"", "line1\n    line2")]
+    // When closing line has no indentation, leading whitespace becomes content
+    [TestCase("\"\"\"\n text\n\"\"\"", " text")]
+    [TestCase("\"\"\"\n\ttext\n\"\"\"", "\ttext")]
 
     // Interpolated raw string literal tests
     [TestCase("$\"\"\"test\"\"\"", "test")]
@@ -1032,6 +1035,9 @@ public class ScannerTests
     [TestCase("$\"\"\"\n    line1\n    line2\n    \"\"\"", "line1\nline2")]
     [TestCase("$\"\"\"\n    a {x} b\n    \"\"\"", "a ", " b")]
     [TestCase("$$\"\"\"\n    a {{x}} b\n    \"\"\"", "a ", " b")]
+    // When closing line has no indentation, leading whitespace becomes content
+    [TestCase("$\"\"\"\n text\n\"\"\"", " text")]
+    [TestCase("$\"\"\"\n\ttext\n\"\"\"", "\ttext")]
 
     // Nested string literals in raw interpolated strings
     [TestCase("$\"\"\"foo {\"bar\"} baz\"\"\"", "foo ", "bar", " baz")]
@@ -1087,16 +1093,12 @@ public class ScannerTests
 
     [TestCase("\"\"\"text\n\"\"\"")]
     [TestCase("\"\"\"\ntext\"\"\"")]
-    [TestCase("\"\"\"\n text\n\"\"\"")]
-    [TestCase("\"\"\"\n\ttext\n\"\"\"")]
     [TestCase("\"\"\"\tline 1\n line 2\t\"\"\"")]
     [TestCase("\"\"\" line 1\n\tline 2 \"\"\"")]
     [TestCase("\"\"\"\tline 1\n        line 2\t\"\"\"")]
     [TestCase("\"\"\"  line 1\n\n  line 2\n\n  line 3\n\"\"\"")]
     [TestCase("$\"\"\"text\n\"\"\"")]
     [TestCase("$\"\"\"\ntext\"\"\"")]
-    [TestCase("$\"\"\"\n text\n\"\"\"")]
-    [TestCase("$\"\"\"\n\ttext\n\"\"\"")]
     [TestCase("$\"\"\"\tline 1\n line 2\t\"\"\"")]
     [TestCase("$\"\"\" line 1\n\tline 2 \"\"\"")]
     [TestCase("$\"\"\"\tline 1\n        line 2\t\"\"\"")]

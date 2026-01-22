@@ -123,11 +123,6 @@ static class CSharpString
                     return StringValueParseResult.Error(StringValueParseResultStatus.InvalidRawStringWhitespace, lineStart + i);
             }
 
-            // When indentLength is 0, verify that the line doesn't start with whitespace
-            // (unless it's a whitespace-only line, which is handled above)
-            if (indentLength == 0 && lineLength > 0 && source[lineStart] is ' ' or '\t')
-                return StringValueParseResult.Error(StringValueParseResultStatus.InvalidRawStringWhitespace, lineStart);
-
             // Append content after stripping indentation
             _ = sb.Append(source, lineStart + indentLength, lineLength - indentLength);
         }
