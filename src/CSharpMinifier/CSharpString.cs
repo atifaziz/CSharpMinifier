@@ -71,7 +71,7 @@ readonly record struct StringValueParseResult
             StringValueParseResultStatus.InvalidHexadecimalEscapeSequence =>
                 "Invalid hexadecimal escape sequence in string.",
             StringValueParseResultStatus.InvalidRawStringWhitespace =>
-                "Invalid whitespace in raw string literal. Content lines must start with the exact same whitespace as the closing delimiter line.",
+                "Line contains different whitespace than the closing line of the raw string literal.",
             StringValueParseResultStatus.InvalidRawStringQuotes =>
                 "Invalid raw string literal. Opening and closing quote counts must match.",
             StringValueParseResultStatus.InvalidRawStringFormat =>
@@ -122,6 +122,11 @@ static class CSharpString
                 if (source[lineStart + i] != source[indentStart + i])
                     return StringValueParseResult.Error(StringValueParseResultStatus.InvalidRawStringWhitespace, lineStart + i);
             }
+
+            // When indentLength is 0, verify that the line doesn't start with whitespace
+            // (unless it's a whitespace-only line, which is handled above)
+            if (indentLength == 0 && lineLength > 0 && source[lineStart] is ' ' or '\t')
+                return StringValueParseResult.Error(StringValueParseResultStatus.InvalidRawStringWhitespace, lineStart);
 
             // Append content after stripping indentation
             _ = sb.Append(source, lineStart + indentLength, lineLength - indentLength);
@@ -187,6 +192,18 @@ static class CSharpString
             }
         }
 
+        // If content ends right after a newline (empty line at the end), add the trailing newline
+        if (lineStart == contentEnd && !isFirstOutputLine && lineStart > contentStart)
+        {
+            // Check if there's a newline just before lineStart
+            if (lineStart >= 2 && source[lineStart - 2] == '\r' && source[lineStart - 1] == '\n')
+                _ = sb.Append("\r\n");
+            else if (source[lineStart - 1] == '\n')
+                _ = sb.Append('\n');
+            else if (source[lineStart - 1] == '\r')
+                _ = sb.Append('\r');
+        }
+
         return StringValueParseResult.Success(sb.ToString());
     }
 
@@ -218,11 +235,25 @@ static class CSharpString
         // Calculate indentation length (whitespace before closing quotes on that line)
         var indentLength = closingQuoteStart - closingQuoteLine;
 
+        // Validate that closing quote line contains only whitespace before the quotes
+        for (var i = closingQuoteLine; i < closingQuoteStart; i++)
+        {
+            if (source[i] is not (' ' or '\t'))
+                return StringValueParseResult.Error(StringValueParseResultStatus.InvalidRawStringWhitespace, i);
+        }
+
         // Skip opening line content (whitespace after opening quotes on same line is ignored)
         // Find the first newline after opening quotes
         var contentStartAfterFirstNewline = contentStart;
         while (contentStartAfterFirstNewline < contentEnd && source[contentStartAfterFirstNewline] is not '\n' and not '\r')
             contentStartAfterFirstNewline++;
+
+        // Validate that opening line contains only whitespace after the quotes
+        for (var i = contentStart; i < contentStartAfterFirstNewline; i++)
+        {
+            if (source[i] is not (' ' or '\t'))
+                return StringValueParseResult.Error(StringValueParseResultStatus.InvalidRawStringWhitespace, i);
+        }
 
         // Skip the first newline itself
         if (contentStartAfterFirstNewline < contentEnd)
