@@ -42,6 +42,9 @@
 
   <PropertyGroup>
     <PolySharpIncludeGeneratedTypes>
+      System.Index;
+      System.Range;
+      System.Diagnostics.CodeAnalysis.DoesNotReturnAttribute;
       System.Diagnostics.CodeAnalysis.NotNullWhenAttribute;
       System.Runtime.CompilerServices.IsExternalInit;
     </PolySharpIncludeGeneratedTypes>

@@ -53,6 +53,11 @@ partial class Program
             (TokenKind.InterpolatedVerbatimStringLiteralEnd  , magenta),
             (TokenKind.CharLiteral                           , cyan),
             (TokenKind.PreprocessorDirective                 , blue),
+            (TokenKind.RawStringLiteral                      , yellow),
+            (TokenKind.InterpolatedRawStringLiteral          , magenta),
+            (TokenKind.InterpolatedRawStringLiteralStart     , magenta),
+            (TokenKind.InterpolatedRawStringLiteralMid       , magenta),
+            (TokenKind.InterpolatedRawStringLiteralEnd       , magenta),
         };
 
         var colorByTokenKind = new Color[defaultPalette.Max(e => (int)e.TokenKind) + 1];
