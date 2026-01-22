@@ -1058,6 +1058,17 @@ public class ScannerTests
     [TestCase(""""""
               $$$"""""foo {{{$$"""bar {{$"""baz {$"qux"}"""}}"""}}}"""""
               """""", "foo ", "bar ", "baz ", "qux")]
+    // No brace escaping tests with $$ interpolation
+    [TestCase(""""
+              $$"""{{{"foobar"}}}"""
+              """",
+              "{", "foobar", "}")]
+    // Common indentation stripping in multi-line raw strings
+    [TestCase("\"\"\"\n\t\tline1\n\t\n\t\tline3\n\t\t\"\"\"",
+              "line1\n\nline3")]
+    [TestCase("\"\"\"\n\t\tline1\n\t\n\t\tline3\n\n\t\t\"\"\"",
+              "line1\n\nline3\n")]
+
 
     public void ParseStrings(string source, params string[] expectations)
     {
@@ -1072,6 +1083,30 @@ public class ScannerTests
             Scanner.ParseStrings(source).Consume());
         Debug.Assert(e is not null);
         Assert.That(e.Message, Is.EqualTo("Invalid hexadecimal escape sequence in string."));
+    }
+
+    [TestCase("\"\"\"text\n\"\"\"")]
+    [TestCase("\"\"\"\ntext\"\"\"")]
+    [TestCase("\"\"\"\n text\n\"\"\"")]
+    [TestCase("\"\"\"\n\ttext\n\"\"\"")]
+    [TestCase("\"\"\"\tline 1\n line 2\t\"\"\"")]
+    [TestCase("\"\"\" line 1\n\tline 2 \"\"\"")]
+    [TestCase("\"\"\"\tline 1\n        line 2\t\"\"\"")]
+    [TestCase("\"\"\"  line 1\n\n  line 2\n\n  line 3\n\"\"\"")]
+    [TestCase("$\"\"\"text\n\"\"\"")]
+    [TestCase("$\"\"\"\ntext\"\"\"")]
+    [TestCase("$\"\"\"\n text\n\"\"\"")]
+    [TestCase("$\"\"\"\n\ttext\n\"\"\"")]
+    [TestCase("$\"\"\"\tline 1\n line 2\t\"\"\"")]
+    [TestCase("$\"\"\" line 1\n\tline 2 \"\"\"")]
+    [TestCase("$\"\"\"\tline 1\n        line 2\t\"\"\"")]
+    [TestCase("$\"\"\"  line 1\n\n  line 2\n\n  line 3\n\"\"\"")]
+    public void InvalidMultilineRawStringWhitespace(string source)
+    {
+        var e = Assert.Throws<SyntaxErrorException>(() =>
+            Scanner.ParseStrings(source).Consume());
+        Debug.Assert(e is not null);
+        Assert.That(e.Message, Is.EqualTo("Line contains different whitespace than the closing line of the raw string literal."));
     }
 
     [TestCase(@"""\u""")]
