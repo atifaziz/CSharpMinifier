@@ -1054,9 +1054,15 @@ public class ScannerTests
     [TestCase("$$\"\"\"foo {{$\"\"\"bar\"\"\"}} baz\"\"\"", "foo ", "bar", " baz")]
     // Multi-line nested strings
     [TestCase("$\"\"\"\nfoo {\"bar\"} baz\n\"\"\"", "foo ", "bar", " baz")]
+    [TestCase("$\"\"\"\t \nfoo {\"bar\"} baz\n\"\"\"", "foo ", "bar", " baz")]
+    [TestCase("$\"\"\"\n\tfoo\n\t{\"bar\"}\n\tbaz\n\n\t\"\"\"", "foo\n", "bar", "\nbaz\n")]
+    [TestCase("$\"\"\"\n\tfoo\n\t{\"bar\"}\n\tbaz\n\tqux\n\n\t\"\"\"", "foo\n", "bar", "\nbaz\nqux\n")]
     [TestCase("$\"\"\"\n    foo {\"bar\"} baz\n    \"\"\"", "foo ", "bar", " baz")]
     [TestCase("$\"\"\"\n    foo {$\"bar\"} baz\n    \"\"\"", "foo ", "bar", " baz")]
     [TestCase("$\"\"\"\n    foo {\"\"\"bar\"\"\"} baz\n    \"\"\"", "foo ", "bar", " baz")]
+    [TestCase("$\"\"\"\t \n    foo {\"bar\"} baz\n    \"\"\"", "foo ", "bar", " baz")]
+    [TestCase("$\"\"\"\t \n    foo {$\"bar\"} baz\n    \"\"\"", "foo ", "bar", " baz")]
+    [TestCase("$\"\"\"\t \n    foo {\"\"\"bar\"\"\"} baz\n    \"\"\"", "foo ", "bar", " baz")]
     // Multiple nested strings
     [TestCase("$\"\"\"a {\"b\"} c {\"d\"} e\"\"\"", "a ", "b", " c ", "d", " e")]
     [TestCase("$\"\"\"a {$\"b\"} c {\"d\"} e\"\"\"", "a ", "b", " c ", "d", " e")]
@@ -1074,8 +1080,6 @@ public class ScannerTests
               "line1\n\nline3")]
     [TestCase("\"\"\"\n\t\tline1\n\t\n\t\tline3\n\n\t\t\"\"\"",
               "line1\n\nline3\n")]
-
-
     public void ParseStrings(string source, params string[] expectations)
     {
         Assert.That(Scanner.ParseStrings(source), Is.EqualTo(expectations));
@@ -1091,24 +1095,32 @@ public class ScannerTests
         Assert.That(e.Message, Is.EqualTo("Invalid hexadecimal escape sequence in string."));
     }
 
-    [TestCase("\"\"\"text\n\"\"\"")]
-    [TestCase("\"\"\"\ntext\"\"\"")]
-    [TestCase("\"\"\"\tline 1\n line 2\t\"\"\"")]
-    [TestCase("\"\"\" line 1\n\tline 2 \"\"\"")]
-    [TestCase("\"\"\"\tline 1\n        line 2\t\"\"\"")]
-    [TestCase("\"\"\"  line 1\n\n  line 2\n\n  line 3\n\"\"\"")]
-    [TestCase("$\"\"\"text\n\"\"\"")]
-    [TestCase("$\"\"\"\ntext\"\"\"")]
-    [TestCase("$\"\"\"\tline 1\n line 2\t\"\"\"")]
-    [TestCase("$\"\"\" line 1\n\tline 2 \"\"\"")]
-    [TestCase("$\"\"\"\tline 1\n        line 2\t\"\"\"")]
-    [TestCase("$\"\"\"  line 1\n\n  line 2\n\n  line 3\n\"\"\"")]
+    [TestCase("\"\"\"\n\tline 1\n line 2\n\t\"\"\"")]
+    [TestCase("\"\"\"\n line 1\n\tline 2\n \"\"\"")]
+    [TestCase("\"\"\"\n \t line 1\n\t \tline 2\n \t \"\"\"")]
     public void InvalidMultilineRawStringWhitespace(string source)
     {
         var e = Assert.Throws<SyntaxErrorException>(() =>
             Scanner.ParseStrings(source).Consume());
         Debug.Assert(e is not null);
         Assert.That(e.Message, Is.EqualTo("Line contains different whitespace than the closing line of the raw string literal."));
+    }
+
+    [TestCase("\"\"\"text\n\"\"\"")]
+    [TestCase("$\"\"\"text\n\"\"\"")]
+    [TestCase("\"\"\"\ntext\"\"\"")]
+    [TestCase("$\"\"\"\ntext\"\"\"")]
+    [TestCase("\"\"\"\ntext \t\"\"\"")]
+    [TestCase("$\"\"\"\ntext \t\"\"\"")]
+    [TestCase("$\"\"\"foo\n{\"bar\\n\"}baz\n\"\"\"")]
+    [TestCase("\"\"\"  line 1\n\n  line 2\n\n  line 3\n\"\"\"")]
+    [TestCase("$\"\"\"  line 1\n\n  line 2\n\n  line 3\n\"\"\"")]
+    public void InvalidRawStringFormat(string source)
+    {
+        var e = Assert.Throws<SyntaxErrorException>(() =>
+            Scanner.ParseStrings(source).Consume());
+        Debug.Assert(e is not null);
+        Assert.That(e.Message, Is.EqualTo("Invalid raw string literal format."));
     }
 
     [TestCase(@"""\u""")]
