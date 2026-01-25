@@ -1013,6 +1013,73 @@ public class ScannerTests
     [TestCase("$\"{{}}\"", @"{}")]
     [TestCase("$@\"{{\n}}\"", "{\n}")]
 
+    // Raw string literal tests (non-interpolated)
+    [TestCase("\"\"\"test\"\"\"", "test")]
+    [TestCase("\"\"\"foo \"bar\" baz\"\"\"", "foo \"bar\" baz")]
+    [TestCase("\"\"\"\ntext\n\"\"\"", "text")]
+    [TestCase("\"\"\"\r\ntext\r\n\"\"\"", "text")]
+    [TestCase("\"\"\"\nline1\nline2\n\"\"\"", "line1\nline2")]
+    [TestCase("\"\"\"\n    text\n    \"\"\"", "text")]
+    [TestCase("\"\"\"\n        line1\n        line2\n        \"\"\"", "line1\nline2")]
+    [TestCase("\"\"\"\n    line1\n        line2\n    \"\"\"", "line1\n    line2")]
+    // When closing line has no indentation, leading whitespace becomes content
+    [TestCase("\"\"\"\n text\n\"\"\"", " text")]
+    [TestCase("\"\"\"\n\ttext\n\"\"\"", "\ttext")]
+
+    // Interpolated raw string literal tests
+    [TestCase("$\"\"\"test\"\"\"", "test")]
+    [TestCase("$\"\"\"foo {x} bar\"\"\"", "foo ", " bar")]
+    [TestCase("$$\"\"\"foo {{x}} bar\"\"\"", "foo ", " bar")]
+    [TestCase("$\"\"\"\ntext\n\"\"\"", "text")]
+    [TestCase("$\"\"\"\n    text\n    \"\"\"", "text")]
+    [TestCase("$\"\"\"\n    line1\n    line2\n    \"\"\"", "line1\nline2")]
+    [TestCase("$\"\"\"\n    a {x} b\n    \"\"\"", "a ", " b")]
+    [TestCase("$$\"\"\"\n    a {{x}} b\n    \"\"\"", "a ", " b")]
+    // When closing line has no indentation, leading whitespace becomes content
+    [TestCase("$\"\"\"\n text\n\"\"\"", " text")]
+    [TestCase("$\"\"\"\n\ttext\n\"\"\"", "\ttext")]
+
+    // Nested string literals in raw interpolated strings
+    [TestCase("$\"\"\"foo {\"bar\"} baz\"\"\"", "foo ", "bar", " baz")]
+    [TestCase("$\"\"\"foo {@\"bar\"} baz\"\"\"", "foo ", "bar", " baz")]
+    [TestCase("$\"\"\"foo {\"\"\"bar\"\"\"} baz\"\"\"", "foo ", "bar", " baz")]
+    [TestCase("$\"\"\"foo {$\"bar\"} baz\"\"\"", "foo ", "bar", " baz")]
+    [TestCase("$\"\"\"foo {$@\"bar\"} baz\"\"\"", "foo ", "bar", " baz")]
+    [TestCase("$\"\"\"foo {$\"\"\"bar\"\"\"} baz\"\"\"", "foo ", "bar", " baz")]
+    [TestCase("$$\"\"\"foo {{\"bar\"}} baz\"\"\"", "foo ", "bar", " baz")]
+    [TestCase("$$\"\"\"foo {{@\"bar\"}} baz\"\"\"", "foo ", "bar", " baz")]
+    [TestCase("$$\"\"\"foo {{\"\"\"bar\"\"\"}} baz\"\"\"", "foo ", "bar", " baz")]
+    [TestCase("$$\"\"\"foo {{$\"bar\"}} baz\"\"\"", "foo ", "bar", " baz")]
+    [TestCase("$$\"\"\"foo {{$@\"bar\"}} baz\"\"\"", "foo ", "bar", " baz")]
+    [TestCase("$$\"\"\"foo {{$\"\"\"bar\"\"\"}} baz\"\"\"", "foo ", "bar", " baz")]
+    // Multi-line nested strings
+    [TestCase("$\"\"\"\nfoo {\"bar\"} baz\n\"\"\"", "foo ", "bar", " baz")]
+    [TestCase("$\"\"\"\t \nfoo {\"bar\"} baz\n\"\"\"", "foo ", "bar", " baz")]
+    [TestCase("$\"\"\"\n\tfoo\n\t{\"bar\"}\n\tbaz\n\n\t\"\"\"", "foo\n", "bar", "\nbaz\n")]
+    [TestCase("$\"\"\"\n\tfoo\n\t{\"bar\"}\n\tbaz\n\tqux\n\n\t\"\"\"", "foo\n", "bar", "\nbaz\nqux\n")]
+    [TestCase("$\"\"\"\n    foo {\"bar\"} baz\n    \"\"\"", "foo ", "bar", " baz")]
+    [TestCase("$\"\"\"\n    foo {$\"bar\"} baz\n    \"\"\"", "foo ", "bar", " baz")]
+    [TestCase("$\"\"\"\n    foo {\"\"\"bar\"\"\"} baz\n    \"\"\"", "foo ", "bar", " baz")]
+    [TestCase("$\"\"\"\t \n    foo {\"bar\"} baz\n    \"\"\"", "foo ", "bar", " baz")]
+    [TestCase("$\"\"\"\t \n    foo {$\"bar\"} baz\n    \"\"\"", "foo ", "bar", " baz")]
+    [TestCase("$\"\"\"\t \n    foo {\"\"\"bar\"\"\"} baz\n    \"\"\"", "foo ", "bar", " baz")]
+    // Multiple nested strings
+    [TestCase("$\"\"\"a {\"b\"} c {\"d\"} e\"\"\"", "a ", "b", " c ", "d", " e")]
+    [TestCase("$\"\"\"a {$\"b\"} c {\"d\"} e\"\"\"", "a ", "b", " c ", "d", " e")]
+    // Three levels of nesting
+    [TestCase(""""""
+              $$$"""""foo {{{$$"""bar {{$"""baz {$"qux"}"""}}"""}}}"""""
+              """""", "foo ", "bar ", "baz ", "qux")]
+    // No brace escaping tests with $$ interpolation
+    [TestCase(""""
+              $$"""{{{"foobar"}}}"""
+              """",
+              "{", "foobar", "}")]
+    // Common indentation stripping in multi-line raw strings
+    [TestCase("\"\"\"\n\t\tline1\n\t\n\t\tline3\n\t\t\"\"\"",
+              "line1\n\nline3")]
+    [TestCase("\"\"\"\n\t\tline1\n\t\n\t\tline3\n\n\t\t\"\"\"",
+              "line1\n\nline3\n")]
     public void ParseStrings(string source, params string[] expectations)
     {
         Assert.That(Scanner.ParseStrings(source), Is.EqualTo(expectations));
@@ -1026,6 +1093,34 @@ public class ScannerTests
             Scanner.ParseStrings(source).Consume());
         Debug.Assert(e is not null);
         Assert.That(e.Message, Is.EqualTo("Invalid hexadecimal escape sequence in string."));
+    }
+
+    [TestCase("\"\"\"\n\tline 1\n line 2\n\t\"\"\"")]
+    [TestCase("\"\"\"\n line 1\n\tline 2\n \"\"\"")]
+    [TestCase("\"\"\"\n \t line 1\n\t \tline 2\n \t \"\"\"")]
+    public void InvalidMultilineRawStringWhitespace(string source)
+    {
+        var e = Assert.Throws<SyntaxErrorException>(() =>
+            Scanner.ParseStrings(source).Consume());
+        Debug.Assert(e is not null);
+        Assert.That(e.Message, Is.EqualTo("Line contains different whitespace than the closing line of the raw string literal."));
+    }
+
+    [TestCase("\"\"\"text\n\"\"\"")]
+    [TestCase("$\"\"\"text\n\"\"\"")]
+    [TestCase("\"\"\"\ntext\"\"\"")]
+    [TestCase("$\"\"\"\ntext\"\"\"")]
+    [TestCase("\"\"\"\ntext \t\"\"\"")]
+    [TestCase("$\"\"\"\ntext \t\"\"\"")]
+    [TestCase("$\"\"\"foo\n{\"bar\\n\"}baz\n\"\"\"")]
+    [TestCase("\"\"\"  line 1\n\n  line 2\n\n  line 3\n\"\"\"")]
+    [TestCase("$\"\"\"  line 1\n\n  line 2\n\n  line 3\n\"\"\"")]
+    public void InvalidRawStringFormat(string source)
+    {
+        var e = Assert.Throws<SyntaxErrorException>(() =>
+            Scanner.ParseStrings(source).Consume());
+        Debug.Assert(e is not null);
+        Assert.That(e.Message, Is.EqualTo("Invalid raw string literal format."));
     }
 
     [TestCase(@"""\u""")]
