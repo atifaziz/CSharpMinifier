@@ -20,7 +20,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
-using AngryArrays.Unshift;
 using CSharpMinifier;
 using Microsoft.Extensions.FileSystemGlobbing;
 
@@ -234,7 +233,7 @@ static partial class Program
         try
         {
             if (args.Length == 0 || args[0] is var arg && (arg.Length == 0 || arg[1] == '-'))
-                return Main(args.Unshift("min"));
+                return Main(["min", ..args]);
 
             return ProgramArguments.CreateParser()
                                    .WithVersion(ThisAssembly.Info.FileVersion)
@@ -244,7 +243,7 @@ static partial class Program
                                           r => Print(Console.Out, 0, r.Version),
                                           r => SubCommandNames.Any(cmd => args[0] == cmd)
                                              ? Print(Console.Error, 1, r.Usage)
-                                             : Main(args.Unshift("min")));
+                                             : Main(["min", ..args]));
         }
 #pragma warning disable CA1031 // Do not catch general exception types (entry-point)
         catch (Exception e)
