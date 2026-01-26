@@ -156,8 +156,8 @@ static partial class Program
 
         var paths =
             from p in envPath.Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries)
-            select p.Length > 0 && p[0] == '~'
-                 ? Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.Personal), p[1..])
+            select p.AsSpan() is ['~', ..var pt]
+                 ? Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.Personal), pt)
                  : p
             into p
             select Path.Join(p, fileName) into p
@@ -192,8 +192,8 @@ static partial class Program
                     if (string.IsNullOrEmpty(e.Current))
                         continue;
 
-                    _ = e.Current[0] == '!'
-                      ? matcher.AddExclude(e.Current[1..])
+                    _ = e.Current is ['!', ..var pattern]
+                      ? matcher.AddExclude(pattern)
                       : matcher.AddInclude(e.Current);
                 }
                 while (e.MoveNext());
@@ -222,9 +222,8 @@ static partial class Program
     public static string[] SubCommandNames  =>
         field ??= [..from arg in new ProgramArguments()
                      select arg.Key into arg
-                     where arg[0] is not '-' and not '<'
+                     where arg is not ['-' or '<', ..]
                      select arg];
-
 
     static int Main(string[] args)
     {
@@ -232,7 +231,7 @@ static partial class Program
 
         try
         {
-            if (args.Length == 0 || args[0] is var arg && (arg.Length == 0 || arg[1] == '-'))
+            if (args is [] or ["" or "-", ..])
                 return Main(["min", ..args]);
 
             return ProgramArguments.CreateParser()

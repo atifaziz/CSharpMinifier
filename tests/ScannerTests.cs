@@ -915,8 +915,8 @@ public class ScannerTests
                                           : Enum.Parse<TokenKind>(knd + "Literal", true),
                              OffsetChange = int.Parse(oc, NumberStyles.None, CultureInfo.InvariantCulture),
                              LineChange   = int.Parse(lc, NumberStyles.None, CultureInfo.InvariantCulture),
-                             ColumnChange = cc[0] != '=' ? int.Parse(cc, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture)  : 0,
-                             Column       = cc[0] == '=' ? int.Parse(cc.AsSpan(1), NumberStyles.None, CultureInfo.InvariantCulture) : 0,
+                             ColumnChange = cc is [not '=', ..] ? int.Parse(cc, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture)  : 0,
+                             Column       = cc.AsSpan() is ['=', ..var n] ? int.Parse(n, NumberStyles.None, CultureInfo.InvariantCulture) : 0,
                              Text         = txt,
                          }))
                     .Scan(new

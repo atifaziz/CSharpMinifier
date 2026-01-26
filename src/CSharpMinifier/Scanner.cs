@@ -1146,13 +1146,15 @@ public static class Scanner
             if (tokens != null && awaitingEndRegionLineEnding)
                 yield return new Region(startMessage, endMessage, tokens);
 
-            (string, string) SplitName(Token token)
-            {
-                var parts = source.Slice(token.Start.Offset + 1, token.End.Offset)
-                                  .TrimStart()
-                                  .Split(SpaceOrTab, 2);
-                return (parts[0], parts.Length > 1 ? parts[1].Trim() : string.Empty);
-            }
+            (string, string) SplitName(Token token) =>
+                source.Slice(token.Start.Offset + 1, token.End.Offset)
+                      .TrimStart()
+                      .Split(SpaceOrTab, 2) switch
+                {
+                    [var name] => (name, string.Empty),
+                    [var name, var rest] => (name, rest.Trim()),
+                    _ => throw new UnreachableException(),
+                };
         }
     }
 
