@@ -80,6 +80,11 @@ public class ScannerTests
     [TestCase("\"\"\"")]
     [TestCase("\"\"\"\"")]
     [TestCase("Console.WriteLine(\"\"\"\"\"\");")]
+    [TestCase("$\"\"\"foo")]
+    [TestCase("\"\"\"foo\"")]
+    [TestCase("\"\"\"foo\"\"")]
+    [TestCase("$\"\"\"foo\"")]
+    [TestCase("$\"\"\"foo\"\"")]
     public void SyntaxError(string source)
     {
         _ = Assert.Throws<SyntaxErrorException>(() => Scanner.Scan(source).Consume());

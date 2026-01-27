@@ -1009,6 +1009,7 @@ public static class Scanner
             case State.Quote:
             case State.DollarQuote:
             case State.InterpolatedRawStringOpening:
+            case State.InterpolatedRawStringClosing:
             case State.RawStringOpening:
             case State.RawStringClosing:
                 throw SyntaxError("Unterminated string starting.");
