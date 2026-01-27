@@ -27,6 +27,12 @@ static partial class Program
 {
     static int Wain(ProgramArguments args, out bool verbose)
     {
+        if (args.OptDebug)
+        {
+            if (!Debugger.Launch())
+                Console.Error.WriteLine("Warning! Failed to launch debugger.");
+        }
+
         verbose = args.OptVerbose;
 
         var result = 0;
