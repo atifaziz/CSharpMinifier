@@ -633,6 +633,7 @@ public static class Scanner
                     {
                         if (TextTransit(State.String, -1) is {} text)
                             yield return text;
+                        goto restart;
                     }
                     break;
                 }

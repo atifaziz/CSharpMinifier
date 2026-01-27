@@ -306,6 +306,7 @@ public class ScannerTests
         @"Text            1 0  1 "";""")]
 
     [TestCase("\"\""          , @"String  2 0  2 ""\""\""""")]
+    [TestCase("\"\\\"\""      , @"String  4 0  4 ""\""\\\""\""""")]
     [TestCase("\"foobar\""    , @"String  8 0  8 ""\""foobar\""""")]
     [TestCase("\"foo\\\\bar\"", @"String 10 0 10 ""\""foo\\\\bar\""""")]
     [TestCase("\"\"+\"\"+\"\"",
