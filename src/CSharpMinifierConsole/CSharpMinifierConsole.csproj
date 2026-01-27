@@ -4,7 +4,7 @@
     <RootNamespace></RootNamespace>
     <OutputType>Exe</OutputType>
     <TargetFrameworks>net10.0;net8.0</TargetFrameworks>
-    <VersionPrefix>2.2.0</VersionPrefix>
+    <VersionPrefix>2.3.0</VersionPrefix>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>csmin</ToolCommandName>
     <Copyright>Copyright © 2019 Atif Aziz. All rights reserved.</Copyright>
