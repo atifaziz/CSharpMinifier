@@ -1,1 +1,5 @@
 #nullable enable
+CSharpMinifier.SyntaxErrorException.SyntaxErrorException(string? message) -> void
+CSharpMinifier.SyntaxErrorException.SyntaxErrorException(string? message, System.Exception? inner) -> void
+*REMOVED*CSharpMinifier.SyntaxErrorException.SyntaxErrorException(string! message) -> void
+*REMOVED*CSharpMinifier.SyntaxErrorException.SyntaxErrorException(string! message, System.Exception! inner) -> void

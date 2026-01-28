@@ -18,13 +18,9 @@ using System;
 
 namespace CSharpMinifier;
 
-public class SyntaxErrorException : Exception
+public class SyntaxErrorException(string? message, Exception? inner) :
+    Exception(message, inner)
 {
-    public SyntaxErrorException() {}
-
-    public SyntaxErrorException(string message) :
-        base(message) {}
-
-    public SyntaxErrorException(string message, Exception inner) :
-        base(message, inner) {}
+    public SyntaxErrorException() : this(null, null) {}
+    public SyntaxErrorException(string? message) : this(message, null) {}
 }
