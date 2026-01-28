@@ -227,7 +227,7 @@ static class CSharpString
                                 switch (TryParseInterpolatedRawStringPart(source, startToken, dollarCount, quoteCount, indent))
                                 {
                                     case { Value: "" }: break;
-                                    case { Value: {} value }: yield return selector(startToken, source, value); break;
+                                    case { Value: { } value }: yield return selector(startToken, source, value); break;
                                     case var error: throw error.ToSyntaxError();
                                 }
 
@@ -262,7 +262,7 @@ static class CSharpString
                                                                                   frame.DollarCount, frame.QuoteCount, frame.EndIndent))
                                         {
                                             case { Value: "" }: break;
-                                            case { Value: {} value }: yield return selector(token, source, value); break;
+                                            case { Value: { } value }: yield return selector(token, source, value); break;
                                             case var error: throw error.ToSyntaxError();
                                         }
 
@@ -298,7 +298,7 @@ static class CSharpString
                                     {
                                         switch (TryParse(source, token))
                                         {
-                                            case { Value: {} value }: yield return selector(token, source, value); break;
+                                            case { Value: { } value }: yield return selector(token, source, value); break;
                                             case var error: throw error.ToSyntaxError();
                                         }
 
@@ -315,7 +315,7 @@ static class CSharpString
                                                                           frame.DollarCount, frame.QuoteCount, frame.EndIndent))
                                 {
                                     case { Value: "" }: break;
-                                    case { Value: {} value }: yield return selector(endToken, source, value); break;
+                                    case { Value: { } value }: yield return selector(endToken, source, value); break;
                                     case var error: throw error.ToSyntaxError();
                                 }
                                 break;
@@ -335,10 +335,10 @@ static class CSharpString
 
     public sealed class InvalidTokenSourceException(string? message, Exception? inner) : Exception(message, inner)
     {
-        public InvalidTokenSourceException() : this(null, null) {}
+        public InvalidTokenSourceException() : this(null, null) { }
 
         public InvalidTokenSourceException(string? message) :
-            this(message, null) {}
+            this(message, null) { }
     }
 
     static StringValueParseResult TryParseInterpolatedRawStringPart(string source, Token token,

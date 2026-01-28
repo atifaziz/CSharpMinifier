@@ -449,7 +449,7 @@ static class SubstringPool
         {
             ref var run = ref runs[length - 1];
 
-            if (run is {} r)
+            if (run is { } r)
             {
                 if (string.CompareOrdinal(r, 0, buffer, offset, length) == 0)
                 {

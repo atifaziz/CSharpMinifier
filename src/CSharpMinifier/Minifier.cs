@@ -34,7 +34,7 @@ public sealed class MinificationOptions
     }
 
     MinificationOptions(MinificationOptions options) :
-        this(options.CommentFilter, options.KeepLeadComment) {}
+        this(options.CommentFilter, options.KeepLeadComment) { }
 
     public MinificationOptions WithCommentFilter(Func<Token, string, bool>? value)
         => CommentFilter == value ? this
@@ -49,10 +49,10 @@ public sealed class MinificationOptions
 #pragma warning restore IDE0072 // Add missing cases
           {
               (null, null) => this,
-              ({}, null) => this,
-              (null, {} right) => WithCommentFilter(right),
+              ({ }, null) => this,
+              (null, { } right) => WithCommentFilter(right),
               var (left, right) when left == right => this,
-              ({} left, {} right) => WithCommentFilter((t, s) => left(t, s) || right(t, s)),
+              ({ } left, { } right) => WithCommentFilter((t, s) => left(t, s) || right(t, s)),
           };
 
     public MinificationOptions FilterImportantComments() =>
@@ -71,7 +71,7 @@ public sealed class MinificationOptions
          : new MinificationOptions(this) { KeepLeadComment = value };
 
     public bool ShouldFilterComment(Token token, string text) =>
-        CommentFilter is {} filter && filter(token, text);
+        CommentFilter is { } filter && filter(token, text);
 }
 
 public static class Minifier
@@ -144,7 +144,7 @@ public static class Minifier
                           && options.KeepLeadComment
                           && lcs != LeadCommentState.Processed
                           && (   lastSingleLineCommentLine is null
-                              || lastSingleLineCommentLine is {} ln
+                              || lastSingleLineCommentLine is { } ln
                               && t.Start.Line - ln == 1):
                     {
                         yield return resultSelector(t);
@@ -205,7 +205,7 @@ public static class Minifier
                         }
                         else
                         {
-                            if (lastCh is {} lch)
+                            if (lastCh is { } lch)
                             {
                                 var ch = source[t.Start.Offset];
                                 if (IsWordChar(ch) && IsWordChar(lch) || ch == lch && (ch == '+' || ch == '-' || ch == '*'))

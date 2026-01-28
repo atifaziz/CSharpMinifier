@@ -144,7 +144,7 @@ static partial class Program
             var options = MinificationOptions.Default
                                              .WithKeepLeadComment(keepLeadComment);
 
-            if (commentFilterPattern is {} s)
+            if (commentFilterPattern is { } s)
                 options = options.FilterCommentMatching(s);
 
             if (keepImportantComment)

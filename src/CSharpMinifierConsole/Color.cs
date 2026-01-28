@@ -22,8 +22,8 @@ readonly record struct Color(ConsoleColor? Foreground, ConsoleColor? Background 
 {
     public void Do(Action<ConsoleColor> onForeground, Action<ConsoleColor> onBackground)
     {
-        if (Background is {} bg) onBackground(bg);
-        if (Foreground is {} fg) onForeground(fg);
+        if (Background is { } bg) onBackground(bg);
+        if (Foreground is { } fg) onForeground(fg);
     }
 
     public static Color Console

@@ -234,7 +234,7 @@ public static class Scanner
                         }
                         case ('\'', _):
                         {
-                            if (TextTransit(State.Char) is {} text)
+                            if (TextTransit(State.Char) is { } text)
                                 yield return text;
                             break;
                         }
@@ -277,7 +277,7 @@ public static class Scanner
                                 InterpolatedStringKind.None or _ => throw new UnreachableException(),
                             };
 
-                            if (TextTransit(newState) is {} text)
+                            if (TextTransit(newState) is { } text)
                                 yield return text;
 
                             if (interpolationState switch
@@ -286,7 +286,7 @@ public static class Scanner
                                     { Braces     : > 0 } => "Braces mismatch in interpolated string expression.",
                                     { Brackets   : > 0 } => "Brackets mismatch in interpolated string expression.",
                                     _ => null
-                                } is {} message)
+                                } is { } message)
                             {
                                 throw SyntaxError(message);
                             }
@@ -296,19 +296,19 @@ public static class Scanner
                         case (' ', _):
                         case ('\t', _):
                         {
-                            if (TextTransit(State.WhiteSpace) is {} text)
+                            if (TextTransit(State.WhiteSpace) is { } text)
                                 yield return text;
                             break;
                         }
                         case ('\r', _):
                         {
-                            if (TextTransit(State.Cr) is {} text)
+                            if (TextTransit(State.Cr) is { } text)
                                 yield return text;
                             break;
                         }
                         case ('\n', _):
                         {
-                            if (TextTransit(State.Text) is {} text)
+                            if (TextTransit(State.Text) is { } text)
                                 yield return text;
                             pos = (pos.Line + 1, 0);
                             yield return Transit(TokenKind.NewLine, State.NewLine, 1);
@@ -426,7 +426,7 @@ public static class Scanner
                     switch (ch)
                     {
                         case '"':
-                            if (TextTransit(State.VerbatimString, -1) is {} text)
+                            if (TextTransit(State.VerbatimString, -1) is { } text)
                                 yield return text;
                             break;
                         case '$':
@@ -490,7 +490,7 @@ public static class Scanner
                     }
                     else
                     {
-                        if (EnterInterpolation(new(InterpolatedStringKind.Regular), -2) is {} text)
+                        if (EnterInterpolation(new(InterpolatedStringKind.Regular), -2) is { } text)
                             yield return text;
                         goto restart;
                     }
@@ -506,7 +506,7 @@ public static class Scanner
                     }
                     else // Regular interpolated string that's empty, i.e.: $""
                     {
-                        if (TextTransit(State.Text, -3) is {} text)
+                        if (TextTransit(State.Text, -3) is { } text)
                             yield return text;
                         yield return Transit(TokenKind.InterpolatedStringLiteral, State.Text);
                         goto restart;
@@ -563,7 +563,7 @@ public static class Scanner
                 {
                     if (ch == '"')
                     {
-                        if (EnterInterpolation(new(InterpolatedStringKind.Verbatim), -2) is {} text)
+                        if (EnterInterpolation(new(InterpolatedStringKind.Verbatim), -2) is { } text)
                             yield return text;
                     }
                     else
@@ -631,7 +631,7 @@ public static class Scanner
                     }
                     else
                     {
-                        if (TextTransit(State.String, -1) is {} text)
+                        if (TextTransit(State.String, -1) is { } text)
                             yield return text;
                         goto restart;
                     }
@@ -646,7 +646,7 @@ public static class Scanner
                     }
                     else // was an empty string literal ""
                     {
-                        if (TextTransit(State.String, -2) is {} text)
+                        if (TextTransit(State.String, -2) is { } text)
                             yield return text;
                         yield return Transit(TokenKind.StringLiteral, State.Text);
                         goto restart;
@@ -740,7 +740,7 @@ public static class Scanner
                     {
                         case '/':
                         case '*':
-                            if (TextTransit(ch == '/' ? State.SingleLineComment : State.MultiLineComment, -1) is {} text)
+                            if (TextTransit(ch == '/' ? State.SingleLineComment : State.MultiLineComment, -1) is { } text)
                                 yield return text;
                             break;
                         default:
@@ -810,7 +810,7 @@ public static class Scanner
                     }
                     else
                     {
-                        if (TextTransit(State.RawString, -quotesOrBraces) is {} text)
+                        if (TextTransit(State.RawString, -quotesOrBraces) is { } text)
                             yield return text;
                         goto restart;
                     }
@@ -874,7 +874,7 @@ public static class Scanner
                             Quotes = quotesOrBraces,
                         };
 
-                        if (EnterInterpolation(newState, -dollars - quotesOrBraces) is {} text)
+                        if (EnterInterpolation(newState, -dollars - quotesOrBraces) is { } text)
                             yield return text;
 
                         goto restart;
@@ -1114,7 +1114,7 @@ public static class Scanner
                                 {
                                     startMessage = specifics;
                                     tokens = [];
-                                    if (lwsToken is {} t)
+                                    if (lwsToken is { } t)
                                         tokens.Add(t);
                                 }
                                 level++;

@@ -21,6 +21,6 @@ namespace CSharpMinifier;
 public class SyntaxErrorException(string? message, Exception? inner) :
     Exception(message, inner)
 {
-    public SyntaxErrorException() : this(null, null) {}
-    public SyntaxErrorException(string? message) : this(message, null) {}
+    public SyntaxErrorException() : this(null, null) { }
+    public SyntaxErrorException(string? message) : this(message, null) { }
 }
