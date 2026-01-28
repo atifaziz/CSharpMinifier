@@ -208,7 +208,7 @@ public static class Minifier
                             if (lastCh is { } lch)
                             {
                                 var ch = source[t.Start.Offset];
-                                if (IsWordChar(ch) && IsWordChar(lch) || ch == lch && (ch == '+' || ch == '-' || ch == '*'))
+                                if (IsWordChar(ch) && IsWordChar(lch) || ch == lch && ch is '+' or '-' or '*')
                                     yield return space;
                             }
 
