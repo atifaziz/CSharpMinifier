@@ -1,1 +1,92 @@
 #nullable enable
+CSharpMinifier.MinificationOptions
+CSharpMinifier.MinificationOptions.CommentFilter.get -> System.Func<CSharpMinifier.Token, string!, bool>?
+CSharpMinifier.MinificationOptions.FilterCommentMatching(string! pattern) -> CSharpMinifier.MinificationOptions!
+CSharpMinifier.MinificationOptions.FilterCommentMatching(string! pattern, System.Text.RegularExpressions.RegexOptions options) -> CSharpMinifier.MinificationOptions!
+CSharpMinifier.MinificationOptions.FilterImportantComments() -> CSharpMinifier.MinificationOptions!
+CSharpMinifier.MinificationOptions.KeepLeadComment.get -> bool
+CSharpMinifier.MinificationOptions.OrCommentFilterOf(CSharpMinifier.MinificationOptions! other) -> CSharpMinifier.MinificationOptions!
+CSharpMinifier.MinificationOptions.ShouldFilterComment(CSharpMinifier.Token token, string! text) -> bool
+CSharpMinifier.MinificationOptions.WithCommentFilter(System.Func<CSharpMinifier.Token, string!, bool>? value) -> CSharpMinifier.MinificationOptions!
+CSharpMinifier.MinificationOptions.WithKeepLeadComment(bool value) -> CSharpMinifier.MinificationOptions!
+CSharpMinifier.Minifier
+CSharpMinifier.Position
+CSharpMinifier.Position.Column.get -> int
+CSharpMinifier.Position.Line.get -> int
+CSharpMinifier.Position.Offset.get -> int
+CSharpMinifier.Position.Position() -> void
+CSharpMinifier.Position.Position(int offset, int line, int column) -> void
+CSharpMinifier.Region
+CSharpMinifier.Region.EndMessage.get -> string!
+CSharpMinifier.Region.Message.get -> string!
+CSharpMinifier.Region.Tokens.get -> System.Collections.Generic.IReadOnlyList<CSharpMinifier.Token>!
+CSharpMinifier.Scanner
+CSharpMinifier.SyntaxErrorException
+CSharpMinifier.SyntaxErrorException.SyntaxErrorException() -> void
+CSharpMinifier.SyntaxErrorException.SyntaxErrorException(string! message) -> void
+CSharpMinifier.SyntaxErrorException.SyntaxErrorException(string! message, System.Exception! inner) -> void
+CSharpMinifier.Token
+CSharpMinifier.Token.End.get -> CSharpMinifier.Position
+CSharpMinifier.Token.End.init -> void
+CSharpMinifier.Token.Kind.get -> CSharpMinifier.TokenKind
+CSharpMinifier.Token.Kind.init -> void
+CSharpMinifier.Token.Length.get -> int
+CSharpMinifier.Token.Start.get -> CSharpMinifier.Position
+CSharpMinifier.Token.Start.init -> void
+CSharpMinifier.Token.Token() -> void
+CSharpMinifier.Token.Token(CSharpMinifier.TokenKind kind, CSharpMinifier.Position start, CSharpMinifier.Position end) -> void
+CSharpMinifier.TokenExtensions
+CSharpMinifier.TokenKind
+CSharpMinifier.TokenKind.CharLiteral = 5 -> CSharpMinifier.TokenKind
+CSharpMinifier.TokenKind.InterpolatedRawStringLiteral = 18 -> CSharpMinifier.TokenKind
+CSharpMinifier.TokenKind.InterpolatedRawStringLiteralEnd = 21 -> CSharpMinifier.TokenKind
+CSharpMinifier.TokenKind.InterpolatedRawStringLiteralMid = 20 -> CSharpMinifier.TokenKind
+CSharpMinifier.TokenKind.InterpolatedRawStringLiteralStart = 19 -> CSharpMinifier.TokenKind
+CSharpMinifier.TokenKind.InterpolatedStringLiteral = 8 -> CSharpMinifier.TokenKind
+CSharpMinifier.TokenKind.InterpolatedStringLiteralEnd = 11 -> CSharpMinifier.TokenKind
+CSharpMinifier.TokenKind.InterpolatedStringLiteralMid = 10 -> CSharpMinifier.TokenKind
+CSharpMinifier.TokenKind.InterpolatedStringLiteralStart = 9 -> CSharpMinifier.TokenKind
+CSharpMinifier.TokenKind.InterpolatedVerbatimStringLiteral = 12 -> CSharpMinifier.TokenKind
+CSharpMinifier.TokenKind.InterpolatedVerbatimStringLiteralEnd = 15 -> CSharpMinifier.TokenKind
+CSharpMinifier.TokenKind.InterpolatedVerbatimStringLiteralMid = 14 -> CSharpMinifier.TokenKind
+CSharpMinifier.TokenKind.InterpolatedVerbatimStringLiteralStart = 13 -> CSharpMinifier.TokenKind
+CSharpMinifier.TokenKind.MultiLineComment = 4 -> CSharpMinifier.TokenKind
+CSharpMinifier.TokenKind.NewLine = 2 -> CSharpMinifier.TokenKind
+CSharpMinifier.TokenKind.PreprocessorDirective = 16 -> CSharpMinifier.TokenKind
+CSharpMinifier.TokenKind.RawStringLiteral = 17 -> CSharpMinifier.TokenKind
+CSharpMinifier.TokenKind.SingleLineComment = 3 -> CSharpMinifier.TokenKind
+CSharpMinifier.TokenKind.StringLiteral = 6 -> CSharpMinifier.TokenKind
+CSharpMinifier.TokenKind.Text = 0 -> CSharpMinifier.TokenKind
+CSharpMinifier.TokenKind.VerbatimStringLiteral = 7 -> CSharpMinifier.TokenKind
+CSharpMinifier.TokenKind.WhiteSpace = 1 -> CSharpMinifier.TokenKind
+CSharpMinifier.TokenKindExtensions
+CSharpMinifier.TokenKindExtensions.extension(CSharpMinifier.TokenKind)
+CSharpMinifier.TokenKindExtensions.extension(CSharpMinifier.TokenKind).HasTraits(CSharpMinifier.TokenKindTraits traits) -> bool
+CSharpMinifier.TokenKindExtensions.extension(CSharpMinifier.TokenKind).Traits.get -> CSharpMinifier.TokenKindTraits
+CSharpMinifier.TokenKindTraits
+CSharpMinifier.TokenKindTraits.Comment = 1 -> CSharpMinifier.TokenKindTraits
+CSharpMinifier.TokenKindTraits.InterpolatedString = 32 -> CSharpMinifier.TokenKindTraits
+CSharpMinifier.TokenKindTraits.InterpolatedStringEnd = 256 -> CSharpMinifier.TokenKindTraits
+CSharpMinifier.TokenKindTraits.InterpolatedStringMid = 128 -> CSharpMinifier.TokenKindTraits
+CSharpMinifier.TokenKindTraits.InterpolatedStringStart = 64 -> CSharpMinifier.TokenKindTraits
+CSharpMinifier.TokenKindTraits.Literal = 4 -> CSharpMinifier.TokenKindTraits
+CSharpMinifier.TokenKindTraits.None = 0 -> CSharpMinifier.TokenKindTraits
+CSharpMinifier.TokenKindTraits.RawString = 512 -> CSharpMinifier.TokenKindTraits
+CSharpMinifier.TokenKindTraits.String = 8 -> CSharpMinifier.TokenKindTraits
+CSharpMinifier.TokenKindTraits.VerbatimString = 16 -> CSharpMinifier.TokenKindTraits
+CSharpMinifier.TokenKindTraits.WhiteSpace = 2 -> CSharpMinifier.TokenKindTraits
+override CSharpMinifier.Position.ToString() -> string!
+override CSharpMinifier.Region.ToString() -> string!
+override CSharpMinifier.Token.ToString() -> string!
+static CSharpMinifier.Minifier.Minify(string! source) -> System.Collections.Generic.IEnumerable<string!>!
+static CSharpMinifier.Minifier.Minify(string! source, CSharpMinifier.MinificationOptions! options) -> System.Collections.Generic.IEnumerable<string!>!
+static CSharpMinifier.Minifier.Minify(string! source, string! newLine) -> System.Collections.Generic.IEnumerable<string!>!
+static CSharpMinifier.Minifier.Minify(string! source, string! newLine, CSharpMinifier.MinificationOptions! options) -> System.Collections.Generic.IEnumerable<string!>!
+static CSharpMinifier.Minifier.Minify<TResult>(string! source, TResult space, TResult newLine, CSharpMinifier.MinificationOptions! options, System.Func<CSharpMinifier.Token, TResult>! resultSelector) -> System.Collections.Generic.IEnumerable<TResult>!
+static CSharpMinifier.Minifier.Minify<TResult>(string! source, TResult space, TResult newLine, System.Func<CSharpMinifier.Token, TResult>! resultSelector) -> System.Collections.Generic.IEnumerable<TResult>!
+static CSharpMinifier.Scanner.ParseStrings(string! source) -> System.Collections.Generic.IEnumerable<string!>!
+static CSharpMinifier.Scanner.ParseStrings<T>(string! source, System.Func<CSharpMinifier.Token, string!, string!, T>! selector) -> System.Collections.Generic.IEnumerable<T>!
+static CSharpMinifier.Scanner.Scan(string! source) -> System.Collections.Generic.IEnumerable<CSharpMinifier.Token>!
+static CSharpMinifier.Scanner.ScanRegions(string! source) -> System.Collections.Generic.IEnumerable<CSharpMinifier.Region!>!
+static CSharpMinifier.TokenExtensions.Substring(this CSharpMinifier.Token token, string! source) -> string!
+static readonly CSharpMinifier.MinificationOptions.Default -> CSharpMinifier.MinificationOptions!
