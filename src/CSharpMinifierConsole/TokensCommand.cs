@@ -17,7 +17,6 @@
 using System;
 using System.Globalization;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using CSharpMinifier;
 using CSharpMinifier.Internals;
 
@@ -158,7 +157,7 @@ partial class Program
             }
             default:
             {
-                throw new SwitchExpressionException(args.OptFormat);
+                throw new Exception($"Invalid format: {args.OptFormat}");
             }
         }
     }
