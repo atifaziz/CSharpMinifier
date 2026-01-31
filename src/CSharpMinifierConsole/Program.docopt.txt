@@ -68,8 +68,12 @@ Options:
   -c, --compare=<HASH>       Set non-zero exit code if HASH (in hexadecimal)
                                is different.
   -a, --algo=<ALGO>          Hash algorithm to use [default: SHA256].
-  -f, --format=<FORMAT>      Output hash format; where FORMAT is one of:
+  -f, --format=<FORMAT>      Output hash format when used with the "hash"
+                               command; where FORMAT is one of:
                                hexadecimal (default), base32 (Crockford), json
+                             Output token format when used with the "tokens"
+                               command; where FORMAT is one of:
+                               json (default), jsonl, line, csv.
       --grep=<PATTERN>       Search region message matching PATTERN.
   -e                         Use regular expression for search.
   -i                         Ignore search case.
