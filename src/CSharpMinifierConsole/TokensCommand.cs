@@ -25,6 +25,7 @@ partial class Program
     static void TokensCommand(ProgramArguments args)
     {
         var isMultiMode = args is { ArgFile.Count: > 1 } or { OptGlobDirInfo: not null };
+        var sources = ReadSources(args.ArgFile, args.OptGlobDirInfo);
 
         switch (args.OptFormat?.ToLowerInvariant())
         {
@@ -39,7 +40,7 @@ partial class Program
                 }
 
                 var i = 0;
-                foreach (var (path, source) in ReadSources(args.ArgFile, args.OptGlobDirInfo))
+                foreach (var (path, source) in sources)
                 {
                     if (isMultiMode)
                     {
@@ -90,7 +91,7 @@ partial class Program
             }
             case "jsonl":
             {
-                foreach (var (path, source) in ReadSources(args.ArgFile, args.OptGlobDirInfo))
+                foreach (var (path, source) in sources)
                 {
                     var filePart = isMultiMode ? $""", "file": {JsonString.Encode(path)}""" : string.Empty;
 
@@ -105,7 +106,7 @@ partial class Program
             }
             case "line":
             {
-                foreach (var (path, source) in ReadSources(args.ArgFile, args.OptGlobDirInfo))
+                foreach (var (path, source) in sources)
                 {
                     var lines =
                         from token in Scanner.Scan(source)
@@ -133,7 +134,7 @@ partial class Program
                     "start_line,start_column,end_line,end_column"
                     + (isMultiMode ? ",file" : null));
 
-                foreach (var (path, source) in ReadSources(args.ArgFile, args.OptGlobDirInfo))
+                foreach (var (path, source) in sources)
                 {
                     var rows =
                         from t in Scanner.Scan(source)
