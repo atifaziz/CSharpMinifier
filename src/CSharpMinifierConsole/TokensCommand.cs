@@ -88,6 +88,21 @@ partial class Program
 
                 break;
             }
+            case "jsonl":
+            {
+                foreach (var (path, source) in ReadSources(args.ArgFile, args.OptGlobDirInfo))
+                {
+                    var filePart = isMultiMode ? $""", "file": {JsonString.Encode(path)}""" : string.Empty;
+
+                    var lines =
+                        from token in Scanner.Scan(source)
+                        select $$"""{ "kind": "{{token.Kind}}", "span": [[{{token.Start.Offset}}, {{token.Start.Line}}, {{token.Start.Column}}], [{{token.End.Offset}}, {{token.End.Line}}, {{token.End.Column}}]], "text": {{JsonString.Encode(source, token.Start.Offset, token.Length)}}{{filePart}} }""";
+
+                    foreach (var line in lines)
+                        Console.WriteLine(line);
+                }
+                break;
+            }
             case "line":
             {
                 foreach (var (path, source) in ReadSources(args.ArgFile, args.OptGlobDirInfo))
