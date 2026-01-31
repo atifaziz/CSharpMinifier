@@ -54,7 +54,7 @@ static class JsonString
             var ch = s[i];
             _ = ch switch
             {
-                '"' or '\'' or '\\' => sb.Append('\\').Append(ch),
+                '"' or '\\' => sb.Append('\\').Append(ch),
                 _ => ch < ControlChars.Length ? sb.Append(ControlChars[ch]) : sb.Append(ch),
             };
         }

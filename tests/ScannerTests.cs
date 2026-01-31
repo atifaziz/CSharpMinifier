@@ -178,12 +178,12 @@ public class ScannerTests
 
     [TestCase("22/7", @"Text 4 0 4 ""22/7""")]
 
-    [TestCase("'a'" , @"Char 3 0 3 ""\'a\'""")]
-    [TestCase("'\\\\'", @"Char 4 0 4 ""\'\\\\\'""")]
+    [TestCase("'a'" , @"Char 3 0 3 ""'a'""")]
+    [TestCase("'\\\\'", @"Char 4 0 4 ""'\\\\'""")]
 
     [TestCase("ch='a';",
         @"Text 3 0 3 ""ch=""",
-        @"Char 3 0 3 ""\'a\'""",
+        @"Char 3 0 3 ""'a'""",
         @"Text 1 0 1 "";""")]
 
     [TestCase(" \r \r42",
@@ -897,7 +897,7 @@ public class ScannerTests
               """",
               @"InterpolatedRawStringStart  9 0 9 ""$\""\""\""foo {""",
               @"InterpolatedStringStart     4 0 4 ""$\""b{""",
-              @"Char                        3 0 3 ""\'a\'""",
+              @"Char                        3 0 3 ""'a'""",
               @"InterpolatedStringEnd       3 0 3 ""}r\""""",
               @"InterpolatedRawStringEnd    8 0 8 ""} baz\""\""\""""")]
 
