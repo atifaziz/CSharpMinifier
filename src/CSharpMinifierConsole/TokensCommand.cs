@@ -25,7 +25,7 @@ partial class Program
 {
     static void TokensCommand(ProgramArguments args)
     {
-        var isMultiMode = args.ArgFile.Count > 1;
+        var isMultiMode = args is { ArgFile.Count: > 1 } or { OptGlobDirInfo: not null };
 
         switch (args.OptFormat?.ToLowerInvariant())
         {
@@ -91,7 +91,7 @@ partial class Program
             }
             case "line":
             {
-                foreach (var (path, source) in ReadSources(args.ArgFile))
+                foreach (var (path, source) in ReadSources(args.ArgFile, args.OptGlobDirInfo))
                 {
                     var lines =
                         from token in Scanner.Scan(source)
@@ -119,7 +119,7 @@ partial class Program
                     "start_line,start_column,end_line,end_column"
                     + (isMultiMode ? ",file" : null));
 
-                foreach (var (path, source) in ReadSources(args.ArgFile))
+                foreach (var (path, source) in ReadSources(args.ArgFile, args.OptGlobDirInfo))
                 {
                     var rows =
                         from t in Scanner.Scan(source)
