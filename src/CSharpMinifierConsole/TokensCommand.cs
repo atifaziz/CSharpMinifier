@@ -47,8 +47,8 @@ partial class Program
                         if (i > 0)
                             Console.WriteLine(",");
                         Console.WriteLine("  {");
-                        Console.WriteLine("    \"file\": " + JsonString.Encode(path) + ",");
-                        Console.WriteLine("    \"tokens\": [");
+                        Console.WriteLine($"""    "file": {JsonString.Encode(path)},""");
+                        Console.WriteLine("""    "tokens": [""");
                     }
                     else
                     {
@@ -62,10 +62,10 @@ partial class Program
                     {
                         if (j > 0)
                             Console.WriteLine(",");
-                        Console.WriteLine($"{indent}  {{");
-                        Console.WriteLine($"{indent}    \"kind\": \"{token.Kind}\",");
-                        Console.WriteLine($"{indent}    \"span\": [[{token.Start.Offset}, {token.Start.Line}, {token.Start.Column}], [{token.End.Offset}, {token.End.Line}, {token.End.Column}]],");
-                        Console.WriteLine($"{indent}    \"text\": {JsonString.Encode(source, token.Start.Offset, token.Length)}");
+                        Console.WriteLine($$"""{{indent}}  {""");
+                        Console.WriteLine($"""{indent}    "kind": "{token.Kind}",""");
+                        Console.WriteLine($"""{indent}    "span": [[{token.Start.Offset}, {token.Start.Line}, {token.Start.Column}], [{token.End.Offset}, {token.End.Line}, {token.End.Column}]],""");
+                        Console.WriteLine($"""{indent}    "text": {JsonString.Encode(source, token.Start.Offset, token.Length)}""");
                         Console.Write($"{indent}  }}");
                         j++;
                     }
