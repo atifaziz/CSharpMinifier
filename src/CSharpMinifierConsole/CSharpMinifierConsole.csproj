@@ -7,6 +7,7 @@
     <VersionPrefix>2.3.0</VersionPrefix>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>csmin</ToolCommandName>
+    <PublishAot>true</PublishAot>
     <Copyright>Copyright © 2019 Atif Aziz. All rights reserved.</Copyright>
     <Description>C# Minification Tool</Description>
     <Authors>Atif Aziz</Authors>

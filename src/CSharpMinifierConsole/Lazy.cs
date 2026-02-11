@@ -15,9 +15,10 @@
 #endregion
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 
 static class Lazy
 {
-    public static Lazy<T> Value<T>(T value) => Create(() => value);
-    public static Lazy<T> Create<T>(Func<T> factory) => new(factory);
+    public static Lazy<T> Value<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] T>(T value) => Create(() => value);
+    public static Lazy<T> Create<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] T>(Func<T> factory) => new(factory);
 }
