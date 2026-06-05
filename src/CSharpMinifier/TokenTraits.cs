@@ -42,7 +42,9 @@ public enum TokenKindTraits
 
 partial class TokenKindExtensions
 {
+#pragma warning disable IDE0052 // Remove unread private members (false negative; used by the TokenKind.Traits property)
     static readonly TokenKindTraits[] TraitsByKind =
+#pragma warning restore IDE0052 // Remove unread private members
     [
         // IMPORTANT! Keep the order here in sync with TokenKind. If a
         // TokenKind member is moved, added or removed then this must be
