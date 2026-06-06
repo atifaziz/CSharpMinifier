@@ -11,7 +11,7 @@ sealed partial class ProgramArguments
         HelpText.Replace("\u00a9", "(C)", StringComparison.Ordinal).ReplaceLineEndings();
 
     const string HelpText = $"""
-        {BuildConstants.Product} (version {BuildConstants.Version})
+        {BuildConstants.Product} (version {BuildConstants.InformationalVersion})
         {BuildConstants.Copyright}
 
         Minifies C# source, removing comments and whitespace that would not
