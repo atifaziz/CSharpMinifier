@@ -160,15 +160,13 @@ jobs:
           mkdir -p archives
           for dir in artifacts/csmin-*; do
             name=$(basename "$dir")
+            # Strip .tar.gz or .zip extension from directory name (archive: false artifacts)
+            base="${name%.tar.gz}"
+            base="${base%.zip}"
             if [[ "$name" == *win* ]]; then
-              # Windows artifacts (and Windows symbols) are zipped
-              cp "$dir"/*.zip "archives/${name}-${{ steps.version.outputs.version }}.zip"
-            elif [[ "$name" == *-symbols* ]]; then
-              # Non-Windows symbols are tar.gz
-              cp "$dir"/*.tar.gz "archives/${name}-${{ steps.version.outputs.version }}.tar.gz"
+              cp "$dir"/*.zip "archives/${base}-${{ steps.version.outputs.version }}.zip"
             else
-              # Non-Windows binaries are tar.gz with correct permissions
-              cp "$dir"/*.tar.gz "archives/${name}-${{ steps.version.outputs.version }}.tar.gz"
+              cp "$dir"/*.tar.gz "archives/${base}-${{ steps.version.outputs.version }}.tar.gz"
             fi
           done
 
