@@ -40,7 +40,7 @@ static partial class Program
         switch (args)
         {
             case { CmdHelp   : true }:
-                Console.WriteLine(ProgramArguments.FormattedHelp);
+                Console.WriteLine(ProgramArguments.Help);
                 Console.Error.WriteLine("NOTE! This command is now obsolete. Use -h or --help instead.");
                 break;
 
@@ -241,10 +241,10 @@ static partial class Program
                 return Main(["min", ..args]);
 
             return ProgramArguments.CreateParser()
-                                   .WithVersion(ThisAssembly.Info.FileVersion)
+                                   .WithVersion(BuildConstants.Version)
                                    .Parse(args)
                                    .Match(args => Wain(args, out verbose),
-                                          _ => Print(Console.Out, 0, ProgramArguments.FormattedHelp),
+                                          _ => Print(Console.Out, 0, ProgramArguments.Help),
                                           r => Print(Console.Out, 0, r.Version),
                                           r => SubCommandNames.Any(cmd => args[0] == cmd)
                                              ? Print(Console.Error, 1, r.Usage)
@@ -267,16 +267,4 @@ static partial class Program
             return exitCode;
         }
     }
-}
-
-sealed partial class ProgramArguments
-{
-    public DirectoryInfo? OptGlobDirInfo => OptGlob is { } glob ? new DirectoryInfo(glob) : null;
-
-    public static string FormattedHelp =>
-        Help.Replace("$LOGO$",
-                     $"{ThisAssembly.Info.Product} (version {new Version(ThisAssembly.Info.FileVersion).Trim(3)})"
-                         + Environment.NewLine
-                         + ThisAssembly.Info.Copyright.Replace("\u00a9", "(C)", StringComparison.Ordinal),
-                     StringComparison.OrdinalIgnoreCase);
 }
