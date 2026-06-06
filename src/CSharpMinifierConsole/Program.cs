@@ -247,7 +247,7 @@ static partial class Program
                                           _ => Print(Console.Out, 0, ProgramArguments.Help),
                                           r => Print(Console.Out, 0, r.Version),
                                           r => SubCommandNames.Any(cmd => args[0] == cmd)
-                                             ? Print(Console.Error, 1, r.Usage)
+                                             ? Print(Console.Error, 1, r.Usage.ReplaceLineEndings())
                                              : Main(["min", ..args]));
         }
 #pragma warning disable CA1031 // Do not catch general exception types (entry-point)
